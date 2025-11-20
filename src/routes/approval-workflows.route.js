@@ -1,30 +1,21 @@
 import express from "express";
+import { getAllApprovalWorkflowsController, getApprovalWorkflowByIdController, createApprovalWorkflowController, approveWorkflowStepController, rejectWorkflowStepController } from "../controllers/approvalWorkflow.controller.js";
 
 const router = express.Router();
 
 // GET all approval workflows
-router.get("/", (req, res) => {
-    res.json({ message: "Get all approval workflows - TODO" });
-});
+router.get("/", getAllApprovalWorkflowsController);
 
 // GET approval workflow by ID
-router.get("/:id", (req, res) => {
-    res.json({ message: `Get approval workflow ${req.params.id} - TODO` });
-});
+router.get("/:id", getApprovalWorkflowByIdController);
 
 // CREATE approval workflow
-router.post("/", (req, res) => {
-    res.json({ message: "Create approval workflow - TODO" });
-});
+router.post("/", createApprovalWorkflowController);
 
 // APPROVE step
-router.put("/:id/approve", (req, res) => {
-    res.json({ message: `Approve workflow step ${req.params.id} - TODO` });
-});
+router.put("/:id/approve", approveWorkflowStepController);
 
 // REJECT step
-router.put("/:id/reject", (req, res) => {
-    res.json({ message: `Reject workflow step ${req.params.id} - TODO` });
-});
+router.put("/:id/reject", rejectWorkflowStepController);
 
 export default router;

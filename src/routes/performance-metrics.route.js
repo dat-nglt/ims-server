@@ -1,25 +1,18 @@
 import express from "express";
+import { getAllPerformanceMetricsController, getPerformanceMetricByUserAndMonthController, createPerformanceMetricController, updatePerformanceMetricController } from "../controllers/performanceMetric.controller.js";
 
 const router = express.Router();
 
 // GET all performance metrics
-router.get("/", (req, res) => {
-  res.json({ message: "Get all performance metrics - TODO" });
-});
+router.get("/", getAllPerformanceMetricsController);
 
 // GET performance metric by user and month
-router.get("/user/:userId/month/:month", (req, res) => {
-  res.json({ message: `Get performance metrics for user ${req.params.userId} in month ${req.params.month} - TODO` });
-});
+router.get("/user/:userId/month/:month", getPerformanceMetricByUserAndMonthController);
 
 // CREATE performance metric
-router.post("/", (req, res) => {
-  res.json({ message: "Create performance metric - TODO" });
-});
+router.post("/", createPerformanceMetricController);
 
 // UPDATE performance metric
-router.put("/:id", (req, res) => {
-  res.json({ message: `Update performance metric ${req.params.id} - TODO` });
-});
+router.put("/:id", updatePerformanceMetricController);
 
 export default router;

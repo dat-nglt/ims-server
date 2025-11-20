@@ -1,24 +1,24 @@
 import express from "express";
-import * as workController from "../controllers/IMS/work.controller.js";
+import { getAllWorksController, getWorksByStatusController, getWorkByIdController, createWorkController, updateWorkController, deleteWorkController } from "../controllers/work.controller.js";
 
 const router = express.Router();
 
 // GET all works
-router.get("/", workController.getAllWorksController);
+router.get("/", getAllWorksController);
 
 // GET works by status (phải ở trước /:id để tránh conflict)
-router.get("/status/:status", workController.getWorksByStatusController);
+router.get("/status/:status", getWorksByStatusController);
 
 // GET work by ID
-router.get("/:id", workController.getWorkByIdController);
+router.get("/:id", getWorkByIdController);
 
 // CREATE new work
-router.post("/", workController.createWorkController);
+router.post("/", createWorkController);
 
 // UPDATE work
-router.put("/:id", workController.updateWorkController);
+router.put("/:id", updateWorkController);
 
 // DELETE work
-router.delete("/:id", workController.deleteWorkController);
+router.delete("/:id", deleteWorkController);
 
 export default router;

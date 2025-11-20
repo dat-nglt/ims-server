@@ -1,30 +1,21 @@
 import express from "express";
+import { getAllSystemConfigController, getSystemConfigByKeyController, createSystemConfigController, updateSystemConfigController, deleteSystemConfigController } from "../controllers/systemConfig.controller.js";
 
 const router = express.Router();
 
 // GET all system config
-router.get("/", (req, res) => {
-  res.json({ message: "Get all system config - TODO" });
-});
+router.get("/", getAllSystemConfigController);
 
 // GET system config by key
-router.get("/:key", (req, res) => {
-  res.json({ message: `Get system config ${req.params.key} - TODO` });
-});
+router.get("/:key", getSystemConfigByKeyController);
 
 // SET system config
-router.post("/", (req, res) => {
-  res.json({ message: "Set system config - TODO" });
-});
+router.post("/", createSystemConfigController);
 
 // UPDATE system config
-router.put("/:key", (req, res) => {
-  res.json({ message: `Update system config ${req.params.key} - TODO` });
-});
+router.put("/:key", updateSystemConfigController);
 
 // DELETE system config
-router.delete("/:key", (req, res) => {
-  res.json({ message: `Delete system config ${req.params.key} - TODO` });
-});
+router.delete("/:key", deleteSystemConfigController);
 
 export default router;

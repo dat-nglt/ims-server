@@ -1,30 +1,21 @@
 import express from "express";
+import { getAllAttachmentsController, getAttachmentByIdController, uploadAttachmentController, deleteAttachmentController, getAttachmentsByWorkIdController } from "../controllers/attachment.controller.js";
 
 const router = express.Router();
 
 // GET all attachments
-router.get("/", (req, res) => {
-  res.json({ message: "Get all attachments - TODO" });
-});
+router.get("/", getAllAttachmentsController);
 
 // GET attachment by ID
-router.get("/:id", (req, res) => {
-  res.json({ message: `Get attachment ${req.params.id} - TODO` });
-});
+router.get("/:id", getAttachmentByIdController);
 
 // UPLOAD attachment
-router.post("/", (req, res) => {
-  res.json({ message: "Upload attachment - TODO" });
-});
+router.post("/", uploadAttachmentController);
 
 // DELETE attachment
-router.delete("/:id", (req, res) => {
-  res.json({ message: `Delete attachment ${req.params.id} - TODO` });
-});
+router.delete("/:id", deleteAttachmentController);
 
 // GET attachments by work ID
-router.get("/work/:workId", (req, res) => {
-  res.json({ message: `Get attachments for work ${req.params.workId} - TODO` });
-});
+router.get("/work/:workId", getAttachmentsByWorkIdController);
 
 export default router;

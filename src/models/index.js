@@ -33,7 +33,7 @@ const db = {};
 
 // Dynamically import all models
 const files = fs.readdirSync(__dirname).filter(file => {
-  return file.endsWith('.js') && file !== 'index.js';
+  return file.endsWith('.model.js') && file !== 'index.js';
 });
 
 for (const file of files) {

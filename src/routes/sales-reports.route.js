@@ -1,30 +1,21 @@
 import express from "express";
+import { getAllSalesReportsController, getSalesReportByIdController, createSalesReportController, updateSalesReportController, getSalesReportsByDateRangeController } from "../controllers/salesReport.controller.js";
 
 const router = express.Router();
 
 // GET all sales reports
-router.get("/", (req, res) => {
-  res.json({ message: "Get all sales reports - TODO" });
-});
+router.get("/", getAllSalesReportsController);
 
 // GET sales report by ID
-router.get("/:id", (req, res) => {
-  res.json({ message: `Get sales report ${req.params.id} - TODO` });
-});
+router.get("/:id", getSalesReportByIdController);
 
 // CREATE sales report
-router.post("/", (req, res) => {
-  res.json({ message: "Create sales report - TODO" });
-});
+router.post("/", createSalesReportController);
 
 // UPDATE sales report
-router.put("/:id", (req, res) => {
-  res.json({ message: `Update sales report ${req.params.id} - TODO` });
-});
+router.put("/:id", updateSalesReportController);
 
 // GET sales report by date range
-router.get("/date-range", (req, res) => {
-  res.json({ message: "Get sales reports by date range - TODO" });
-});
+router.get("/date-range", getSalesReportsByDateRangeController);
 
 export default router;

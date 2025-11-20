@@ -1,25 +1,18 @@
 import express from "express";
+import { getAllEmployeeProfilesController, getEmployeeProfileByUserIdController, createEmployeeProfileController, updateEmployeeProfileController } from "../controllers/employeeProfile.controller.js";
 
 const router = express.Router();
 
 // GET all employee profiles
-router.get("/", (req, res) => {
-  res.json({ message: "Get all employee profiles - TODO" });
-});
+router.get("/", getAllEmployeeProfilesController);
 
 // GET employee profile by user ID
-router.get("/user/:userId", (req, res) => {
-  res.json({ message: `Get employee profile for user ${req.params.userId} - TODO` });
-});
+router.get("/user/:userId", getEmployeeProfileByUserIdController);
 
 // CREATE employee profile
-router.post("/", (req, res) => {
-  res.json({ message: "Create employee profile - TODO" });
-});
+router.post("/", createEmployeeProfileController);
 
 // UPDATE employee profile
-router.put("/user/:userId", (req, res) => {
-  res.json({ message: `Update employee profile for user ${req.params.userId} - TODO` });
-});
+router.put("/user/:userId", updateEmployeeProfileController);
 
 export default router;

@@ -1,30 +1,21 @@
 import express from "express";
+import { getAllNotificationsController, getNotificationByIdController, markNotificationAsReadController, deleteNotificationController, getUnreadNotificationsCountController } from "../controllers/notification.controller.js";
 
 const router = express.Router();
 
 // GET all notifications for user
-router.get("/", (req, res) => {
-  res.json({ message: "Get all notifications - TODO" });
-});
+router.get("/", getAllNotificationsController);
 
 // GET notification by ID
-router.get("/:id", (req, res) => {
-  res.json({ message: `Get notification ${req.params.id} - TODO` });
-});
+router.get("/:id", getNotificationByIdController);
 
 // MARK notification as read
-router.put("/:id/read", (req, res) => {
-  res.json({ message: `Mark notification ${req.params.id} as read - TODO` });
-});
+router.put("/:id/read", markNotificationAsReadController);
 
 // DELETE notification
-router.delete("/:id", (req, res) => {
-  res.json({ message: `Delete notification ${req.params.id} - TODO` });
-});
+router.delete("/:id", deleteNotificationController);
 
 // GET unread notifications count
-router.get("/unread/count", (req, res) => {
-  res.json({ message: "Get unread notifications count - TODO" });
-});
+router.get("/unread/count", getUnreadNotificationsCountController);
 
 export default router;

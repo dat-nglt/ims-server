@@ -1,21 +1,21 @@
 import express from "express";
-import * as checkInController from "../controllers/IMS/checkIn.controller.js";
+import { getAllCheckInsController, getCheckInByIdController, checkInController, checkOutController, getCheckInHistoryByUserIdController } from "../controllers/checkIn.controller.js";
 
 const router = express.Router();
 
 // GET all check-ins
-router.get("/", checkInController.getAllCheckInsController);
+router.get("/", getAllCheckInsController);
 
 // GET check-in history for user (phải ở trước /:id để tránh conflict)
-router.get("/user/:userId", checkInController.getCheckInHistoryByUserIdController);
+router.get("/user/:userId", getCheckInHistoryByUserIdController);
 
 // GET check-in by ID
-router.get("/:id", checkInController.getCheckInByIdController);
+router.get("/:id", getCheckInByIdController);
 
 // CHECK-IN
-router.post("/check-in", checkInController.checkInController);
+router.post("/check-in", checkInController);
 
 // CHECK-OUT
-router.post("/:id/check-out", checkInController.checkOutController);
+router.post("/:id/check-out", checkOutController);
 
 export default router;

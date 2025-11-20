@@ -1,21 +1,21 @@
 import express from "express";
-import * as technicianSkillController from "../controllers/IMS/technicianSkill.controller.js";
+import { getAllTechnicianSkillsController, getTechnicianSkillByTechnicianIdController, assignTechnicianSkillController, updateTechnicianSkillController, deleteTechnicianSkillController } from "../controllers/technicianSkill.controller.js";
 
 const router = express.Router();
 
 // GET all technician skills
-router.get("/", technicianSkillController.getAllTechnicianSkillsController);
+router.get("/", getAllTechnicianSkillsController);
 
 // GET technician skills by technician ID
-router.get("/technician/:technicianId", technicianSkillController.getTechnicianSkillByTechnicianIdController);
+router.get("/technician/:technicianId", getTechnicianSkillByTechnicianIdController);
 
 // ASSIGN skill level to technician
-router.post("/", technicianSkillController.assignTechnicianSkillController);
+router.post("/", assignTechnicianSkillController);
 
 // UPDATE technician skill
-router.put("/:id", technicianSkillController.updateTechnicianSkillController);
+router.put("/:id", updateTechnicianSkillController);
 
 // DELETE technician skill
-router.delete("/:id", technicianSkillController.deleteTechnicianSkillController);
+router.delete("/:id", deleteTechnicianSkillController);
 
 export default router;

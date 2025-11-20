@@ -1,30 +1,21 @@
 import express from "express";
+import { getAllPermissionsController, getPermissionByIdController, createPermissionController, updatePermissionController, deletePermissionController } from "../controllers/permission.controller.js";
 
 const router = express.Router();
 
 // GET all permissions
-router.get("/", (req, res) => {
-  res.json({ message: "Get all permissions - TODO" });
-});
+router.get("/", getAllPermissionsController);
 
 // GET permission by ID
-router.get("/:id", (req, res) => {
-  res.json({ message: `Get permission ${req.params.id} - TODO` });
-});
+router.get("/:id", getPermissionByIdController);
 
 // CREATE new permission
-router.post("/", (req, res) => {
-  res.json({ message: "Create permission - TODO" });
-});
+router.post("/", createPermissionController);
 
 // UPDATE permission
-router.put("/:id", (req, res) => {
-  res.json({ message: `Update permission ${req.params.id} - TODO` });
-});
+router.put("/:id", updatePermissionController);
 
 // DELETE permission
-router.delete("/:id", (req, res) => {
-  res.json({ message: `Delete permission ${req.params.id} - TODO` });
-});
+router.delete("/:id", deletePermissionController);
 
 export default router;

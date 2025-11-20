@@ -1,35 +1,24 @@
 import express from "express";
+import { getAllWorkAssignmentsController, getWorkAssignmentByIdController, createWorkAssignmentController, acceptWorkAssignmentController, rejectWorkAssignmentController, completeWorkAssignmentController } from "../controllers/workAssignment.controller.js";
 
 const router = express.Router();
 
 // GET all work assignments
-router.get("/", (req, res) => {
-  res.json({ message: "Get all work assignments - TODO" });
-});
+router.get("/", getAllWorkAssignmentsController);
 
 // GET work assignment by ID
-router.get("/:id", (req, res) => {
-  res.json({ message: `Get work assignment ${req.params.id} - TODO` });
-});
+router.get("/:id", getWorkAssignmentByIdController);
 
 // CREATE new work assignment
-router.post("/", (req, res) => {
-  res.json({ message: "Create work assignment - TODO" });
-});
+router.post("/", createWorkAssignmentController);
 
 // ACCEPT work assignment
-router.put("/:id/accept", (req, res) => {
-  res.json({ message: `Accept work assignment ${req.params.id} - TODO` });
-});
+router.put("/:id/accept", acceptWorkAssignmentController);
 
 // REJECT work assignment
-router.put("/:id/reject", (req, res) => {
-  res.json({ message: `Reject work assignment ${req.params.id} - TODO` });
-});
+router.put("/:id/reject", rejectWorkAssignmentController);
 
 // COMPLETE work assignment
-router.put("/:id/complete", (req, res) => {
-  res.json({ message: `Complete work assignment ${req.params.id} - TODO` });
-});
+router.put("/:id/complete", completeWorkAssignmentController);
 
 export default router;

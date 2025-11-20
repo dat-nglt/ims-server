@@ -1,30 +1,21 @@
 import express from "express";
+import { getAllUsersController, getUserByIdController, createUserController, updateUserController, deleteUserController } from "../controllers/user.controller.js";
 
 const router = express.Router();
 
 // GET all users
-router.get("/", (req, res) => {
-  res.json({ message: "Get all users - TODO" });
-});
+router.get("/", getAllUsersController);
 
 // GET user by ID
-router.get("/:id", (req, res) => {
-  res.json({ message: `Get user ${req.params.id} - TODO` });
-});
+router.get("/:id", getUserByIdController);
 
 // CREATE new user
-router.post("/", (req, res) => {
-  res.json({ message: "Create user - TODO" });
-});
+router.post("/", createUserController);
 
 // UPDATE user
-router.put("/:id", (req, res) => {
-  res.json({ message: `Update user ${req.params.id} - TODO` });
-});
+router.put("/:id", updateUserController);
 
 // DELETE user
-router.delete("/:id", (req, res) => {
-  res.json({ message: `Delete user ${req.params.id} - TODO` });
-});
+router.delete("/:id", deleteUserController);
 
 export default router;
