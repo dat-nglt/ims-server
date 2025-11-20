@@ -1,0 +1,26 @@
+sudo nano /etc/nginx/sites-available/ims-server
+
+server {
+    listen 80;
+    
+    # 1. Sửa lại tên lệnh cho đúng
+    server_name videcoder.io.vn www.videcoder.io.vn;
+
+    location / {
+        # 2. Cấu hình Reverse Proxy (Thay 3000 bằng cổng app Node.js của bạn)
+        proxy_pass http://localhost:3000; 
+        
+        # 3. Các header cần thiết để Node.js hiểu đúng request
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+
+=> sudo nginx -t
+
+=> sudo systemctl restart nginx
