@@ -1,5 +1,6 @@
 import db from "../models/index.js";
 import logger from "../utils/logger.js";
+import axios from "axios";
 
 /**
  * Lấy danh sách tất cả check-in
@@ -15,6 +16,26 @@ export const getAllCheckInsService = async () => {
     return { success: true, data: checkIns };
   } catch (error) {
     logger.error("Error in getAllCheckInsService:", error.message);
+    throw error;
+  }
+};
+
+/**
+ * Lấy thông tin toạ độ (chưa triển khai)
+ */
+export const getLocationService = async (accessToken, code) => {
+  try {
+    const secretKey = process.env.ZALO_SECRET_KEY;
+    const response = await axios.get("https://graph.zalo.me/v2.0/me/info", {
+      headers: {
+        access_token: accessToken,
+        code: code,
+        secret_key: secretKey,
+      },
+    });
+    return { success: true, data: response.data };
+  } catch (error) {
+    logger.error("Error in getLocationService:", error.message);
     throw error;
   }
 };

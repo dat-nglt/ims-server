@@ -1,10 +1,20 @@
 import express from "express";
-import { getAllCheckInsController, getCheckInByIdController, checkInController, checkOutController, getCheckInHistoryByUserIdController } from "../controllers/checkIn.controller.js";
+import {
+  getAllCheckInsController,
+  getCheckInByIdController,
+  checkInController,
+  checkOutController,
+  getCheckInHistoryByUserIdController,
+  getLocationController,
+} from "../controllers/checkIn.controller.js";
 
 const router = express.Router();
 
 // GET all check-ins
 router.get("/", getAllCheckInsController);
+
+// GET location (chưa triển khai)cl
+router.get("/location", getLocationController);
 
 // GET check-in history for user (phải ở trước /:id để tránh conflict)
 router.get("/user/:userId", getCheckInHistoryByUserIdController);

@@ -1,12 +1,13 @@
 import logger from "../utils/logger.js";
-import * as userRolePermissionService from "../../services/IMS/userRolePermission.service.js";
+import * as userRolePermissionService from "../../services/userRolePermission.service.js";
 
 /**
  * Lấy tất cả quyền hạn người dùng
  */
 export const getAllUserRolePermissionsController = async (req, res) => {
   try {
-    const result = await userRolePermissionService.getAllUserRolePermissionsService();
+    const result =
+      await userRolePermissionService.getAllUserRolePermissionsService();
     res.json({
       status: "success",
       data: result.data,
@@ -27,7 +28,8 @@ export const getAllUserRolePermissionsController = async (req, res) => {
 export const getUserPermissionsByUserIdController = async (req, res) => {
   try {
     const { userId } = req.params;
-    const result = await userRolePermissionService.getUserPermissionsByUserIdService(userId);
+    const result =
+      await userRolePermissionService.getUserPermissionsByUserIdService(userId);
     res.json({
       status: "success",
       data: result.data,
@@ -47,7 +49,9 @@ export const getUserPermissionsByUserIdController = async (req, res) => {
  */
 export const grantPermissionToUserController = async (req, res) => {
   try {
-    const result = await userRolePermissionService.grantPermissionToUserService(req.body);
+    const result = await userRolePermissionService.grantPermissionToUserService(
+      req.body
+    );
     res.status(201).json({
       status: "success",
       data: result.data,
@@ -68,7 +72,8 @@ export const grantPermissionToUserController = async (req, res) => {
 export const revokePermissionFromUserController = async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await userRolePermissionService.revokePermissionFromUserService(id);
+    const result =
+      await userRolePermissionService.revokePermissionFromUserService(id);
     res.json({
       status: "success",
       message: result.message,

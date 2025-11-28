@@ -1,6 +1,21 @@
 import logger from "../utils/logger.js";
 import * as checkInService from "../services/checkIn.service.js";
 
+export const getLocationController = async (req, res) => {
+  try {
+    const { access_token, code } = req.query;
+    const result = await checkInService.getLocationService(access_token, code);
+    res.json({
+      status: "success",
+      data: result.data,
+      message: "Lấy thông tin vị trí thành công",
+    });
+  } catch (error) {
+    logger.error(`[${req.id}] Error in getLocationController:`, error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 /**
  * Lấy danh sách tất cả check-in
  */
@@ -83,7 +98,9 @@ export const checkOutController = async (req, res) => {
 export const getCheckInHistoryByUserIdController = async (req, res) => {
   try {
     const { userId } = req.params;
-    const result = await checkInService.getCheckInHistoryByUserIdService(userId);
+    const result = await checkInService.getCheckInHistoryByUserIdService(
+      userId
+    );
 
     res.json({
       status: "success",

@@ -123,7 +123,7 @@ async function startServer() {
         });
 
         // --- API VERSIONING ---
-        app.use("/api/v1", mainRouter);
+        mainRouter(app);
         logger.info("Cấu hình routes thành công");
 
         // --- XỬ LÝ 404 ---
