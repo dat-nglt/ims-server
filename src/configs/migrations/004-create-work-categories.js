@@ -17,23 +17,29 @@ export async function up(queryInterface, Sequelize) {
       type: Sequelize.ENUM('Công trình', 'Dịch vụ'),
       unique: true,
       allowNull: false,
+      comment: 'Tên danh mục công việc (Công trình hoặc Dịch vụ)',
     },
     description: {
       type: Sequelize.TEXT,
+      comment: 'Mô tả chi tiết về danh mục',
     },
     icon: {
       type: Sequelize.STRING(50),
+      comment: 'Tên icon từ thư viện (vd: zap, wind)',
     },
     color: {
       type: Sequelize.STRING(7),
+      comment: 'Mã màu hex (vd: #FF6B6B)',
     },
     is_active: {
       type: Sequelize.BOOLEAN,
       defaultValue: true,
+      comment: 'Danh mục có hoạt động hay không',
     },
     display_order: {
       type: Sequelize.INTEGER,
       defaultValue: 0,
+      comment: 'Thứ tự hiển thị trong UI (1, 2, 3...)',
     },
     created_at: {
       type: Sequelize.DATE,

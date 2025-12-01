@@ -33,6 +33,7 @@ export async function up(queryInterface, Sequelize) {
         model: 'users',
         key: 'id',
       },
+      comment: 'Người cập nhật',
     },
     updated_at: {
       type: Sequelize.DATE,

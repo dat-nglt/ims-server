@@ -37,9 +37,11 @@ export async function up(queryInterface, Sequelize) {
     },
     latitude: {
       type: Sequelize.DECIMAL(10, 8),
+      comment: 'Vĩ độ',
     },
     longitude: {
       type: Sequelize.DECIMAL(11, 8),
+      comment: 'Kinh độ',
     },
     location_name: {
       type: Sequelize.STRING(255),
@@ -56,15 +58,19 @@ export async function up(queryInterface, Sequelize) {
     },
     distance_from_work: {
       type: Sequelize.DECIMAL(10, 2),
+      comment: 'Khoảng cách từ công việc',
     },
     is_within_radius: {
       type: Sequelize.BOOLEAN,
+      comment: 'Có trong phạm vi hay không',
     },
     duration_minutes: {
       type: Sequelize.INTEGER,
+      comment: 'Thời gian làm việc',
     },
     device_info: {
       type: Sequelize.TEXT,
+      comment: 'Thông tin thiết bị',
     },
     ip_address: {
       type: Sequelize.STRING(45),

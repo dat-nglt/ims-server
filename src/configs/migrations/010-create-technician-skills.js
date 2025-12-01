@@ -24,10 +24,12 @@ export async function up(queryInterface, Sequelize) {
     technician_level: {
       type: Sequelize.STRING(100),
       allowNull: false,
+      comment: 'Cấp bậc: Kỹ thuật chính, Kỹ thuật phụ, Kỹ thuật viên thực tập',
     },
     assigned_at: {
       type: Sequelize.DATE,
       defaultValue: Sequelize.NOW,
+      comment: 'Ngày phân công cấp bậc',
     },
     created_at: {
       type: Sequelize.DATE,

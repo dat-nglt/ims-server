@@ -17,6 +17,7 @@ export async function up(queryInterface, Sequelize) {
       type: Sequelize.STRING(100),
       unique: true,
       allowNull: false,
+      comment: 'Mã báo cáo bán hàng',
     },
     sales_person_id: {
       type: Sequelize.INTEGER,
@@ -25,19 +26,24 @@ export async function up(queryInterface, Sequelize) {
         model: 'users',
         key: 'id',
       },
+      comment: 'Nhân viên kinh doanh',
     },
     report_date: {
       type: Sequelize.DATE,
       allowNull: false,
+      comment: 'Ngày của báo cáo',
     },
     revenue: {
       type: Sequelize.DECIMAL(10, 2),
+      comment: 'Tổng doanh thu',
     },
     cost: {
       type: Sequelize.DECIMAL(10, 2),
+      comment: 'Tổng chi phí',
     },
     profit: {
       type: Sequelize.DECIMAL(10, 2),
+      comment: 'Tổng lợi nhuận',
     },
     notes: {
       type: Sequelize.TEXT,

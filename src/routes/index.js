@@ -1,23 +1,34 @@
 // IMS Routes
-import routeForUsers from "./users.route.js";
-import routeForRoles from "./roles.route.js";
-import routeForPermissions from "./permissions.route.js";
-import routeForUserRolePermissions from "./user-role-permissions.route.js";
-import routeForWorks from "./works.route.js";
-import routeForWorkCategories from "./work-categories.route.js";
-import routeForWorkAssignments from "./work-assignments.route.js";
-import routeForWorkReports from "./work-reports.route.js";
-import routeForWorkHistory from "./work-history.route.js";
-import routeForCheckIns from "./check-ins.route.js";
-import routeForAttachments from "./attachments.route.js";
-import routeForNotifications from "./notifications.route.js";
-import routeForEmployeeProfiles from "./employee-profiles.route.js";
-import routeForTechnicianSkills from "./technician-skills.route.js";
-import routeForApprovalWorkflows from "./approval-workflows.route.js";
-import routeForSalesReports from "./sales-reports.route.js";
-import routeForPerformanceMetrics from "./performance-metrics.route.js";
-import routeForDashboardMetrics from "./dashboard-metrics.route.js";
-import routeForSystemConfig from "./system-config.route.js";
+import {
+    routeForUsers,
+    routeForRoles,
+    routeForPermissions,
+    routeForUserRolePermissions,
+} from "./users/index.js";
+import {
+    routeForWorks,
+    routeForWorkCategories,
+    routeForWorkAssignments,
+    routeForWorkReports,
+    routeForWorkHistory,
+} from "./works/index.js";
+import {
+    routeForCheckIns,
+    routeForAttachments,
+    routeForNotifications,
+} from "./operations/index.js";
+import {
+    routeForEmployeeProfiles,
+    routeForTechnicianSkills,
+} from "./hr/index.js";
+import { routeForApprovalWorkflows } from "./workflows/index.js";
+import { routeForSalesReports } from "./reports/index.js";
+import {
+    routeForPerformanceMetrics,
+    routeForDashboardMetrics,
+} from "./metrics/index.js";
+import { routeForSystemConfig } from "./system/index.js";
+import { routeForZaloWebhook } from "./webhooks/index.js";
 
 const mainRouter = (server) => {
     // --- IMS ROUTES (API v1) ---
@@ -25,7 +36,10 @@ const mainRouter = (server) => {
     server.use("/api/v1/ims/users", routeForUsers);
     server.use("/api/v1/ims/roles", routeForRoles);
     server.use("/api/v1/ims/permissions", routeForPermissions);
-    server.use("/api/v1/ims/user-role-permissions", routeForUserRolePermissions);
+    server.use(
+        "/api/v1/ims/user-role-permissions",
+        routeForUserRolePermissions
+    );
 
     // Work Management
     server.use("/api/v1/ims/works", routeForWorks);
@@ -53,6 +67,9 @@ const mainRouter = (server) => {
 
     // System Configuration
     server.use("/api/v1/ims/system-config", routeForSystemConfig);
+
+    // Webhooks
+    server.use("/api/v1/ims/zalo-webhook", routeForZaloWebhook);
 };
 
 export default mainRouter;

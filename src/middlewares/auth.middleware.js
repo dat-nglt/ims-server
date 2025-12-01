@@ -2,7 +2,7 @@
 
 import jwt from "jsonwebtoken";
 import logger from "../utils/logger.js";
-import { getUserProfileService } from "../services/users.service.js";
+import { getUserProfileService } from "../services/users/index.js";
 
 export const checkAuth = async (req, res, next) => {
   try {

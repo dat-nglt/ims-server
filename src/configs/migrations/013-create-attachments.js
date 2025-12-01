@@ -19,6 +19,7 @@ export async function up(queryInterface, Sequelize) {
         model: 'works',
         key: 'id',
       },
+      comment: 'Công việc liên quan',
     },
     report_id: {
       type: Sequelize.INTEGER,
@@ -26,20 +27,25 @@ export async function up(queryInterface, Sequelize) {
         model: 'work_reports',
         key: 'id',
       },
+      comment: 'Báo cáo liên quan',
     },
     file_name: {
       type: Sequelize.STRING(255),
       allowNull: false,
+      comment: 'Tên tập tin',
     },
     file_url: {
       type: Sequelize.TEXT,
       allowNull: false,
+      comment: 'URL truy cập tập tin',
     },
     file_type: {
       type: Sequelize.STRING(50),
+      comment: 'Loại tập tin: image, document, video...',
     },
     file_size: {
       type: Sequelize.INTEGER,
+      comment: 'Dung lượng tập tin (bytes)',
     },
     uploaded_by: {
       type: Sequelize.INTEGER,
@@ -47,10 +53,12 @@ export async function up(queryInterface, Sequelize) {
         model: 'users',
         key: 'id',
       },
+      comment: 'Người upload tập tin',
     },
     uploaded_at: {
       type: Sequelize.DATE,
       defaultValue: Sequelize.NOW,
+      comment: 'Thời gian upload',
     },
   });
 

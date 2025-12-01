@@ -4,6 +4,7 @@
  * Migration 007: Tạo bảng Work Reports (Báo cáo công việc)
  * 
  * Lưu trữ báo cáo tiến độ/hoàn thành công việc
+ * - Bao gồm vị trí, hình ảnh phân loại, người phê duyệt được giao
  */
 
 export async function up(queryInterface, Sequelize) {
@@ -20,6 +21,7 @@ export async function up(queryInterface, Sequelize) {
         model: 'works',
         key: 'id',
       },
+      comment: 'ID công việc',
     },
     reported_by: {
       type: Sequelize.INTEGER,
@@ -28,6 +30,7 @@ export async function up(queryInterface, Sequelize) {
         model: 'users',
         key: 'id',
       },
+      comment: 'ID người báo cáo',
     },
     progress_percentage: {
       type: Sequelize.INTEGER,
@@ -35,24 +38,54 @@ export async function up(queryInterface, Sequelize) {
     status: {
       type: Sequelize.STRING(50),
       defaultValue: 'in_progress',
+      comment: 'Trạng thái: in_progress, completed',
     },
     description: {
       type: Sequelize.TEXT,
+      comment: 'Mô tả chi tiết công việc đã làm',
     },
     notes: {
       type: Sequelize.TEXT,
+      comment: 'Ghi chú thêm',
     },
     photo_urls: {
-      type: Sequelize.ARRAY(Sequelize.TEXT),
+      type: Sequelize.JSONB,
+    },
+    location: {
+      type: Sequelize.STRING(255),
+      comment: 'Vị trí công việc',
+    },
+    before_images: {
+      type: Sequelize.JSONB,
+      comment: 'Danh sách URL ảnh trước khi làm (JSON)',
+    },
+    during_images: {
+      type: Sequelize.JSONB,
+      comment: 'Danh sách URL ảnh trong quá trình làm (JSON)',
+    },
+    after_images: {
+      type: Sequelize.JSONB,
+      comment: 'Danh sách URL ảnh sau khi làm (JSON)',
+    },
+    assigned_approver: {
+      type: Sequelize.INTEGER,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+      comment: 'ID người được giao phê duyệt',
     },
     materials_used: {
       type: Sequelize.TEXT,
+      comment: 'Vật liệu, thiết bị sử dụng',
     },
     issues_encountered: {
       type: Sequelize.TEXT,
+      comment: 'Các vấn đề/khó khăn gặp phải',
     },
     solution_applied: {
       type: Sequelize.TEXT,
+      comment: 'Giải pháp đã áp dụng',
     },
     time_spent_hours: {
       type: Sequelize.DECIMAL(5, 2),
@@ -102,6 +135,7 @@ export async function up(queryInterface, Sequelize) {
   await queryInterface.addIndex('work_reports', ['approval_status']);
   await queryInterface.addIndex('work_reports', ['reported_at']);
   await queryInterface.addIndex('work_reports', ['quality_rating']);
+  await queryInterface.addIndex('work_reports', ['assigned_approver']);
 }
 
 export async function down(queryInterface, Sequelize) {

@@ -20,6 +20,7 @@ export async function up(queryInterface, Sequelize) {
         model: 'works',
         key: 'id',
       },
+      comment: 'ID công việc',
     },
     report_id: {
       type: Sequelize.INTEGER,
@@ -28,6 +29,7 @@ export async function up(queryInterface, Sequelize) {
         model: 'work_reports',
         key: 'id',
       },
+      comment: 'ID báo cáo',
     },
     current_approver_id: {
       type: Sequelize.INTEGER,
@@ -61,6 +63,12 @@ export async function up(queryInterface, Sequelize) {
   await queryInterface.addIndex('approval_workflow', ['report_id']);
   await queryInterface.addIndex('approval_workflow', ['approval_step']);
   await queryInterface.addIndex('approval_workflow', ['current_step_status']);
+  
+  await queryInterface.addConstraint('approval_workflow', {
+    fields: ['work_id', 'report_id'],
+    type: 'unique',
+    name: 'unique_work_report_approval',
+  });
 }
 
 export async function down(queryInterface, Sequelize) {

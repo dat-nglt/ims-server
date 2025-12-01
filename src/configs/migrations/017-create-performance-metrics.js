@@ -24,6 +24,7 @@ export async function up(queryInterface, Sequelize) {
     month: {
       type: Sequelize.DATE,
       allowNull: false,
+      comment: 'Tháng thống kê (chỉ cần năm và tháng)',
     },
     works_completed: {
       type: Sequelize.INTEGER,

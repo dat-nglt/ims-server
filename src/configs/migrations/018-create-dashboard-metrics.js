@@ -26,12 +26,14 @@ export async function up(queryInterface, Sequelize) {
     },
     metric_type: {
       type: Sequelize.STRING(50),
+      comment: 'completed_works, total_hours, quality_score...',
     },
     metric_value: {
       type: Sequelize.DECIMAL(10, 2),
     },
     metric_json: {
       type: Sequelize.JSONB,
+      comment: 'Dữ liệu chi tiết dạng JSON',
     },
     created_at: {
       type: Sequelize.DATE,
