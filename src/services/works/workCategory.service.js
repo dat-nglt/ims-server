@@ -76,9 +76,9 @@ export const createWorkCategoryService = async (categoryData) => {
             throw new Error("Tên danh mục phải là 'Công trình' hoặc 'Dịch vụ'");
         }
 
-        // Check if name already exists
+        // Check if name already exists for active categories   
         const existingCategory = await db.WorkCategory.findOne({
-            where: { name },
+            where: { name, is_active: true },
         });
         if (existingCategory) {
             throw new Error("Danh mục với tên này đã tồn tại");

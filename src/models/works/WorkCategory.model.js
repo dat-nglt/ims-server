@@ -20,7 +20,6 @@ export default (sequelize, DataTypes) => {
       // Tên danh mục: chỉ cho phép 'Công trình' hoặc 'Dịch vụ'
       name: {
         type: DataTypes.ENUM('Công trình', 'Dịch vụ'),
-        unique: true,
         allowNull: false,
         comment: 'Tên danh mục công việc (Công trình hoặc Dịch vụ)',
       },
@@ -64,7 +63,10 @@ export default (sequelize, DataTypes) => {
     {
       tableName: 'work_categories',
       timestamps: false,
-      indexes: [{ fields: ['name'] }, { fields: ['is_active'] }],
+      indexes: [
+        { fields: ['name', 'is_active'], unique: true }, // Composite unique index for active records
+        { fields: ['is_active'] }
+      ],
     }
   );
 

@@ -9,6 +9,8 @@
  * - Quản lý: người quản lý, người tạo
  * - Tài chính: ngân sách, chi tiêu
  * - Tiến độ: phần trăm hoàn thành
+ * - Công việc: tổng số, hoàn thành, quá hạn, báo cáo chờ
+ * - Nhóm: danh sách thành viên (qua quan hệ many-to-many)
  */
 export default (sequelize, DataTypes) => {
   const Project = sequelize.define(
@@ -82,6 +84,30 @@ export default (sequelize, DataTypes) => {
         defaultValue: 0,
         comment: 'Số tiền đã chi tiêu',
       },
+      // Tổng số công việc
+      totalTasks: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        comment: 'Tổng số công việc trong dự án',
+      },
+      // Số công việc hoàn thành
+      completedTasks: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        comment: 'Số công việc đã hoàn thành',
+      },
+      // Số công việc quá hạn
+      overdueTasks: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        comment: 'Số công việc quá hạn',
+      },
+      // Số báo cáo chờ xử lý
+      pendingReports: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        comment: 'Số báo cáo đang chờ xử lý',
+      },
       // Người tạo (FK)
       created_by: {
         type: DataTypes.INTEGER,
@@ -113,6 +139,10 @@ export default (sequelize, DataTypes) => {
         { fields: ['end_date'] },
         { fields: ['manager_id'] },
         { fields: ['created_by'] },
+        { fields: ['totalTasks'] },
+        { fields: ['completedTasks'] },
+        { fields: ['overdueTasks'] },
+        { fields: ['pendingReports'] },
       ],
     }
   );
@@ -153,6 +183,14 @@ export default (sequelize, DataTypes) => {
     Project.hasMany(models.Notification, {
       foreignKey: 'related_project_id',
       as: 'notifications',
+    });
+
+    // Một dự án có nhiều thành viên (many-to-many với User qua bảng project_members)
+    Project.belongsToMany(models.User, {
+      through: 'project_members', // Giả sử bảng junction là project_members
+      foreignKey: 'project_id',
+      otherKey: 'user_id',
+      as: 'team', // Để khớp với frontend: team: Array<string> (các tên user)
     });
   };
 

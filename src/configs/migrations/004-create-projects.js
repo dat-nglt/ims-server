@@ -73,6 +73,26 @@ export async function up(queryInterface, Sequelize) {
             defaultValue: 0,
             comment: "Số tiền đã chi tiêu",
         },
+        totalTasks: {
+            type: Sequelize.INTEGER,
+            defaultValue: 0,
+            comment: "Tổng số công việc trong dự án",
+        },
+        completedTasks: {
+            type: Sequelize.INTEGER,
+            defaultValue: 0,
+            comment: "Số công việc đã hoàn thành",
+        },
+        overdueTasks: {
+            type: Sequelize.INTEGER,
+            defaultValue: 0,
+            comment: "Số công việc quá hạn",
+        },
+        pendingReports: {
+            type: Sequelize.INTEGER,
+            defaultValue: 0,
+            comment: "Số báo cáo đang chờ xử lý",
+        },
         created_by: {
             type: Sequelize.INTEGER,
             references: {
@@ -100,6 +120,10 @@ export async function up(queryInterface, Sequelize) {
     await queryInterface.addIndex("projects", ["end_date"]);
     await queryInterface.addIndex("projects", ["manager_id"]);
     await queryInterface.addIndex("projects", ["created_by"]);
+    await queryInterface.addIndex("projects", ["totalTasks"]);
+    await queryInterface.addIndex("projects", ["completedTasks"]);
+    await queryInterface.addIndex("projects", ["overdueTasks"]);
+    await queryInterface.addIndex("projects", ["pendingReports"]);
 }
 
 export async function down(queryInterface, Sequelize) {

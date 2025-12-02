@@ -15,7 +15,6 @@ export async function up(queryInterface, Sequelize) {
         },
         name: {
             type: Sequelize.STRING(50),
-            unique: true,
             allowNull: false,
         },
         description: {
@@ -57,7 +56,7 @@ export async function up(queryInterface, Sequelize) {
         },
     });
 
-    await queryInterface.addIndex("roles", ["name"]);
+    await queryInterface.addIndex("roles", ["name", "is_deleted"], { unique: true }); // Composite unique index for active records
     await queryInterface.addIndex("roles", ["created_at"]);
     await queryInterface.addIndex("roles", ["is_deleted"]);
     await queryInterface.addIndex("roles", ["level"]);

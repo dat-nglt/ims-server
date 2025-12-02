@@ -13,7 +13,6 @@ import {
     Permission,
     Role,
     User,
-    UserRolePermission,
     RolePermissions,
     UserRoles,
 } from "./users/index.js";
@@ -66,7 +65,6 @@ const models = [
     User,
     RolePermissions,
     UserRoles,
-    UserRolePermission,
     ApprovalWorkflow,
     Project,
     Work,

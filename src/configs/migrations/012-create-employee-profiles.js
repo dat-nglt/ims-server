@@ -67,6 +67,11 @@ export async function up(queryInterface, Sequelize) {
       type: Sequelize.DECIMAL(3, 2),
       comment: 'Đánh giá hiệu suất (1-5)',
     },
+    is_active: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: true,
+      comment: 'Hồ sơ có hoạt động hay không',
+    },
     created_at: {
       type: Sequelize.DATE,
       defaultValue: Sequelize.NOW,
@@ -78,6 +83,7 @@ export async function up(queryInterface, Sequelize) {
   });
 
   await queryInterface.addIndex('employee_profiles', ['user_id']);
+  await queryInterface.addIndex('employee_profiles', ['is_active']);
 }
 
 export async function down(queryInterface, Sequelize) {

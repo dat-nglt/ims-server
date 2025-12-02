@@ -15,11 +15,33 @@ export async function up(queryInterface, Sequelize) {
         },
         name: {
             type: Sequelize.STRING(100),
-            unique: true,
             allowNull: false,
         },
         description: {
             type: Sequelize.TEXT,
+        },
+        category: {
+            type: Sequelize.STRING(50),
+            comment: "Danh mục quyền hạn: user_management, work_management...",
+        },
+        is_deleted: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: false,
+            comment: "Soft delete flag",
+        },
+        created_by: {
+            type: Sequelize.INTEGER,
+            references: {
+                model: "users",
+                key: "id",
+            },
+        },
+        updated_by: {
+            type: Sequelize.INTEGER,
+            references: {
+                model: "users",
+                key: "id",
+            },
         },
         created_at: {
             type: Sequelize.DATE,
@@ -31,7 +53,11 @@ export async function up(queryInterface, Sequelize) {
         },
     });
 
-    await queryInterface.addIndex("permissions", ["name"]);
+    await queryInterface.addIndex("permissions", ["name", "is_deleted"], {
+        unique: true,
+    }); // Composite unique index for active records
+    await queryInterface.addIndex("permissions", ["category"]);
+    await queryInterface.addIndex("permissions", ["is_deleted"]);
 }
 
 export async function down(queryInterface, Sequelize) {

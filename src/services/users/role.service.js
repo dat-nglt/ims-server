@@ -147,10 +147,18 @@ export const deleteRoleService = async (id, deleted_by) => {
         }
 
         // Kiểm tra có user nào đang dùng role này không
-        const usersCount = await db.User.count({
-            where: { is_active: true },
+        const assignedUsersCount = await db.UserRoles.count({
+            where: { role_id: id },
+            include: [
+                {
+                    model: db.User,
+                    as: "user", // Specify the association alias
+                    where: { is_active: true },
+                    required: true,
+                },
+            ],
         });
-        if (usersCount > 0) {
+        if (assignedUsersCount > 0) {
             throw new Error("Không thể xóa vai trò đang được sử dụng");
         }
 

@@ -80,6 +80,12 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DECIMAL(3, 2),
         comment: 'Đánh giá hiệu suất (1-5)',
       },
+      // Trạng thái hoạt động (for soft delete)
+      is_active: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+        comment: 'Hồ sơ có hoạt động hay không',
+      },
       created_at: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
@@ -92,7 +98,7 @@ export default (sequelize, DataTypes) => {
     {
       tableName: 'employee_profiles',
       timestamps: false,
-      indexes: [{ fields: ['user_id'] }],
+      indexes: [{ fields: ['user_id'] }, { fields: ['is_active'] }],
     }
   );
 

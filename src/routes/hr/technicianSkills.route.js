@@ -2,9 +2,9 @@ import express from "express";
 import {
     getAllTechnicianSkillsController,
     getTechnicianSkillByTechnicianIdController,
+    createTechnicianSkillController,
     updateTechnicianSkillController,
     deleteTechnicianSkillController,
-    createTechnicianSkillController,
 } from "../../controllers/hr/technicianSkill.controller.js";
 
 const router = express.Router();
@@ -12,17 +12,14 @@ const router = express.Router();
 // GET all technician skills
 router.get("/", getAllTechnicianSkillsController);
 
-// GET technician skills by technician ID
-router.get(
-    "/technician/:technicianId",
-    getTechnicianSkillByTechnicianIdController
-);
+// GET technician skill by technician ID
+router.get("/technician/:technicianId", getTechnicianSkillByTechnicianIdController);
 
-// ASSIGN skill level to technician
+// CREATE technician skill
 router.post("/", createTechnicianSkillController);
 
 // UPDATE technician skill
-router.put("/:id", updateTechnicianSkillController);
+router.put("/technician/:technicianId", updateTechnicianSkillController);
 
 // DELETE technician skill
 router.delete("/:id", deleteTechnicianSkillController);

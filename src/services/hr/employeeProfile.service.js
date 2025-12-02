@@ -3,10 +3,12 @@ import logger from "../../utils/logger.js";
 
 /**
  * Lấy danh sách tất cả hồ sơ
+ * SQL: SELECT ep.*, u.* FROM employee_profiles ep LEFT JOIN users u ON ep.user_id = u.id WHERE ep.is_active = true;
  */
 export const getAllEmployeeProfilesService = async () => {
   try {
     const profiles = await db.EmployeeProfile.findAll({
+      where: { is_active: true }, // Filter active profiles
       include: [{ model: db.User, as: "user" }],
     });
 
@@ -19,11 +21,12 @@ export const getAllEmployeeProfilesService = async () => {
 
 /**
  * Lấy hồ sơ theo user ID
+ * SQL: SELECT ep.*, u.* FROM employee_profiles ep LEFT JOIN users u ON ep.user_id = u.id WHERE ep.user_id = ? AND ep.is_active = true;
  */
 export const getEmployeeProfileByUserIdService = async (userId) => {
   try {
     const profile = await db.EmployeeProfile.findOne({
-      where: { user_id: userId },
+      where: { user_id: userId, is_active: true }, // Filter active profiles
       include: [{ model: db.User, as: "user" }],
     });
 
@@ -40,6 +43,7 @@ export const getEmployeeProfileByUserIdService = async (userId) => {
 
 /**
  * Tạo hồ sơ
+ * SQL: INSERT INTO employee_profiles (user_id, department, specialization, certification, phone_secondary, address, date_of_birth, gender, id_number, hire_date, total_experience_years, performance_rating, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true, NOW(), NOW());
  */
 export const createEmployeeProfileService = async (profileData) => {
   try {
@@ -49,7 +53,24 @@ export const createEmployeeProfileService = async (profileData) => {
       throw new Error("user_id là bắt buộc");
     }
 
-    const profile = await db.EmployeeProfile.create(profileData);
+    // Kiểm tra người dùng tồn tại và active
+    const user = await db.User.findByPk(user_id);
+    if (!user || !user.is_active) {
+      throw new Error("Người dùng không tồn tại hoặc không hoạt động");
+    }
+
+    // Kiểm tra hồ sơ đã tồn tại cho user này
+    const existingProfile = await db.EmployeeProfile.findOne({
+      where: { user_id },
+    });
+    if (existingProfile) {
+      throw new Error("Hồ sơ nhân viên đã tồn tại cho người dùng này");
+    }
+
+    const profile = await db.EmployeeProfile.create({
+      ...profileData,
+      is_active: true, // Ensure new profiles are active
+    });
 
     return { success: true, data: profile };
   } catch (error) {
@@ -60,16 +81,19 @@ export const createEmployeeProfileService = async (profileData) => {
 
 /**
  * Cập nhật hồ sơ
+ * SQL: UPDATE employee_profiles SET department = ?, specialization = ?, certification = ?, phone_secondary = ?, address = ?, date_of_birth = ?, gender = ?, id_number = ?, hire_date = ?, total_experience_years = ?, performance_rating = ?, updated_at = NOW() WHERE user_id = ? AND is_active = true;
  */
 export const updateEmployeeProfileService = async (userId, updateData) => {
   try {
     const profile = await db.EmployeeProfile.findOne({
-      where: { user_id: userId },
+      where: { user_id: userId, is_active: true }, // Filter active profiles
     });
 
     if (!profile) {
       throw new Error("Hồ sơ nhân viên không tồn tại");
     }
+
+    // Optional: Add field validation here if needed (e.g., performance_rating between 1-5)
 
     await profile.update({
       ...updateData,

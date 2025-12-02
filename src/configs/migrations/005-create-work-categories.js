@@ -15,7 +15,6 @@ export async function up(queryInterface, Sequelize) {
     },
     name: {
       type: Sequelize.ENUM('Công trình', 'Dịch vụ'),
-      unique: true,
       allowNull: false,
       comment: 'Tên danh mục công việc (Công trình hoặc Dịch vụ)',
     },
@@ -51,7 +50,7 @@ export async function up(queryInterface, Sequelize) {
     },
   });
 
-  await queryInterface.addIndex('work_categories', ['name']);
+  await queryInterface.addIndex('work_categories', ['name', 'is_active'], { unique: true }); // Composite unique index for active records
   await queryInterface.addIndex('work_categories', ['is_active']);
 }
 

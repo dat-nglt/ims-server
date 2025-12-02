@@ -2,7 +2,7 @@ import logger from "../../utils/logger.js";
 import * as technicianSkillService from "../../services/hr/index.js";
 
 /**
- * Lấy danh sách tất cả cấp bậc
+ * Lấy danh sách tất cả kỹ năng kỹ thuật viên
  */
 export const getAllTechnicianSkillsController = async (req, res) => {
   try {
@@ -10,7 +10,7 @@ export const getAllTechnicianSkillsController = async (req, res) => {
     res.json({
       status: "success",
       data: result.data,
-      message: "Lấy danh sách cấp bậc kỹ thuật viên thành công",
+      message: "Lấy danh sách kỹ năng kỹ thuật viên thành công",
     });
   } catch (error) {
     logger.error(
@@ -22,7 +22,7 @@ export const getAllTechnicianSkillsController = async (req, res) => {
 };
 
 /**
- * Lấy cấp bậc theo technician ID
+ * Lấy kỹ năng theo technician ID
  */
 export const getTechnicianSkillByTechnicianIdController = async (req, res) => {
   try {
@@ -31,31 +31,31 @@ export const getTechnicianSkillByTechnicianIdController = async (req, res) => {
     res.json({
       status: "success",
       data: result.data,
-      message: "Lấy cấp bậc kỹ thuật viên thành công",
+      message: "Lấy kỹ năng kỹ thuật viên thành công",
     });
   } catch (error) {
     logger.error(
       `[${req.id}] Error in getTechnicianSkillByTechnicianIdController:`,
       error.message
     );
-    res.status(500).json({ error: error.message });
+    res.status(404).json({ error: error.message });
   }
 };
 
 /**
- * Phân công cấp bậc
+ * Tạo kỹ năng
  */
-export const assignTechnicianSkillController = async (req, res) => {
+export const createTechnicianSkillController = async (req, res) => {
   try {
-    const result = await technicianSkillService.assignTechnicianSkillService(req.body);
+    const result = await technicianSkillService.createTechnicianSkillService(req.body);
     res.status(201).json({
       status: "success",
       data: result.data,
-      message: "Phân công cấp bậc kỹ thuật viên thành công",
+      message: "Tạo kỹ năng kỹ thuật viên thành công",
     });
   } catch (error) {
     logger.error(
-      `[${req.id}] Error in assignTechnicianSkillController:`,
+      `[${req.id}] Error in createTechnicianSkillController:`,
       error.message
     );
     res.status(400).json({ error: error.message });
@@ -63,16 +63,16 @@ export const assignTechnicianSkillController = async (req, res) => {
 };
 
 /**
- * Cập nhật cấp bậc
+ * Cập nhật kỹ năng
  */
 export const updateTechnicianSkillController = async (req, res) => {
   try {
-    const { id } = req.params;
-    const result = await technicianSkillService.updateTechnicianSkillService(id, req.body);
+    const { technicianId } = req.params;
+    const result = await technicianSkillService.updateTechnicianSkillService(technicianId, req.body);
     res.json({
       status: "success",
       data: result.data,
-      message: "Cập nhật cấp bậc kỹ thuật viên thành công",
+      message: "Cập nhật kỹ năng kỹ thuật viên thành công",
     });
   } catch (error) {
     logger.error(
@@ -84,7 +84,7 @@ export const updateTechnicianSkillController = async (req, res) => {
 };
 
 /**
- * Xóa cấp bậc
+ * Xóa kỹ năng
  */
 export const deleteTechnicianSkillController = async (req, res) => {
   try {

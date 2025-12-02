@@ -13,7 +13,7 @@ router.get("/", getAllEmployeeProfilesController);
 
 // GET employee profile by user ID
 router.get("/user/:userId", getEmployeeProfileByUserIdController);
-
+    
 // CREATE employee profile
 router.post("/", createEmployeeProfileController);
 

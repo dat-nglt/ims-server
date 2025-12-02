@@ -11,7 +11,6 @@ export default (sequelize, DataTypes) => {
             },
             name: {
                 type: DataTypes.STRING(50),
-                unique: true,
                 allowNull: false,
                 validate: {
                     notEmpty: true,
@@ -63,7 +62,7 @@ export default (sequelize, DataTypes) => {
             tableName: "roles",
             timestamps: false, // Tắt timestamp tự động vì đã khai báo tay
             indexes: [
-                { fields: ["name"] },
+                { fields: ["name", "is_deleted"], unique: true }, // Composite unique index for active records
                 { fields: ["level"] },
                 { fields: ["is_deleted"] },
             ],
@@ -80,6 +79,14 @@ export default (sequelize, DataTypes) => {
         // Quan hệ với bảng trung gian RolePermissions
         Role.hasMany(models.RolePermissions, {
             foreignKey: "role_id",
+            as: "rolePermissions",
+        });
+
+        // Many-to-many với Permission
+        Role.belongsToMany(models.Permission, {
+            through: models.RolePermissions,
+            foreignKey: "role_id",
+            otherKey: "permission_id",
             as: "permissions",
         });
 
@@ -91,6 +98,16 @@ export default (sequelize, DataTypes) => {
         Role.belongsTo(models.User, {
             foreignKey: "updated_by",
             as: "updater",
+        });
+    };
+
+    // Helper method for assigning role to user
+    Role.prototype.assignToUser = async function(userId, assignedById) {
+        const UserRoles = this.sequelize.models.UserRoles;
+        return await UserRoles.create({
+            user_id: userId,
+            role_id: this.id,
+            assigned_by: assignedById,
         });
     };
 

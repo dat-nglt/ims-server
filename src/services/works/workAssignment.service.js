@@ -86,7 +86,8 @@ export const getWorkAssignmentByIdService = async (id) => {
 };
 
 /**
- * Tạo phân công công việc
+ * Tạo phân công công việc (Phase 2: Technician assignment after work creation)
+ * This is the detailed assignment with scheduling and status tracking
  */
 export const createWorkAssignmentService = async (assignmentData) => {
   try {
@@ -256,6 +257,61 @@ export const startWorkAssignmentService = async (id) => {
     return { success: true, data: assignment };
   } catch (error) {
     logger.error("Error in startWorkAssignmentService:", error.message);
+    throw error;
+  }
+};
+
+/**
+ * Gán kỹ thuật viên cho công việc (Phase 2: Technician assignment)
+ * This creates a WorkAssignment record for the technician and updates work status if needed
+ */
+export const assignTechnicianToWorkService = async (workId, technicianData) => {
+  try {
+    const { technician_id, assigned_by, estimated_start_time, estimated_end_time, notes } = technicianData;
+
+    if (!technician_id || !assigned_by) {
+      throw new Error("Thiếu thông tin bắt buộc: technician_id, assigned_by");
+    }
+
+    // Check if work exists
+    const work = await db.Work.findByPk(workId);
+    if (!work) {
+      throw new Error("Công việc không tồn tại");
+    }
+
+    // Check if technician exists
+    const technician = await db.User.findByPk(technician_id);
+    if (!technician) {
+      throw new Error("Kỹ thuật viên không tồn tại");
+    }
+
+    // Check if assignment already exists for this work and technician
+    const existingAssignment = await db.WorkAssignment.findOne({
+      where: { work_id: workId, technician_id, assigned_status: { [Op.ne]: 'rejected' } }
+    });
+    if (existingAssignment) {
+      throw new Error("Phân công đã tồn tại cho công việc và kỹ thuật viên này");
+    }
+
+    // Create assignment
+    const assignment = await db.WorkAssignment.create({
+      work_id: workId,
+      technician_id,
+      assigned_by,
+      estimated_start_time,
+      estimated_end_time,
+      notes,
+      assigned_status: "pending",
+    });
+
+    // Optionally update work status to 'assigned' if not already
+    if (work.status === 'pending') {
+      await work.update({ status: 'assigned', updated_at: new Date() });
+    }
+
+    return { success: true, data: assignment };
+  } catch (error) {
+    logger.error("Error in assignTechnicianToWorkService:", error.message);
     throw error;
   }
 };

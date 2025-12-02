@@ -3,8 +3,10 @@ import {
     routeForUsers,
     routeForRoles,
     routeForPermissions,
-    routeForUserRolePermissions,
+    routeForUserRole,
+    routeForRolePermissions,
 } from "./users/index.js";
+import { routeForProject } from "./projects/index.js";
 import {
     routeForWorks,
     routeForWorkCategories,
@@ -36,10 +38,11 @@ const mainRouter = (server) => {
     server.use("/api/v1/ims/users", routeForUsers);
     server.use("/api/v1/ims/roles", routeForRoles);
     server.use("/api/v1/ims/permissions", routeForPermissions);
-    server.use(
-        "/api/v1/ims/user-role-permissions",
-        routeForUserRolePermissions
-    );
+    server.use("/api/v1/ims/user-roles", routeForUserRole);
+    server.use("/api/v1/ims/role-permissions", routeForRolePermissions);
+
+    // Project Management
+    server.use("/api/v1/ims/projects", routeForProject);
 
     // Work Management
     server.use("/api/v1/ims/works", routeForWorks);

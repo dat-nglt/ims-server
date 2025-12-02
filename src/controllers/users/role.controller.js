@@ -34,8 +34,7 @@ export const getRoleByIdController = async (req, res) => {
         });
     } catch (error) {
         logger.error(
-            `[${req.id}] Error in getRoleByIdController:`,
-            error.message
+            `[${req.id}] Error in getRoleByIdController: ${error.message}`
         );
         res.status(404).json({ error: error.message });
     }
@@ -57,10 +56,7 @@ export const createRoleController = async (req, res) => {
             message: "Tạo vai trò thành công",
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in createRoleController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in createRoleController: ${error.message}`);
         res.status(400).json({ error: error.message });
     }
 };
@@ -103,8 +99,7 @@ export const deleteRoleController = async (req, res) => {
         });
     } catch (error) {
         logger.error(
-            `[${req.id}] Error in deleteRoleController:`,
-            error.message
+            `[${req.id}] Error in deleteRoleController: ${error.message}`
         );
         res.status(404).json({ error: error.message });
     }
