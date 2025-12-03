@@ -23,6 +23,15 @@ export async function up(queryInterface, Sequelize) {
       },
       comment: 'ID công việc',
     },
+    project_id: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'projects',
+        key: 'id',
+      },
+      comment: 'ID dự án',
+    },
     reported_by: {
       type: Sequelize.INTEGER,
       allowNull: false,
@@ -131,6 +140,7 @@ export async function up(queryInterface, Sequelize) {
   });
 
   await queryInterface.addIndex('work_reports', ['work_id']);
+  await queryInterface.addIndex('work_reports', ['project_id']);
   await queryInterface.addIndex('work_reports', ['reported_by']);
   await queryInterface.addIndex('work_reports', ['approval_status']);
   await queryInterface.addIndex('work_reports', ['reported_at']);

@@ -5,10 +5,13 @@ import {
     createSystemConfigController,
     updateSystemConfigController,
     deleteSystemConfigController,
+    getSystemSettingsController,
+    updateSystemSettingsController,
 } from "../../controllers/system/systemConfig.controller.js";
 
 const router = express.Router();
 
+// Routes cũ cho cấu hình theo key
 // GET all system config
 router.get("/", getAllSystemConfigController);
 
@@ -23,5 +26,12 @@ router.put("/:key", updateSystemConfigController);
 
 // DELETE system config
 router.delete("/:key", deleteSystemConfigController);
+
+// Routes mới cho toàn bộ cài đặt hệ thống
+// GET toàn bộ cài đặt hệ thống
+router.get("/settings/full", getSystemSettingsController);
+
+// PUT cập nhật toàn bộ cài đặt hệ thống
+router.put("/settings/full", updateSystemSettingsController);
 
 export default router;

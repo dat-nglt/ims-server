@@ -308,12 +308,6 @@ export default (sequelize, DataTypes) => {
             as: "histories",
         });
 
-        // Một công việc có nhiều quy trình phê duyệt
-        Work.hasMany(models.ApprovalWorkflow, {
-            foreignKey: "work_id",
-            as: "approvalWorkflows",
-        });
-
         // Một công việc có nhiều thông báo
         Work.hasMany(models.Notification, {
             foreignKey: "related_work_id",

@@ -3,7 +3,7 @@
 /**
  * Model SystemConfig (Cấu hình hệ thống)
  * 
- * Lưu trữ các cấu hình toàn hệ thống
+ * Lưu trữ toàn bộ cài đặt hệ thống dưới dạng JSON để phản ánh cấu trúc từ SystemSettings.jsx
  */
 export default (sequelize, DataTypes) => {
   const SystemConfig = sequelize.define(
@@ -14,23 +14,12 @@ export default (sequelize, DataTypes) => {
         primaryKey: true,
         autoIncrement: true,
       },
-      // Khóa cấu hình
-      config_key: {
-        type: DataTypes.STRING(100),
-        unique: true,
+      // Lưu trữ toàn bộ cài đặt dưới dạng JSON (bao gồm settings, notificationSettings, defaultPermissions, integrations, attendanceLocations, activityLog)
+      settings: {
+        type: DataTypes.JSONB, // Sử dụng JSONB cho PostgreSQL để query hiệu quả
         allowNull: false,
-      },
-      // Giá trị cấu hình
-      config_value: {
-        type: DataTypes.TEXT,
-      },
-      // Loại dữ liệu
-      config_type: {
-        type: DataTypes.STRING(50),
-      },
-      // Mô tả
-      description: {
-        type: DataTypes.TEXT,
+        defaultValue: {},
+        comment: 'Toàn bộ cài đặt hệ thống dưới dạng JSON',
       },
       // Người cập nhật
       updated_by: {
@@ -39,6 +28,7 @@ export default (sequelize, DataTypes) => {
           model: 'users',
           key: 'id',
         },
+        comment: 'Người dùng cập nhật cài đặt',
       },
       // Thời gian cập nhật
       updated_at: {
@@ -47,9 +37,12 @@ export default (sequelize, DataTypes) => {
       },
     },
     {
-      tableName: 'system_config',
+      tableName: 'system_configs',
       timestamps: false,
-      indexes: [{ fields: ['config_key'] }],
+      indexes: [
+        { fields: ['updated_by'] },
+        { fields: ['updated_at'] },
+      ],
     }
   );
 

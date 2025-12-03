@@ -30,6 +30,15 @@ export default (sequelize, DataTypes) => {
         },
         comment: 'ID công việc',
       },
+      project_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'projects',
+          key: 'id',
+        },
+        comment: 'ID dự án',
+      },
       reported_by: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -160,6 +169,7 @@ export default (sequelize, DataTypes) => {
       timestamps: false,
       indexes: [
         { fields: ['work_id'] },
+        { fields: ['project_id'] },
         { fields: ['reported_by'] },
         { fields: ['approval_status'] },
         { fields: ['reported_at'] },
@@ -175,6 +185,12 @@ export default (sequelize, DataTypes) => {
     WorkReport.belongsTo(models.Work, {
       foreignKey: 'work_id',
       as: 'work',
+    });
+
+    // Thuộc dự án
+    WorkReport.belongsTo(models.Project, {
+      foreignKey: 'project_id',
+      as: 'project',
     });
 
     // Người báo cáo
@@ -199,12 +215,6 @@ export default (sequelize, DataTypes) => {
     WorkReport.hasMany(models.Attachment, {
       foreignKey: 'report_id',
       as: 'attachments',
-    });
-
-    // Một báo cáo có nhiều quy trình phê duyệt
-    WorkReport.hasMany(models.ApprovalWorkflow, {
-      foreignKey: 'report_id',
-      as: 'approvalWorkflows',
     });
   };
 

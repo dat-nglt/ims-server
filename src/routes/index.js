@@ -23,7 +23,6 @@ import {
     routeForEmployeeProfiles,
     routeForTechnicianSkills,
 } from "./hr/index.js";
-import { routeForApprovalWorkflows } from "./workflows/index.js";
 import { routeForSalesReports } from "./reports/index.js";
 import {
     routeForPerformanceMetrics,
@@ -62,7 +61,6 @@ const mainRouter = (server) => {
     server.use("/api/v1/ims/technician-skills", routeForTechnicianSkills);
 
     // Workflow & Reports
-    server.use("/api/v1/ims/approval-workflows", routeForApprovalWorkflows);
     server.use("/api/v1/ims/sales-reports", routeForSalesReports);
 
     // Metrics & Dashboard

@@ -80,6 +80,7 @@ export const createWorkReportService = async (reportData) => {
 
     const report = await db.WorkReport.create({
       work_id,
+      project_id: work.project_id,
       reported_by,
       progress_percentage,
       status: "in_progress",

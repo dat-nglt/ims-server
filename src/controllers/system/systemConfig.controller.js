@@ -102,3 +102,43 @@ export const deleteSystemConfigController = async (req, res) => {
     res.status(404).json({ error: error.message });
   }
 };
+
+/**
+ * Lấy toàn bộ cài đặt hệ thống
+ */
+export const getSystemSettingsController = async (req, res) => {
+  try {
+    const result = await systemConfigService.getSystemSettingsService();
+    res.json({
+      status: "success",
+      data: result.data,
+      message: "Lấy cài đặt hệ thống thành công",
+    });
+  } catch (error) {
+    logger.error(
+      `[${req.id}] Error in getSystemSettingsController:`,
+      error.message
+    );
+    res.status(500).json({ error: error.message });
+  }
+};
+
+/**
+ * Cập nhật toàn bộ cài đặt hệ thống
+ */
+export const updateSystemSettingsController = async (req, res) => {
+  try {
+    const result = await systemConfigService.updateSystemSettingsService(req.body);
+    res.json({
+      status: "success",
+      data: result.data,
+      message: "Cập nhật cài đặt hệ thống thành công",
+    });
+  } catch (error) {
+    logger.error(
+      `[${req.id}] Error in updateSystemSettingsController:`,
+      error.message
+    );
+    res.status(400).json({ error: error.message });
+  }
+};

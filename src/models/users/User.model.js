@@ -189,15 +189,7 @@ export default (sequelize, DataTypes) => {
             as: "salesReports",
         });
 
-        User.hasMany(models.PerformanceMetric, {
-            foreignKey: "user_id",
-            as: "performanceMetrics",
-        });
-
-        User.hasMany(models.DashboardMetric, {
-            foreignKey: "user_id",
-            as: "dashboardMetrics",
-        });
+        // Removed PerformanceMetric and DashboardMetric associations - data calculated from other models
 
         User.hasMany(models.Notification, {
             foreignKey: "user_id",
@@ -217,11 +209,6 @@ export default (sequelize, DataTypes) => {
         User.hasMany(models.SystemConfig, {
             foreignKey: "updated_by",
             as: "configUpdates",
-        });
-
-        User.hasMany(models.ApprovalWorkflow, {
-            foreignKey: "current_approver_id",
-            as: "approvalsToReview",
         });
     };
 
