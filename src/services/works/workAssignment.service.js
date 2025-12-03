@@ -1,6 +1,7 @@
 import db from "../../models/index.js";
 import logger from "../../utils/logger.js";
 import { Op } from "sequelize";
+import { createWorkHistoryService } from "./workHistory.service.js";
 
 /**
  * Lấy danh sách tất cả phân công (legacy)
@@ -116,6 +117,12 @@ export const createWorkAssignmentService = async (assignmentData) => {
       throw new Error("Kỹ thuật viên không tồn tại");
     }
 
+    // Check if assigned_by exists
+    const assigner = await db.User.findByPk(assigned_by);
+    if (!assigner) {
+      throw new Error("Người phân công không tồn tại");
+    }
+
     // Check if assignment already exists for this work and technician
     const existingAssignment = await db.WorkAssignment.findOne({
       where: { work_id, technician_id, assigned_status: { [Op.ne]: 'rejected' } }
@@ -133,6 +140,18 @@ export const createWorkAssignmentService = async (assignmentData) => {
       notes,
       assigned_status: "pending",
     });
+
+    // Log work history
+    try {
+      await createWorkHistoryService({
+        work_id: work_id,
+        action: "assigned",
+        changed_by: assigned_by,
+        notes: "Phân công kỹ thuật viên",
+      });
+    } catch (historyError) {
+      logger.error(`Failed to log work history for assignment creation: ${historyError.message}`);
+    }
 
     return { success: true, data: assignment };
   } catch (error) {
@@ -155,6 +174,18 @@ export const acceptWorkAssignmentService = async (id) => {
       assigned_status: "accepted",
       accepted_at: new Date(),
     });
+
+    // Log work history
+    try {
+      await createWorkHistoryService({
+        work_id: assignment.work_id,
+        action: "accepted",
+        changed_by: assignment.technician_id,
+        notes: "Phân công được chấp nhận",
+      });
+    } catch (historyError) {
+      logger.error("Failed to log work history for acceptance:", historyError.message);
+    }
 
     return { success: true, data: assignment };
   } catch (error) {
@@ -180,6 +211,18 @@ export const rejectWorkAssignmentService = async (id, rejectionData) => {
       rejected_reason,
     });
 
+    // Log work history
+    try {
+      await createWorkHistoryService({
+        work_id: assignment.work_id,
+        action: "rejected",
+        changed_by: assignment.technician_id,
+        notes: "Phân công bị từ chối",
+      });
+    } catch (historyError) {
+      logger.error("Failed to log work history for rejection:", historyError.message);
+    }
+
     return { success: true, data: assignment };
   } catch (error) {
     logger.error("Error in rejectWorkAssignmentService:", error.message);
@@ -201,6 +244,18 @@ export const completeWorkAssignmentService = async (id) => {
       assigned_status: "completed",
       actual_end_time: new Date(),
     });
+
+    // Log work history
+    try {
+      await createWorkHistoryService({
+        work_id: assignment.work_id,
+        action: "completed",
+        changed_by: assignment.technician_id,
+        notes: "Phân công hoàn thành",
+      });
+    } catch (historyError) {
+      logger.error("Failed to log work history for completion:", historyError.message);
+    }
 
     return { success: true, data: assignment };
   } catch (error) {
@@ -228,6 +283,18 @@ export const updateWorkAssignmentService = async (id, updateData) => {
       updated_at: new Date(),
     });
 
+    // Log work history
+    try {
+      await createWorkHistoryService({
+        work_id: assignment.work_id,
+        action: "updated",
+        changed_by: updateData.changed_by || assignment.assigned_by,
+        notes: "Phân công được cập nhật",
+      });
+    } catch (historyError) {
+      logger.error("Failed to log work history for update:", historyError.message);
+    }
+
     return { success: true, data: assignment };
   } catch (error) {
     logger.error("Error in updateWorkAssignmentService:", error.message);
@@ -253,6 +320,18 @@ export const startWorkAssignmentService = async (id) => {
       actual_start_time: new Date(),
       updated_at: new Date(),
     });
+
+    // Log work history
+    try {
+      await createWorkHistoryService({
+        work_id: assignment.work_id,
+        action: "started",
+        changed_by: assignment.technician_id,
+        notes: "Công việc bắt đầu",
+      });
+    } catch (historyError) {
+      logger.error("Failed to log work history for start:", historyError.message);
+    }
 
     return { success: true, data: assignment };
   } catch (error) {
@@ -285,6 +364,12 @@ export const assignTechnicianToWorkService = async (workId, technicianData) => {
       throw new Error("Kỹ thuật viên không tồn tại");
     }
 
+    // Check if assigned_by exists
+    const assigner = await db.User.findByPk(assigned_by);
+    if (!assigner) {
+      throw new Error("Người phân công không tồn tại");
+    }
+
     // Check if assignment already exists for this work and technician
     const existingAssignment = await db.WorkAssignment.findOne({
       where: { work_id: workId, technician_id, assigned_status: { [Op.ne]: 'rejected' } }
@@ -309,9 +394,52 @@ export const assignTechnicianToWorkService = async (workId, technicianData) => {
       await work.update({ status: 'assigned', updated_at: new Date() });
     }
 
+    // Log work history
+    try {
+      await createWorkHistoryService({
+        work_id: workId,
+        action: "assigned",
+        changed_by: assigned_by,
+        notes: "Gán kỹ thuật viên cho công việc",
+      });
+    } catch (historyError) {
+      logger.error("Failed to log work history for technician assignment:", historyError.message);
+    }
+
     return { success: true, data: assignment };
   } catch (error) {
     logger.error("Error in assignTechnicianToWorkService:", error.message);
+    throw error;
+  }
+};
+
+/**
+ * Lấy tất cả phân công của một công việc
+ */
+export const getWorkAssignmentsByWorkIdService = async (workId) => {
+  try {
+    // Check if work exists
+    const work = await db.Work.findByPk(workId);
+    if (!work) {
+      throw new Error("Công việc không tồn tại");
+    }
+
+    const assignments = await db.WorkAssignment.findAll({
+      where: { work_id: workId },
+      include: [
+        { model: db.Work, as: "work", attributes: ['id', 'title', 'status', 'due_date'] },
+        { model: db.User, as: "technician", attributes: ['id', 'name', 'email'] },
+        { model: db.User, as: "assignedByUser", attributes: ['id', 'name'] },
+      ],
+      order: [["assignment_date", "DESC"]],
+    });
+
+    return {
+      success: true,
+      data: assignments,
+    };
+  } catch (error) {
+    logger.error("Error in getWorkAssignmentsByWorkIdService:", error.message);
     throw error;
   }
 };

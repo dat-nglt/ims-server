@@ -104,3 +104,44 @@ export const getUnreadNotificationsCountController = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+/**
+ * Lấy tất cả thông báo của hệ thống
+ */
+export const getAllSystemNotificationsController = async (req, res) => {
+  try {
+    const result = await notificationService.getAllSystemNotificationsService();
+    res.json({
+      status: "success",
+      data: result.data,
+      message: "Lấy tất cả thông báo hệ thống thành công",
+    });
+  } catch (error) {
+    logger.error(
+      `[${req.id}] Error in getAllSystemNotificationsController:`,
+      error.message
+    );
+    res.status(500).json({ error: error.message });
+  }
+};
+
+/**
+ * Đánh dấu đọc tất cả thông báo
+ */
+export const markAllNotificationsAsReadController = async (req, res) => {
+  try {
+    const { userId } = req.query;
+    const result = await notificationService.markAllNotificationsAsReadService(userId);
+    res.json({
+      status: "success",
+      data: result.data,
+      message: "Đánh dấu đọc tất cả thông báo thành công",
+    });
+  } catch (error) {
+    logger.error(
+      `[${req.id}] Error in markAllNotificationsAsReadController:`,
+      error.message
+    );
+    res.status(400).json({ error: error.message });
+  }
+};

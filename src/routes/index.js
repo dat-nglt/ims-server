@@ -12,12 +12,12 @@ import {
     routeForWorkCategories,
     routeForWorkAssignments,
     routeForWorkReports,
-    routeForWorkHistory,
 } from "./works/index.js";
 import {
     routeForCheckIns,
     routeForAttachments,
     routeForNotifications,
+    attendanceRoute, // Thêm import mới nếu muốn tách biệt
 } from "./operations/index.js";
 import {
     routeForEmployeeProfiles,
@@ -49,12 +49,13 @@ const mainRouter = (server) => {
     server.use("/api/v1/ims/work-categories", routeForWorkCategories);
     server.use("/api/v1/ims/work-assignments", routeForWorkAssignments);
     server.use("/api/v1/ims/work-reports", routeForWorkReports);
-    server.use("/api/v1/ims/work-history", routeForWorkHistory);
 
     // Operations
     server.use("/api/v1/ims/check-ins", routeForCheckIns);
     server.use("/api/v1/ims/attachments", routeForAttachments);
     server.use("/api/v1/ims/notifications", routeForNotifications);
+    // Thêm use mới nếu muốn tách biệt attendance
+    server.use("/api/v1/ims/attendance", attendanceRoute);
 
     // HR & Management
     server.use("/api/v1/ims/employee-profiles", routeForEmployeeProfiles);

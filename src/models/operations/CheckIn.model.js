@@ -8,6 +8,10 @@
  * - Ảnh chứng minh
  * - Thời gian làm việc
  * - Kiểm tra phạm vi
+ * - Loại chấm công (mới: check_in_type)
+ * - Liên kết dự án (mới: project_id, optional)
+ * - Khoảng cách vi phạm (mới: violation_distance)
+ * - Trạng thái enum (cập nhật: status với enum)
  */
 export default (sequelize, DataTypes) => {
   const CheckIn = sequelize.define(
@@ -32,6 +36,15 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         references: {
           model: 'works',
+          key: 'id',
+        },
+      },
+      // ID dự án (FK, mới: để hỗ trợ lọc theo dự án trong TrackAttendance, optional vì công việc có thể không thuộc dự án)
+      project_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true, // Optional để hỗ trợ công việc không liên kết dự án
+        references: {
+          model: 'projects',
           key: 'id',
         },
       },
@@ -72,9 +85,9 @@ export default (sequelize, DataTypes) => {
       photo_url: {
         type: DataTypes.TEXT,
       },
-      // Trạng thái
+      // Trạng thái (cập nhật: enum để hỗ trợ 'on_leave' từ TrackAttendance)
       status: {
-        type: DataTypes.STRING(50),
+        type: DataTypes.ENUM('checked_in', 'checked_out', 'on_leave'),
         defaultValue: 'checked_in',
       },
       // Khoảng cách từ công việc với validation
@@ -107,6 +120,17 @@ export default (sequelize, DataTypes) => {
       notes: {
         type: DataTypes.TEXT,
       },
+      // Loại chấm công (mới: từ checkInTypes trong CheckIn.jsx)
+      check_in_type: {
+        type: DataTypes.STRING(50),
+      },
+      // Khoảng cách vi phạm (mới: từ violationDistance trong CheckIn.jsx)
+      violation_distance: {
+        type: DataTypes.DECIMAL(10, 2),
+        validate: {
+          min: 0,
+        },
+      },
       created_at: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
@@ -122,7 +146,18 @@ export default (sequelize, DataTypes) => {
         { fields: ['is_within_radius'] },
         { fields: ['status'] },
         { fields: ['user_id', 'check_in_time'] }, // Composite index cho truy vấn theo user và thời gian
+        { fields: ['project_id'] }, // Index mới cho lọc theo dự án
+        { fields: ['check_in_type'] }, // Index mới cho lọc theo loại chấm công
       ],
+      hooks: {
+        // Hook mới: Tự động tính duration_minutes khi cập nhật check_out_time
+        beforeSave: (checkIn, options) => {
+          if (checkIn.check_out_time && checkIn.check_in_time) {
+            const durationMs = new Date(checkIn.check_out_time) - new Date(checkIn.check_in_time);
+            checkIn.duration_minutes = Math.floor(durationMs / (1000 * 60));
+          }
+        },
+      },
     }
   );
 
@@ -136,6 +171,11 @@ export default (sequelize, DataTypes) => {
     CheckIn.belongsTo(models.Work, {
       foreignKey: 'work_id',
       as: 'work',
+    });
+
+    CheckIn.belongsTo(models.Project, {
+      foreignKey: 'project_id',
+      as: 'project',
     });
   };
 

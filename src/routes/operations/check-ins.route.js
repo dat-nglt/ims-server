@@ -5,16 +5,18 @@ import {
     checkInController,
     checkOutController,
     getCheckInHistoryByUserIdController,
-    getLocationController,
+    // getLocationController,
+    // Thêm imports mới cho TrackWorkMap
+    getTechniciansLocationsController,
+    getOfficeLocationController,
+    getTechnicianLocationHistoryController,
+    getJobItemsLocationsController,
 } from "../../controllers/operations/checkIn.controller.js";
 
 const router = express.Router();
 
 // GET all check-ins
 router.get("/", getAllCheckInsController);
-
-// GET location (chưa triển khai)cl
-router.get("/location", getLocationController);
 
 // GET check-in history for user (phải ở trước /:id để tránh conflict)
 router.get("/user/:userId", getCheckInHistoryByUserIdController);
@@ -27,5 +29,21 @@ router.post("/check-in", checkInController);
 
 // CHECK-OUT
 router.post("/:id/check-out", checkOutController);
+
+// Routes mới cho TrackWorkMap
+// GET danh sách vị trí kỹ thuật viên
+router.get("/history/locations", getTechniciansLocationsController);
+
+// GET vị trí văn phòng
+router.get("/office/location", getOfficeLocationController);
+
+// GET lịch sử vị trí kỹ thuật viên
+router.get(
+    "/technicians/:technicianId/location-history",
+    getTechnicianLocationHistoryController
+);
+
+// GET vị trí công việc
+router.get("/job-items/locations", getJobItemsLocationsController);
 
 export default router;

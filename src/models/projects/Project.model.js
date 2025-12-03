@@ -173,12 +173,6 @@ export default (sequelize, DataTypes) => {
       as: 'reports',
     });
 
-    // Một dự án có nhiều lịch sử chi tiết (nếu cần)
-    Project.hasMany(models.WorkHistoryDetailed, {
-      foreignKey: 'project_id',
-      as: 'detailedHistories',
-    });
-
     // Một dự án có nhiều thông báo
     Project.hasMany(models.Notification, {
       foreignKey: 'related_project_id',

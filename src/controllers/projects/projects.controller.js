@@ -1,4 +1,5 @@
 import * as ProjectService from "../../services/projects/projects.service.js";
+import { getAllProjectHistoriesService } from "../../services/projects/projectHistory.service.js";
 
 // GET /api/projects
 export const getProjectsController = async (req, res) => {
@@ -163,7 +164,7 @@ export const updateProjectController = async (req, res) => {
         }
         res.status(200).json({
             success: true,
-            message: "Project updated successfully",
+            message: "Cập nhật dự án thành công",
             data: updatedProject,
         });
     } catch (error) {
@@ -188,13 +189,33 @@ export const deleteProjectController = async (req, res) => {
         }
         res.status(200).json({
             success: true,
-            message: "Project deleted successfully",
+            message: "Xoá dự án thành công",
         });
     } catch (error) {
         console.error("Error deleting project:", error);
         res.status(500).json({
             success: false,
             message: "Xoá dự án không thành công",
+            error: error.message,
+        });
+    }
+};
+
+// GET /api/projects/:id/history
+export const getProjectHistoriesController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const histories = await getAllProjectHistoriesService(id);
+        res.status(200).json({
+            success: true,
+            message: "Lấy lịch sử dự án thành công",
+            data: histories,
+        });
+    } catch (error) {
+        console.error("Error fetching project histories:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lấy lịch sử dự án không thành công",
             error: error.message,
         });
     }

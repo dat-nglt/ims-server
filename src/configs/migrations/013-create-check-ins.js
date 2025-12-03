@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Migration 012: Tạo bảng Check Ins (Chấm công)
+ * Migration 013: Tạo bảng Check Ins (Chấm công)
  * 
  * Lưu trữ thông tin check-in/check-out
  */
@@ -25,6 +25,15 @@ export async function up(queryInterface, Sequelize) {
       type: Sequelize.INTEGER,
       references: {
         model: 'works',
+        key: 'id',
+      },
+    },
+    // Thêm project_id: để hỗ trợ lọc theo dự án, optional
+    project_id: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'projects',
         key: 'id',
       },
     },
@@ -52,8 +61,9 @@ export async function up(queryInterface, Sequelize) {
     photo_url: {
       type: Sequelize.TEXT,
     },
+    // Cập nhật status thành ENUM để hỗ trợ 'on_leave'
     status: {
-      type: Sequelize.STRING(50),
+      type: Sequelize.ENUM('checked_in', 'checked_out', 'on_leave'),
       defaultValue: 'checked_in',
     },
     distance_from_work: {
@@ -78,6 +88,15 @@ export async function up(queryInterface, Sequelize) {
     notes: {
       type: Sequelize.TEXT,
     },
+    // Thêm check_in_type: loại chấm công
+    check_in_type: {
+      type: Sequelize.STRING(50),
+    },
+    // Thêm violation_distance: khoảng cách vi phạm
+    violation_distance: {
+      type: Sequelize.DECIMAL(10, 2),
+      comment: 'Khoảng cách vi phạm vị trí',
+    },
     created_at: {
       type: Sequelize.DATE,
       defaultValue: Sequelize.NOW,
@@ -89,7 +108,10 @@ export async function up(queryInterface, Sequelize) {
   await queryInterface.addIndex('check_ins', ['check_in_time']);
   await queryInterface.addIndex('check_ins', ['is_within_radius']);
   await queryInterface.addIndex('check_ins', ['status']);
-  await queryInterface.addIndex('check_ins', ['user_id', 'check_in_time']);
+  await queryInterface.addIndex('check_ins', ['user_id', 'check_in_time']); // Composite index cho truy vấn theo user và thời gian
+  // Thêm indexes mới
+  await queryInterface.addIndex('check_ins', ['project_id']);
+  await queryInterface.addIndex('check_ins', ['check_in_type']);
 }
 
 export async function down(queryInterface, Sequelize) {

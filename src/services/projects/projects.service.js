@@ -1,6 +1,8 @@
 import { Op } from "sequelize";
 import db from "../../models/index.js"; // Updated to use centralized db
 import logger from "../../utils/logger.js"; // Added for consistent logging
+import { createNotificationService } from "../operations/notification.service.js";
+import { createProjectHistoryService } from "./projectHistory.service.js";
 
 // Fetch projects with filters, includes, and computed fields
 export const getProjectsService = async (filters) => {
@@ -231,6 +233,35 @@ export const createProjectService = async (data) => {
         try {
             const project = await db.Project.create(data, { transaction });
             await transaction.commit();
+
+            // Log project history
+            try {
+                await createProjectHistoryService({
+                    project_id: project.id,
+                    action: "created",
+                    changed_by: manager_id || data.created_by, // Use manager_id or provided created_by
+                    notes: "Dự án được tạo",
+                });
+            } catch (historyError) {
+                logger.error("Failed to log project history for creation: " + historyError.message);
+            }
+
+            // Create notification for project manager if assigned
+            if (manager_id) {
+                try {
+                    await createNotificationService({
+                        user_id: manager_id,
+                        title: "Dự án mới được giao quản lý",
+                        message: `Dự án "${name}" đã được tạo và bạn được chỉ định làm quản lý.`,
+                        type: "project_assigned",
+                        related_project_id: project.id,
+                        action_url: `/projects/${project.id}`,
+                    });
+                } catch (notificationError) {
+                    logger.error("Failed to create notification for project creation: " + notificationError.message);
+                }
+            }
+
             return { success: true, data: project };
         } catch (error) {
             await transaction.rollback();
@@ -245,6 +276,20 @@ export const createProjectService = async (data) => {
 // Update project
 export const updateProjectService = async (id, data) => {
     try {
+        // Get current project to know the manager
+        const currentProject = await db.Project.findByPk(id);
+        if (!currentProject) {
+            throw new Error("Dự án không tồn tại");
+        }
+
+        // Kiểm tra manager_id nếu được cung cấp
+        if (data.manager_id) {
+            const manager = await db.User.findByPk(data.manager_id);
+            if (!manager) {
+                throw new Error("Người quản lý không tồn tại");
+            }
+        }
+
         const transaction = await db.sequelize.transaction();
         try {
             const [updated] = await db.Project.update(data, {
@@ -254,6 +299,36 @@ export const updateProjectService = async (id, data) => {
             if (updated) {
                 const project = await db.Project.findByPk(id, { transaction });
                 await transaction.commit();
+
+                // Log project history
+                try {
+                    await createProjectHistoryService({
+                        project_id: id,
+                        action: "updated",
+                        changed_by: data.changed_by || managerId, // Use provided or current manager
+                        notes: "Dự án được cập nhật",
+                    });
+                } catch (historyError) {
+                    logger.error("Failed to log project history for update: " + historyError.message);
+                }
+
+                // Create notification for project manager
+                const managerId = data.manager_id || currentProject.manager_id;
+                if (managerId) {
+                    try {
+                        await createNotificationService({
+                            user_id: managerId,
+                            title: "Dự án được cập nhật",
+                            message: `Dự án "${project.name}" đã được cập nhật.`,
+                            type: "project_updated",
+                            related_project_id: id,
+                            action_url: `/projects/${id}`,
+                        });
+                    } catch (notificationError) {
+                        logger.error("Failed to create notification for project update: " + notificationError.message);
+                    }
+                }
+
                 return { success: true, data: project };
             }
             throw new Error("Dự án không tồn tại");
@@ -270,8 +345,42 @@ export const updateProjectService = async (id, data) => {
 // Delete project
 export const deleteProjectService = async (id) => {
     try {
+        // Get project before deletion to know the manager
+        const project = await db.Project.findByPk(id);
+        if (!project) {
+            throw new Error("Dự án không tồn tại");
+        }
+
         const transaction = await db.sequelize.transaction();
         try {
+            // Log project history before deletion
+            try {
+                await createProjectHistoryService({
+                    project_id: id,
+                    action: "deleted",
+                    changed_by: project.manager_id || data.changed_by, // Use manager or provided
+                    notes: "Dự án bị xóa",
+                });
+            } catch (historyError) {
+                logger.error("Failed to log project history for deletion: " + historyError.message);
+            }
+
+            // Create notification for project manager before deletion
+            if (project.manager_id) {
+                try {
+                    await createNotificationService({
+                        user_id: project.manager_id,
+                        title: "Dự án bị xóa",
+                        message: `Dự án "${project.name}" đã bị xóa khỏi hệ thống.`,
+                        type: "project_deleted",
+                        related_project_id: id,
+                        action_url: `/projects`, // Redirect to projects list
+                    });
+                } catch (notificationError) {
+                    logger.error("Failed to create notification for project deletion: " + notificationError.message);
+                }
+            }
+
             const deleted = await db.Project.destroy({
                 where: { id },
                 transaction,
@@ -280,7 +389,7 @@ export const deleteProjectService = async (id) => {
             if (deleted > 0) {
                 return {
                     success: true,
-                    message: "Project deleted successfully",
+                    message: "Xoá dự án thành công",
                 };
             }
             throw new Error("Dự án không tồn tại");

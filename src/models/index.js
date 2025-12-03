@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 // Import models from subfolders
 import { EmployeeProfile, TechnicianSkill } from "./hr/index.js";
 import { DashboardMetric, PerformanceMetric } from "./metrics/index.js";
-import { Attachment, CheckIn, Notification } from "./operations/index.js";
+import { Attachment, CheckIn, Notification, OfficeLocation, LocationHistory } from "./operations/index.js";
 import { SalesReportDaily } from "./reports/index.js";
 import { SystemConfig } from "./system/index.js";
 import {
@@ -17,13 +17,12 @@ import {
     UserRoles,
 } from "./users/index.js";
 import { ApprovalWorkflow } from "./workflows/index.js";
+import { ProjectHistory, Project } from "./projects/index.js";
 import {
-    Project,
     Work,
     WorkAssignment,
     WorkCategory,
     WorkHistory,
-    WorkHistoryDetailed,
     WorkReport,
 } from "./works/index.js";
 
@@ -58,6 +57,8 @@ const models = [
     Attachment,
     CheckIn,
     Notification,
+    OfficeLocation,
+    LocationHistory,
     SalesReportDaily,
     SystemConfig,
     Permission,
@@ -66,12 +67,12 @@ const models = [
     RolePermissions,
     UserRoles,
     ApprovalWorkflow,
+    ProjectHistory,
     Project,
     Work,
     WorkAssignment,
     WorkCategory,
     WorkHistory,
-    WorkHistoryDetailed,
     WorkReport,
 ];
 

@@ -106,6 +106,9 @@ export const updateTechnicianSkillService = async (
     try {
         const { technician_level } = updateData;
 
+        console.log(technician_level, technicianId);
+        
+
         const skill = await db.TechnicianSkill.findOne({
             where: { technician_id: technicianId },
         });

@@ -6,6 +6,7 @@ import {
     createProjectController,
     updateProjectController,
     deleteProjectController,
+    getProjectHistoriesController,
 } from "../../controllers/projects/projects.controller.js";
 // import authMiddleware from '../middlewares/authMiddleware.js'; // Uncomment if authentication is required
 
@@ -28,5 +29,8 @@ router.put("/:id", /* authMiddleware, */ updateProjectController);
 
 // DELETE /api/projects/:id - Delete a project
 router.delete("/:id", /* authMiddleware, */ deleteProjectController);
+
+// GET /api/projects/:id/history - Get project histories
+router.get("/   ", /* authMiddleware, */ getProjectHistoriesController);
 
 export default router;

@@ -2,6 +2,18 @@ import db from "../../models/index.js";
 
 const assignPermissionToRole = async (roleId, permissionId) => {
     try {
+        // Kiểm tra roleId tồn tại
+        const role = await db.Role.findByPk(roleId);
+        if (!role) {
+            throw new Error("Vai trò không tồn tại");
+        }
+
+        // Kiểm tra permissionId tồn tại
+        const permission = await db.Permission.findByPk(permissionId);
+        if (!permission) {
+            throw new Error("Quyền hạn không tồn tại");
+        }
+
         const existing = await db.RolePermissions.findOne({
             where: { role_id: roleId, permission_id: permissionId },
         });
@@ -20,6 +32,18 @@ const assignPermissionToRole = async (roleId, permissionId) => {
 
 const removePermissionFromRole = async (roleId, permissionId) => {
     try {
+        // Kiểm tra roleId tồn tại
+        const role = await db.Role.findByPk(roleId);
+        if (!role) {
+            throw new Error("Vai trò không tồn tại");
+        }
+
+        // Kiểm tra permissionId tồn tại
+        const permission = await db.Permission.findByPk(permissionId);
+        if (!permission) {
+            throw new Error("Quyền hạn không tồn tại");
+        }
+
         const deleted = await db.RolePermissions.destroy({
             where: { role_id: roleId, permission_id: permissionId },
         });

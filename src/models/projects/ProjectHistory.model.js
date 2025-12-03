@@ -1,31 +1,31 @@
 "use strict";
 
 /**
- * Model WorkHistory (Lịch sử công việc)
+ * Model ProjectHistory (Lịch sử dự án)
  *
- * Lưu trữ lịch sử thay đổi của công việc:
+ * Lưu trữ lịch sử thay đổi của dự án:
  * - Theo dõi tất cả thay đổi với old_values và new_values dưới dạng JSON
- * - Liên kết với công việc và người thay đổi
+ * - Liên kết với dự án và người thay đổi
  * - Hỗ trợ theo dõi thay đổi trạng thái, phân công, và các trường khác
  */
 export default (sequelize, DataTypes) => {
-    const WorkHistory = sequelize.define(
-        "WorkHistory",
+    const ProjectHistory = sequelize.define(
+        "ProjectHistory",
         {
             id: {
                 type: DataTypes.INTEGER,
                 primaryKey: true,
                 autoIncrement: true,
             },
-            // ID công việc (FK)
-            work_id: {
+            // ID dự án (FK)
+            project_id: {
                 type: DataTypes.INTEGER,
                 allowNull: false,
                 references: {
-                    model: "works",
+                    model: "projects",
                     key: "id",
                 },
-                comment: "Công việc",
+                comment: "Dự án",
             },
             // Hành động: created, updated, approved, deleted, assigned, accepted, rejected, started, completed, reported, report_updated, report_approved, report_rejected
             action: {
@@ -93,10 +93,10 @@ export default (sequelize, DataTypes) => {
             },
         },
         {
-            tableName: "work_history",
+            tableName: "project_history",
             timestamps: false,
             indexes: [
-                { fields: ["work_id"] },
+                { fields: ["project_id"] },
                 { fields: ["action"] },
                 { fields: ["field_changed"] },
                 { fields: ["changed_at"] },
@@ -105,17 +105,17 @@ export default (sequelize, DataTypes) => {
         }
     );
 
-    WorkHistory.associate = (models) => {
-        WorkHistory.belongsTo(models.Work, {
-            foreignKey: "work_id",
-            as: "work",
+    ProjectHistory.associate = (models) => {
+        ProjectHistory.belongsTo(models.Project, {
+            foreignKey: "project_id",
+            as: "project",
         });
 
-        WorkHistory.belongsTo(models.User, {
+        ProjectHistory.belongsTo(models.User, {
             foreignKey: "changed_by",
             as: "changedByUser",
         });
     };
 
-    return WorkHistory;
+    return ProjectHistory;
 };

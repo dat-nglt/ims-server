@@ -190,3 +190,24 @@ export const startWorkAssignmentController = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+/**
+ * Lấy tất cả phân công của một công việc
+ */
+export const getWorkAssignmentsByWorkIdController = async (req, res) => {
+  try {
+    const { workId } = req.params;
+    const result = await workAssignmentService.getWorkAssignmentsByWorkIdService(workId);
+    res.json({
+      status: "success",
+      data: result.data,
+      message: "Lấy danh sách phân công của công việc thành công",
+    });
+  } catch (error) {
+    logger.error(
+      `[${req.id}] Error in getWorkAssignmentsByWorkIdController:`,
+      error.message
+    );
+    res.status(404).json({ error: error.message });
+  }
+};

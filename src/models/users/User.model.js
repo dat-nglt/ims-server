@@ -214,11 +214,6 @@ export default (sequelize, DataTypes) => {
             as: "workHistoryChanges",
         });
 
-        User.hasMany(models.WorkHistoryDetailed, {
-            foreignKey: "changed_by",
-            as: "detailedHistoryChanges",
-        });
-
         User.hasMany(models.SystemConfig, {
             foreignKey: "updated_by",
             as: "configUpdates",
