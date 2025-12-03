@@ -5,6 +5,7 @@ import {
     routeForPermissions,
     routeForUserRole,
     routeForRolePermissions,
+    routeForAuth,
 } from "./users/index.js";
 import { routeForProject } from "./projects/index.js";
 import {
@@ -30,11 +31,13 @@ import {
 } from "./metrics/index.js";
 import { routeForSystemConfig } from "./system/index.js";
 import { routeForZaloWebhook } from "./webhooks/index.js";
+import examplesRouter from "./examples.js";
 
 const mainRouter = (server) => {
     // --- IMS ROUTES (API v1) ---
     // User Management
     server.use("/api/v1/ims/users", routeForUsers);
+    server.use("/api/v1/ims/auth", routeForAuth);
     server.use("/api/v1/ims/roles", routeForRoles);
     server.use("/api/v1/ims/permissions", routeForPermissions);
     server.use("/api/v1/ims/user-roles", routeForUserRole);
@@ -72,6 +75,9 @@ const mainRouter = (server) => {
 
     // Webhooks
     server.use("/api/v1/ims/zalo-webhook", routeForZaloWebhook);
+
+    // Examples - Authentication middleware usage examples
+    server.use("/api/v1/ims/examples", examplesRouter);
 };
 
 export default mainRouter;

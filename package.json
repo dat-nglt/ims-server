@@ -8,6 +8,7 @@
         "start": "node dist/server.js",
         "clean": "rimraf dist",
         "build": "npm run clean && babel src --out-dir dist --copy-files",
+        "test:appsecret": "node test-appsecret-proof.js",
         "db:create": "sequelize-cli db:create",
         "db:migrate": "sequelize-cli db:migrate",
         "db:migrate:undo": "sequelize-cli db:migrate:undo",
@@ -22,6 +23,7 @@
     "dependencies": {
         "@google/genai": "^1.29.0",
         "axios": "^1.13.2",
+        "bcrypt": "^6.0.0",
         "bcryptjs": "^2.4.3",
         "bullmq": "^5.63.0",
         "compression": "^1.8.1",

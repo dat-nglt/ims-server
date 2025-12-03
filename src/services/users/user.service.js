@@ -104,35 +104,35 @@ export const createUserService = async (userData) => {
         if (
             !employee_id ||
             !name ||
-            !position ||
-            !email ||
-            !phone
+            !position
         ) {
-            throw new Error("Thiếu thông tin bắt buộc");
+            throw new Error("Thiếu thông tin bắt buộc: employee_id, name, position");
         }
 
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
+        // Validate email format nếu có
+        if (email && !emailRegex.test(email)) {
             throw new Error("Email không hợp lệ");
         }
 
-        // Validate phone format (basic Vietnamese phone number)
-        const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
-        if (!phoneRegex.test(phone)) {
+        // Validate phone format nếu có
+        if (phone && !phoneRegex.test(phone)) {
             throw new Error("Số điện thoại không hợp lệ");
         }
 
-        // Kiểm tra email đã tồn tại
-        const existingUser = await db.User.findOne({ where: { email } });
-        if (existingUser) {
-            throw new Error("Email đã được sử dụng");
+        // Kiểm tra email đã tồn tại nếu có email
+        if (email) {
+            const existingUser = await db.User.findOne({ where: { email } });
+            if (existingUser) {
+                throw new Error("Email đã được sử dụng");
+            }
         }
 
-        // Kiểm tra phone đã tồn tại
-        const existingPhone = await db.User.findOne({ where: { phone } });
-        if (existingPhone) {
-            throw new Error("Số điện thoại đã được sử dụng");
+        // Kiểm tra phone đã tồn tại nếu có phone
+        if (phone) {
+            const existingPhone = await db.User.findOne({ where: { phone } });
+            if (existingPhone) {
+                throw new Error("Số điện thoại đã được sử dụng");
+            }
         }
 
         // Kiểm tra employee_id đã tồn tại
@@ -235,6 +235,119 @@ export const deleteUserService = async (id) => {
         return { success: true, message: "Xóa người dùng thành công" };
     } catch (error) {
         logger.error("Error in deleteUserService:", error.message);
+        throw error;
+    }
+};
+
+/**
+ * Lấy thông tin người dùng theo số điện thoại
+ */
+export const getUserByPhoneService = async (phone) => {
+    try {
+        const user = await db.User.findOne({
+            where: { phone },
+            include: [
+                {
+                    model: db.UserRoles,
+                    as: "userRoles",
+                    include: [{ model: db.Role, as: "role" }],
+                },
+            ],
+        });
+
+        if (!user) {
+            return { success: false, message: "Người dùng không tồn tại" };
+        }
+
+        return { success: true, data: user };
+    } catch (error) {
+        logger.error("Error in getUserByPhoneService:", error.message);
+        throw error;
+    }
+};
+
+/**
+ * Lấy thông tin người dùng theo Zalo ID
+ */
+export const getUserByZaloIdService = async (zalo_id) => {
+    try {
+        const user = await db.User.findOne({
+            where: { zalo_id },
+            include: [
+                {
+                    model: db.UserRoles,
+                    as: "userRoles",
+                    include: [{ model: db.Role, as: "role" }],
+                },
+            ],
+        });
+
+        if (!user) {
+            return { success: false, message: "Người dùng không tồn tại" };
+        }
+
+        return { success: true, data: user };
+    } catch (error) {
+        logger.error("Error in getUserByZaloIdService:", error.message);
+        throw error;
+    }
+};
+
+/**
+ * Lấy roles của user
+ */
+export const getUserRolesService = async (userId) => {
+    try {
+        const userRoles = await db.UserRoles.findAll({
+            where: { user_id: userId },
+            include: [{ model: db.Role, as: "role" }],
+        });
+
+        const roles = userRoles.map(ur => ur.role).filter(r => r);
+        return { success: true, data: roles };
+    } catch (error) {
+        logger.error("Error in getUserRolesService:", error.message);
+        throw error;
+    }
+};
+
+/**
+ * Lấy permissions của user
+ */
+export const getUserPermissionsService = async (userId) => {
+    try {
+        const userRoles = await db.UserRoles.findAll({
+            where: { user_id: userId },
+            include: [{
+                model: db.Role,
+                as: "role",
+                include: [{
+                    model: db.RolePermissions,
+                    as: "rolePermissions",
+                    include: [{ model: db.Permission, as: "permission" }]
+                }]
+            }],
+        });
+
+        const permissions = [];
+        userRoles.forEach(ur => {
+            if (ur.role && ur.role.rolePermissions) {
+                ur.role.rolePermissions.forEach(rp => {
+                    if (rp.permission) {
+                        permissions.push(rp.permission);
+                    }
+                });
+            }
+        });
+
+        // Remove duplicates
+        const uniquePermissions = permissions.filter((perm, index, self) =>
+            index === self.findIndex(p => p.id === perm.id)
+        );
+
+        return { success: true, data: uniquePermissions };
+    } catch (error) {
+        logger.error("Error in getUserPermissionsService:", error.message);
         throw error;
     }
 };

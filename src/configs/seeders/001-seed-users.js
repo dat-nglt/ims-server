@@ -1,7 +1,12 @@
 'use strict';
 
+import bcrypt from 'bcryptjs';
+
 export default {
   async up(queryInterface, Sequelize) {
+    // Hash password cho các user
+    const hashedPassword = await bcrypt.hash('123456', 10);
+
     // Chèn 4 người dùng demo
     await queryInterface.bulkInsert('users', [
       {
@@ -10,8 +15,9 @@ export default {
         position: 'Quản Trị Viên',
         email: 'admin@videcoder.io.vn',
         phone: '0977708801',
-        role_id: 1,
+        password: hashedPassword,
         department: 'IT',
+        status: 'active',
         is_active: true,
         created_at: new Date(),
         updated_at: new Date()
@@ -22,8 +28,9 @@ export default {
         position: 'Quản Lý',
         email: 'manager@videcoder.io.vn',
         phone: '0977708802',
-        role_id: 2,
+        password: hashedPassword,
         department: 'Operations',
+        status: 'active',
         is_active: true,
         created_at: new Date(),
         updated_at: new Date()
@@ -34,8 +41,9 @@ export default {
         position: 'Nhân Viên Kinh Doanh',
         email: 'sales@videcoder.io.vn',
         phone: '0977708803',
-        role_id: 3,
+        password: hashedPassword,
         department: 'Sales',
+        status: 'active',
         is_active: true,
         created_at: new Date(),
         updated_at: new Date()
@@ -46,8 +54,9 @@ export default {
         position: 'Kỹ Thuật Viên',
         email: 'tech@videcoder.io.vn',
         phone: '0977708804',
-        role_id: 4,
+        password: hashedPassword,
         department: 'Technical',
+        status: 'active',
         is_active: true,
         created_at: new Date(),
         updated_at: new Date()

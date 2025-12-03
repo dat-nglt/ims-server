@@ -3,6 +3,7 @@ import routeForRoles from "./roles.route.js";
 import routeForPermissions from "./permissions.route.js";
 import routeForUserRole from "./user.role.route.js";
 import routeForRolePermissions from "./role.permission.route.js";
+import routeForAuth from "./auth.route.js";
 
 export {
     routeForUsers,
@@ -10,4 +11,5 @@ export {
     routeForPermissions,
     routeForUserRole,
     routeForRolePermissions,
+    routeForAuth,
 };

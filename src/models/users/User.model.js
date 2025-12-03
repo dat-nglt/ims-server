@@ -46,6 +46,7 @@ export default (sequelize, DataTypes) => {
             // Số điện thoại
             phone: {
                 type: DataTypes.STRING(20),
+                allowNull: true, // Cho phép null cho Zalo users
                 validate: {
                     is: /^\+?[0-9\-\s]+$/i, // Regex cho số điện thoại
                 },
@@ -55,11 +56,24 @@ export default (sequelize, DataTypes) => {
             email: {
                 type: DataTypes.STRING(255),
                 unique: true,
-                allowNull: false, // Thêm allowNull: false
+                allowNull: true, // Cho phép null cho Zalo users
                 validate: {
                     isEmail: true,
                 },
                 comment: "Email duy nhất của người dùng",
+            },
+            // Mật khẩu: hash bcrypt
+            password: {
+                type: DataTypes.STRING(255),
+                allowNull: true, // Cho phép null nếu đăng nhập qua Zalo
+                comment: "Mật khẩu đã hash",
+            },
+            // Zalo ID: cho đăng nhập qua Zalo Mini App
+            zalo_id: {
+                type: DataTypes.STRING(100),
+                unique: true,
+                allowNull: true,
+                comment: "Zalo ID của người dùng",
             },
             // Trạng thái: active, inactive, suspended
             status: {
