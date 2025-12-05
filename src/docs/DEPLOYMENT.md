@@ -126,7 +126,7 @@ cat ~/.ssh/github_actions_key
 ssh-copy-id -i ~/.ssh/id_rsa.pub user@14.225.218.37
 
 # Nếu sử dụng key riêng
-ssh-copy-id -i ~/.ssh/github_actions_key.pub user@14.225.218.37
+ssh-copy-id -i ~/.ssh/github_actions_key.pub root@14.225.218.37
 ```
 
 #### Kiểm tra kết nối SSH:
