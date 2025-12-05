@@ -29,11 +29,23 @@ export async function up(queryInterface, Sequelize) {
         },
         phone: {
             type: Sequelize.STRING(20),
+            allowNull: true, // Updated to allow null as per later migration
         },
         email: {
             type: Sequelize.STRING(255),
             unique: true, // Đã tự động tạo index unique
-            allowNull: false,
+            allowNull: true, // Updated to allow null as per later migration
+        },
+        password: {
+            type: Sequelize.STRING(255),
+            allowNull: true,
+            comment: 'Mật khẩu đã hash',
+        },
+        zalo_id: {
+            type: Sequelize.STRING(100),
+            allowNull: true,
+            unique: true,
+            comment: 'Zalo ID của người dùng',
         },
         status: {
             type: Sequelize.STRING(50),

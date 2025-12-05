@@ -98,7 +98,8 @@ sudo chown -R $USER:$USER /var/www/ims-server
 cd /var/www/ims-server
 if [ -d ".git" ]; then
     echo -e "${YELLOW}🔄 Cập nhật repository...${NC}"
-    git pull origin main
+    git fetch origin
+    git reset --hard origin/main
 else
     echo -e "${YELLOW}📥 Clone repository...${NC}"
     git clone https://github.com/dat-nglt/ims-server.git .
