@@ -131,6 +131,8 @@ export const loginController = async (req, res) => {
  */
 export const zaloLoginController = async (req, res) => {
     try {
+        console.log("zaloLoginController");
+        
         const { access_token } = req.body;
 
         if (!access_token) {
