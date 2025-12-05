@@ -12,9 +12,9 @@ import compression from "compression";
 import { v4 as uuidv4 } from "uuid";
 
 // Import custom utilities and modules: logger for logging, mainRouter for routes, db for database models
-import logger from "./src/utils/logger.js";
-import mainRouter from "./src/routes/index.js";
-import db from "./src/models/index.js";
+import logger from "./utils/logger.js";
+import mainRouter from "./routes/index.js";
+import db from "./models/index.js";
 
 // Load environment variables from .env file
 dotenv.config();

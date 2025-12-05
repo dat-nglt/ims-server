@@ -153,8 +153,8 @@ echo -e "${YELLOW}🗃️ Chạy database migrations...${NC}"
 npm run db:migrate
 
 # Seed database
-# echo -e "${YELLOW}🌱 Seed database...${NC}"
-# npm run db:seed || echo -e "${YELLOW}⚠️ Seed có thể đã chạy trước đó${NC}"
+echo -e "${YELLOW}🌱 Seed database...${NC}"
+npm run db:seed || echo -e "${YELLOW}⚠️ Seed có thể đã chạy trước đó${NC}"
 
 # Start application with PM2
 echo -e "${YELLOW}🚀 Khởi động ứng dụng với PM2...${NC}"
