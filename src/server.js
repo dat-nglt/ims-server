@@ -233,8 +233,8 @@ async function startServer() {
             logger.info(
                 `Server đang chạy tại cổng ${PORT} [${process.env.NODE_ENV}]`
             );
-            logger.info(`Health Check: http://localhost:${PORT}/health`);
-            logger.info(`API - v.1.0: http://localhost:${PORT}/api/v1`);
+            logger.info(`Health Check: https://videcoder.io.vn/health`);
+            logger.info(`API - v.1.0: https://videcoder.io.vn/api/v1`);
         });
 
         // --- GRACEFUL SHUTDOWN ---

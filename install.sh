@@ -162,7 +162,6 @@ if [ $? -eq 0 ]; then
 else
     pm2 start npm --name ims-server -- start --prefix /var/www/ims-server
     pm2 save
-    pm2 startup -u $(whoami) --hp $(eval echo ~$USER)
     echo -e "${GREEN}✅ Đã khởi động ứng dụng mới${NC}"
 fi
 
