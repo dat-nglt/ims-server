@@ -61,6 +61,11 @@ export async function up(queryInterface, Sequelize) {
             type: Sequelize.BOOLEAN,
             defaultValue: true,
         },
+        approved: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: false,
+            comment: 'Trạng thái phê duyệt tài khoản',
+        },
         last_login: {
             type: Sequelize.DATE,
         },

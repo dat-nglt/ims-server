@@ -131,8 +131,6 @@ export const loginController = async (req, res) => {
  */
 export const zaloLoginController = async (req, res) => {
     try {
-        console.log("zaloLoginController");
-
         const { access_token } = req.body;
 
         if (!access_token) {
@@ -157,31 +155,6 @@ export const zaloLoginController = async (req, res) => {
             ZALO_APP_SECRET_KEY
         );
 
-        logger.info(
-            `[${req.id}] Calculated appsecret_proof: ${appSecretProof}`
-        );
-        logger.info(
-            `[${req.id}] Using access_token: ${access_token.substring(
-                0,
-                10
-            )}...`
-        );
-        logger.info(
-            `[${req.id}] ZALO_APP_SECRET_KEY: ${ZALO_APP_SECRET_KEY.substring(
-                0,
-                10
-            )}...`
-        );
-
-        logger.info(
-            `[${
-                req.id
-            }] Calling Zalo API with appsecret_proof for access_token: ${access_token.substring(
-                0,
-                10
-            )}...`
-        );
-
         const zaloResponse = await axios.get("https://graph.zalo.me/v2.0/me", {
             headers: {
                 access_token: access_token,
@@ -193,7 +166,9 @@ export const zaloLoginController = async (req, res) => {
             timeout: 10000, // 10 seconds timeout
         });
 
-        logger.info(`[${req.id}] Zalo API response: ${zaloResponse.status}`);
+        logger.info(
+            `[${req.id}] Zalo API response from https://graph.zalo.me/v2.0/me: ${zaloResponse.status}`
+        );
 
         const zaloProfile = zaloResponse.data;
 
@@ -223,9 +198,8 @@ export const zaloLoginController = async (req, res) => {
                 status: "active",
                 is_active: true,
                 department: "Technical",
+                approved: false,
             };
-
-            logger.info(JSON.stringify(userData));
 
             const createResult = await userService.createUserService(userData);
             if (!createResult.success) {
@@ -240,10 +214,11 @@ export const zaloLoginController = async (req, res) => {
         }
 
         // Kiểm tra trạng thái
-        if (!user.is_active || user.status !== "active") {
+        if (!user.is_active || user.status !== "active" || !user.approved) {
             return res.status(403).json({
                 status: "error",
-                message: "Tài khoản đã bị khóa hoặc không hoạt động",
+                message:
+                    "Tài khoản đã bị khóa, không hoạt động hoặc chưa được phê duyệt",
             });
         }
 
@@ -255,7 +230,7 @@ export const zaloLoginController = async (req, res) => {
                 zalo_id: user.zalo_id,
                 role: user.role || "user",
             },
-            process.env.JWT_SECRET || "your-secret-key",
+            process.env.JWT_SECRET || "ims-secret-key",
             { expiresIn: "24h" }
         );
 
@@ -353,6 +328,7 @@ export const registerController = async (req, res) => {
             position: "Staff",
             status: "active",
             is_active: true,
+            approved: false,
         };
 
         const result = await userService.createUserService(userData);

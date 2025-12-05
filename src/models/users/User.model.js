@@ -97,6 +97,12 @@ export default (sequelize, DataTypes) => {
                 defaultValue: true,
                 comment: "Tài khoản có hoạt động hay không",
             },
+            // Trạng thái phê duyệt
+            approved: {
+                type: DataTypes.BOOLEAN,
+                defaultValue: false,
+                comment: "Trạng thái phê duyệt tài khoản",
+            },
             // Thời gian đăng nhập lần cuối
             last_login: {
                 type: DataTypes.DATE,
