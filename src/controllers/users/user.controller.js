@@ -10,7 +10,7 @@ export const getAllUsersController = async (req, res) => {
         res.json({
             status: "success",
             data: result.data,
-            message: "Lấy danh sách người dùng thành công",
+            message: "Lấy danh sách người dùng hệ thống thành công",
         });
     } catch (error) {
         logger.error(
