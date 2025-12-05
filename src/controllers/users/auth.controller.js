@@ -132,7 +132,7 @@ export const loginController = async (req, res) => {
 export const zaloLoginController = async (req, res) => {
     try {
         console.log("zaloLoginController");
-        
+
         const { access_token } = req.body;
 
         if (!access_token) {
@@ -224,6 +224,8 @@ export const zaloLoginController = async (req, res) => {
                 email: `zalo_${zaloProfile.id}@temp.com`, // Email tạm thời
                 phone: null, // Có thể để null hoặc yêu cầu cập nhật sau
             };
+
+            logger.info(JSON.stringify(userData));
 
             const createResult = await userService.createUserService(userData);
             if (!createResult.success) {

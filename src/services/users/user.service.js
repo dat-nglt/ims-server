@@ -101,12 +101,10 @@ export const createUserService = async (userData) => {
         } = userData;
 
         // Validation
-        if (
-            !employee_id ||
-            !name ||
-            !position
-        ) {
-            throw new Error("Thiếu thông tin bắt buộc: employee_id, name, position");
+        if (!employee_id || !name || !position) {
+            throw new Error(
+                "Thiếu thông tin bắt buộc: employee_id, name, position"
+            );
         }
 
         // Validate email format nếu có
@@ -156,7 +154,7 @@ export const createUserService = async (userData) => {
 
         return { success: true, data: user };
     } catch (error) {
-        logger.error("Error in createUserService:", error.message);
+        logger.error("Error in createUserService:" + error.message);
         throw error;
     }
 };
@@ -303,7 +301,7 @@ export const getUserRolesService = async (userId) => {
             include: [{ model: db.Role, as: "role" }],
         });
 
-        const roles = userRoles.map(ur => ur.role).filter(r => r);
+        const roles = userRoles.map((ur) => ur.role).filter((r) => r);
         return { success: true, data: roles };
     } catch (error) {
         logger.error("Error in getUserRolesService:", error.message);
@@ -318,21 +316,27 @@ export const getUserPermissionsService = async (userId) => {
     try {
         const userRoles = await db.UserRoles.findAll({
             where: { user_id: userId },
-            include: [{
-                model: db.Role,
-                as: "role",
-                include: [{
-                    model: db.RolePermissions,
-                    as: "rolePermissions",
-                    include: [{ model: db.Permission, as: "permission" }]
-                }]
-            }],
+            include: [
+                {
+                    model: db.Role,
+                    as: "role",
+                    include: [
+                        {
+                            model: db.RolePermissions,
+                            as: "rolePermissions",
+                            include: [
+                                { model: db.Permission, as: "permission" },
+                            ],
+                        },
+                    ],
+                },
+            ],
         });
 
         const permissions = [];
-        userRoles.forEach(ur => {
+        userRoles.forEach((ur) => {
             if (ur.role && ur.role.rolePermissions) {
-                ur.role.rolePermissions.forEach(rp => {
+                ur.role.rolePermissions.forEach((rp) => {
                     if (rp.permission) {
                         permissions.push(rp.permission);
                     }
@@ -341,8 +345,9 @@ export const getUserPermissionsService = async (userId) => {
         });
 
         // Remove duplicates
-        const uniquePermissions = permissions.filter((perm, index, self) =>
-            index === self.findIndex(p => p.id === perm.id)
+        const uniquePermissions = permissions.filter(
+            (perm, index, self) =>
+                index === self.findIndex((p) => p.id === perm.id)
         );
 
         return { success: true, data: uniquePermissions };
