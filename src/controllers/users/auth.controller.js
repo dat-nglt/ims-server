@@ -213,14 +213,6 @@ export const zaloLoginController = async (req, res) => {
             user = userResult.data;
         }
 
-        if (!user.approved) {
-            return res.status(200).json({
-                status: "success",
-                message:
-                    "Tài khoản của bạn cần được chấp thuận từ phía quản trị viên. Vui lòng đợi và đăng nhập lại.",
-            });
-        }
-
         // Kiểm tra trạng thái
         if (!user.is_active || user.status !== "active") {
             return res.status(403).json({
