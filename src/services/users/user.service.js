@@ -1,7 +1,5 @@
 import db from "../../models/index.js";
 import logger from "../../utils/logger.js";
-import { phoneRegex } from "../../utils/validation.js";
-
 /**
  * Lấy danh sách tất cả người dùng
  * SQL: SELECT u.*, ur.*, r.*, m.*, ep.*, ts.* FROM users u
@@ -110,11 +108,6 @@ export const createUserService = async (userData) => {
             throw new Error(
                 "Thiếu thông tin bắt buộc: employee_id, name, position"
             );
-        }
-
-        // Validate phone format nếu có
-        if (phone && !phoneRegex.test(phone)) {
-            throw new Error("Số điện thoại không hợp lệ");
         }
 
         // Kiểm tra email đã tồn tại nếu có email
