@@ -88,6 +88,9 @@ echo -e "${YELLOW}🔥 Cấu hình firewall...${NC}"
 sudo ufw --force enable
 sudo ufw allow OpenSSH
 sudo ufw allow 'Nginx Full'
+sudo ufw allow 443/tcp
+sudo ufw reload
+echo -e "${GREEN}✅ Firewall đã được cấu hình (bao gồm cổng 443)${NC}"
 
 # Create application directory
 echo -e "${YELLOW}📁 Tạo thư mục ứng dụng...${NC}"
@@ -155,30 +158,39 @@ echo -e "${GREEN}✅ Database migrations đã hoàn thành${NC}"
 
 # Configure Nginx
 echo -e "${YELLOW}🌐 Cấu hình Nginx...${NC}"
-sudo tee /etc/nginx/sites-available/videcoder.io.vn > /dev/null <<EOF
+sudo tee /etc/nginx/sites-available/videcoder.io.vn > /dev/null <<'EOF'
 server {
     listen 80;
+    listen 443 ssl http2;
     server_name videcoder.io.vn www.videcoder.io.vn;
+
+    ssl_certificate /etc/letsencrypt/live/videcoder.io.vn/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/videcoder.io.vn/privkey.pem;
+    
+    # Redirect HTTP to HTTPS
+    if ($scheme != "https") {
+        return 301 https://$server_name$request_uri;
+    }
 
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
     }
 
-    # Gzip compression
     gzip on;
     gzip_vary on;
     gzip_min_length 1024;
     gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json;
 }
 EOF
+
 
 # Enable site
 if [ ! -L "/etc/nginx/sites-enabled/videcoder.io.vn" ]; then
