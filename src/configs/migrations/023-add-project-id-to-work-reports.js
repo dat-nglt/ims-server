@@ -7,20 +7,9 @@
  */
 
 export async function up(queryInterface, Sequelize) {
-  await queryInterface.addColumn('work_reports', 'project_id', {
-    type: Sequelize.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'projects',
-      key: 'id',
-    },
-    comment: 'ID dự án',
-  });
-
-  await queryInterface.addIndex('work_reports', ['project_id']);
+  // Removed redundant addColumn and addIndex for project_id, as it already exists from migration 008
 }
 
 export async function down(queryInterface, Sequelize) {
-  await queryInterface.removeIndex('work_reports', ['project_id']);
-  await queryInterface.removeColumn('work_reports', 'project_id');
+  // Removed redundant removeColumn and removeIndex, as project_id is managed in migration 008
 }
