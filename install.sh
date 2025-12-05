@@ -125,8 +125,8 @@ fi
 
 # Check if database exists
 if ! sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -qw ims_db; then
-    sudo -u postgres psql -c "CREATE DATABASE ims_db OWNER ims_user;"
-    sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ims_db TO ims_user;"
+    sudo -u postgres psql -c "CREATE DATABASE ims_db OWNER ims_root;"
+    sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ims_db TO ims_root;"
     echo -e "${GREEN}✅ Đã tạo database ims_db${NC}"
 else
     echo -e "${BLUE}✅ Database ims_db đã tồn tại${NC}"
