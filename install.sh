@@ -127,6 +127,9 @@ else
     echo -e "${BLUE}✅ User ims_root đã tồn tại${NC}"
 fi
 
+# Terminate active connections to ims_db before dropping
+sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='ims_db';"
+
 # Drop database if exists and recreate
 sudo -u postgres psql -c "DROP DATABASE IF EXISTS ims_db;" || true
 sudo -u postgres psql -c "CREATE DATABASE ims_db OWNER ims_root;"
