@@ -213,16 +213,16 @@ export const zaloLoginController = async (req, res) => {
         if (!userResult.success) {
             // Tạo tài khoản mới nếu chưa tồn tại
             const userData = {
-                zalo_id: zaloProfile.id,
-                name: zaloProfile.name,
                 avatar_url: zaloProfile.picture?.data?.url || null,
-                employee_id: `ZALO${zaloProfile.id}`, // Tạo employee_id từ zalo_id
+                name: zaloProfile.name,
+                phone: null, // Có thể để null hoặc yêu cầu cập nhật sau
+                email: `zalo_${zaloProfile.id}@temp.com`, // Email tạm thời
+                zalo_id: zaloProfile.id,
+                employee_id: `IMS-LQD-${zaloProfile.id}`, // Tạo employee_id từ zalo_id
                 position: "Technician", // Mặc định là kỹ thuật viên
-                department: "Technical",
                 status: "active",
                 is_active: true,
-                email: `zalo_${zaloProfile.id}@temp.com`, // Email tạm thời
-                phone: null, // Có thể để null hoặc yêu cầu cập nhật sau
+                department: "Technical",
             };
 
             logger.info(JSON.stringify(userData));

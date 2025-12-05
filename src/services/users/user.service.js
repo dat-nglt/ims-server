@@ -1,5 +1,6 @@
 import db from "../../models/index.js";
 import logger from "../../utils/logger.js";
+import { phoneRegex } from "../../utils/validation.js";
 
 /**
  * Lấy danh sách tất cả người dùng
@@ -85,19 +86,23 @@ export const getUserByIdService = async (id) => {
 
 /**
  * Tạo người dùng mới
- * SQL: INSERT INTO users (employee_id, name, position, email, phone, department, manager_id, created_at, updated_at)
- * VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW());
+ * SQL: INSERT INTO users (employee_id, name, position, email, phone, department, manager_id, avatar_url, zalo_id, status, is_active, created_at, updated_at)
+ * VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW());
  */
 export const createUserService = async (userData) => {
     try {
         const {
-            employee_id,
+            avatar_url,
             name,
-            position,
-            email,
             phone,
+            email,
+            zalo_id,
+            employee_id,
+            position,
             department,
             manager_id,
+            status = "active", // Default status
+            is_active = true, // Default is_active
         } = userData;
 
         // Validation
@@ -105,11 +110,6 @@ export const createUserService = async (userData) => {
             throw new Error(
                 "Thiếu thông tin bắt buộc: employee_id, name, position"
             );
-        }
-
-        // Validate email format nếu có
-        if (email && !emailRegex.test(email)) {
-            throw new Error("Email không hợp lệ");
         }
 
         // Validate phone format nếu có
@@ -142,6 +142,14 @@ export const createUserService = async (userData) => {
             throw new Error("Mã nhân viên đã tồn tại");
         }
 
+        // Kiểm tra zalo_id đã tồn tại nếu có
+        if (zalo_id) {
+            const existingZalo = await db.User.findOne({ where: { zalo_id } });
+            if (existingZalo) {
+                throw new Error("Zalo ID đã được sử dụng");
+            }
+        }
+
         const user = await db.User.create({
             employee_id,
             name,
@@ -150,6 +158,10 @@ export const createUserService = async (userData) => {
             phone,
             department,
             manager_id,
+            avatar_url,
+            zalo_id,
+            status,
+            is_active,
         });
 
         return { success: true, data: user };
