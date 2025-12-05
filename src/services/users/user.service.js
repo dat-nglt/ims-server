@@ -187,6 +187,7 @@ export const updateUserService = async (id, updateData) => {
             status,
             is_active,
             approved,
+            password,
         } = updateData;
 
         // Kiểm tra email nếu thay đổi
@@ -208,6 +209,7 @@ export const updateUserService = async (id, updateData) => {
             status,
             is_active,
             approved,
+            password,
             updated_at: new Date(),
         });
 
