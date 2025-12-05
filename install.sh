@@ -152,21 +152,15 @@ fi
 echo -e "${YELLOW}🗃️ Chạy database migrations...${NC}"
 npm run db:migrate
 
-# Seed database
-echo -e "${YELLOW}🌱 Seed database...${NC}"
-npm run db:seed || echo -e "${YELLOW}⚠️ Seed có thể đã chạy trước đó${NC}"
-
 # Start application with PM2
 echo -e "${YELLOW}🚀 Khởi động ứng dụng với PM2...${NC}"
-
-APP_DIR="/var/www/ims-server"
 
 pm2 describe ims-server > /dev/null 2>&1
 if [ $? -eq 0 ]; then
     pm2 restart ims-server
     echo -e "${GREEN}✅ Đã restart ứng dụng${NC}"
 else
-    pm2 start npm --name "ims-server" -- start --prefix "$APP_DIR"
+    pm2 start npm --name ims-server -- start --prefix /var/www/ims-server
     pm2 save
     pm2 startup -u $(whoami) --hp $(eval echo ~$USER)
     echo -e "${GREEN}✅ Đã khởi động ứng dụng mới${NC}"
