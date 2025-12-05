@@ -75,27 +75,64 @@ ALTER USER ims_user PASSWORD 'your_secure_password_here';
 ## Cấu Hình CI/CD Với GitHub Actions
 
 ### Bước 1: Tạo SSH Key
-Trên máy local:
+Trên máy local (không phải trên VPS):
+
 ```bash
-# Tạo SSH key pair
+# Tạo SSH key pair mới (không ghi đè key hiện có)
+ssh-keygen -t rsa -b 4096 -C "github-actions@videcoder.io.vn" -f ~/.ssh/github_actions_key
+
+# Hoặc nếu muốn sử dụng key mặc định (có thể ghi đè)
 ssh-keygen -t rsa -b 4096 -C "github-actions@videcoder.io.vn"
+```
 
-# Copy public key lên VPS
-ssh-copy-id user@14.225.218.37
+**Quan trọng:** Khi được hỏi passphrase, hãy nhấn Enter để không đặt passphrase (GitHub Actions cần key không có passphrase).
 
-# Copy private key để dùng trong GitHub Secrets
+#### Cách lấy VPS_SSH_KEY:
+
+**Nếu sử dụng key mặc định (~/.ssh/id_rsa):**
+```bash
+# Hiển thị nội dung private key
 cat ~/.ssh/id_rsa
 ```
 
-### Bước 2: Cấu Hình GitHub Secrets
-1. Truy cập repository trên GitHub
-2. Vào **Settings** > **Secrets and variables** > **Actions**
-3. Thêm các secrets sau:
+**Nếu tạo key riêng (khuyến nghị):**
+```bash
+# Hiển thị nội dung private key từ file mới tạo
+cat ~/.ssh/github_actions_key
+```
 
-| Secret Name | Value |
-|-------------|-------|
-| `VPS_USERNAME` | Tên user SSH của VPS (ví dụ: `ubuntu`) |
-| `VPS_SSH_KEY` | Nội dung private key SSH (từ bước 1) |
+**Copy toàn bộ nội dung** từ `-----BEGIN OPENSSH PRIVATE KEY-----` đến `-----END OPENSSH PRIVATE KEY-----` (bao gồm cả 2 dòng này).
+
+#### Cài đặt public key lên VPS:
+```bash
+# Nếu sử dụng key mặc định
+ssh-copy-id -i ~/.ssh/id_rsa.pub user@14.225.218.37
+
+# Nếu sử dụng key riêng
+ssh-copy-id -i ~/.ssh/github_actions_key.pub user@14.225.218.37
+```
+
+#### Kiểm tra kết nối SSH:
+```bash
+# Test kết nối với key mới
+ssh -i ~/.ssh/github_actions_key user@14.225.218.37 "echo 'SSH connection successful'"
+```
+
+### Bước 2: Cấu Hình GitHub Secrets
+1. Truy cập repository trên GitHub: `https://github.com/dat-nglt/ims-server`
+2. Vào **Settings** → **Secrets and variables** → **Actions**
+3. Click **New repository secret**
+4. Thêm các secrets sau:
+
+| Secret Name | Value | Mô tả |
+|-------------|-------|-------|
+| `root` | Tên user SSH của VPS (ví dụ: `root` hoặc `ubuntu`) | Tên user để SSH vào VPS |
+| `VPS_SSH_KEY` | Nội dung private key SSH (từ bước 1) | Private key để GitHub Actions SSH vào VPS |
+
+**Lưu ý quan trọng:**
+- `VPS_SSH_KEY` phải là nội dung đầy đủ của private key (từ `-----BEGIN OPENSSH PRIVATE KEY-----` đến `-----END OPENSSH PRIVATE KEY-----`)
+- Không thêm khoảng trắng hoặc ký tự thừa
+- Đảm bảo key không có passphrase
 
 ### Bước 3: Workflow File
 File `.github/workflows/deploy.yml` đã được tạo với nội dung:

@@ -116,11 +116,11 @@ npm run build
 echo -e "${YELLOW}🗄️ Thiết lập cơ sở dữ liệu PostgreSQL...${NC}"
 
 # Check if database user exists
-if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='ims_user'" | grep -q 1; then
-    sudo -u postgres psql -c "CREATE USER ims_user WITH PASSWORD 'change_this_password';"
-    echo -e "${GREEN}✅ Đã tạo user ims_user${NC}"
+if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='ims_root'" | grep -q 1; then
+    sudo -u postgres psql -c "CREATE USER ims_root WITH PASSWORD 'khonggilatuyetdoiBAOMAT2025';"
+    echo -e "${GREEN}✅ Đã tạo user ims_root${NC}"
 else
-    echo -e "${BLUE}✅ User ims_user đã tồn tại${NC}"
+    echo -e "${BLUE}✅ User ims_root đã tồn tại${NC}"
 fi
 
 # Check if database exists
@@ -141,8 +141,8 @@ PORT=3000
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=ims_db
-DB_USER=ims_user
-DB_PASSWORD=change_this_password
+DB_USER=ims_root
+DB_PASSWORD=khonggilatuyetdoiBAOMAT2025
 # Thêm các biến môi trường khác nếu cần
 EOF
     echo -e "${GREEN}✅ Đã tạo file .env${NC}"
