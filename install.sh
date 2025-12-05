@@ -124,14 +124,11 @@ else
     echo -e "${BLUE}✅ User ims_root đã tồn tại${NC}"
 fi
 
-# Check if database exists
-if ! sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -qw ims_db; then
-    sudo -u postgres psql -c "CREATE DATABASE ims_db OWNER ims_root;"
-    sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ims_db TO ims_root;"
-    echo -e "${GREEN}✅ Đã tạo database ims_db${NC}"
-else
-    echo -e "${BLUE}✅ Database ims_db đã tồn tại${NC}"
-fi
+# Drop database if exists and recreate
+sudo -u postgres psql -c "DROP DATABASE IF EXISTS ims_db;" || true
+sudo -u postgres psql -c "CREATE DATABASE ims_db OWNER ims_root;"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ims_db TO ims_root;"
+echo -e "${GREEN}✅ Đã tạo database ims_db${NC}"
 
 # Create .env file if not exists
 if [ ! -f ".env" ]; then
