@@ -156,6 +156,22 @@ export const zaloLoginController = async (req, res) => {
         );
 
         logger.info(
+            `[${req.id}] Calculated appsecret_proof: ${appSecretProof}`
+        );
+        logger.info(
+            `[${req.id}] Using access_token: ${access_token.substring(
+                0,
+                10
+            )}...`
+        );
+        logger.info(
+            `[${req.id}] ZALO_APP_SECRET_KEY: ${ZALO_APP_SECRET_KEY.substring(
+                0,
+                10
+            )}...`
+        );
+
+        logger.info(
             `[${
                 req.id
             }] Calling Zalo API with appsecret_proof for access_token: ${access_token.substring(
