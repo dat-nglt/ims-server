@@ -52,10 +52,11 @@ fi
 
 # Start and enable PostgreSQL
 if ! service_running postgresql; then
-    sudo systemctl start postgresql
     sudo systemctl enable postgresql
     echo -e "${GREEN}✅ PostgreSQL đã được khởi động${NC}"
 else
+    sudo systemctl stop postgresql
+    sudo systemctl start postgresql
     echo -e "${BLUE}✅ PostgreSQL đang chạy${NC}"
 fi
 
@@ -126,9 +127,6 @@ if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='ims_root'
 else
     echo -e "${BLUE}✅ User ims_root đã tồn tại${NC}"
 fi
-
-# Terminate active connections to ims_db before dropping
-sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='ims_db';"
 
 # Drop database if exists and recreate
 sudo -u postgres psql -c "DROP DATABASE IF EXISTS ims_db;" || true
