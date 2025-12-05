@@ -151,20 +151,7 @@ fi
 # Run database migrations
 echo -e "${YELLOW}🗃️ Chạy database migrations...${NC}"
 npm run db:migrate
-
-# Start application with PM2
-echo -e "${YELLOW}🚀 Khởi động ứng dụng với PM2...${NC}"
-
-pm2 describe ims-server > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    pm2 restart ims-server
-    echo -e "${GREEN}✅ Đã restart ứng dụng${NC}"
-else
-    pm2 start npm --name ims-server -- start --prefix /var/www/ims-server
-    pm2 save
-    echo -e "${GREEN}✅ Đã khởi động ứng dụng mới${NC}"
-fi
-
+echo -e "${GREEN}✅ Database migrations đã hoàn thành${NC}"
 
 # Configure Nginx
 echo -e "${YELLOW}🌐 Cấu hình Nginx...${NC}"
