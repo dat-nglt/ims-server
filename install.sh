@@ -157,6 +157,11 @@ echo -e "${YELLOW}🗃️ Chạy database migrations...${NC}"
 npm run db:migrate
 echo -e "${GREEN}✅ Database migrations đã hoàn thành${NC}"
 
+# Run database seeders
+echo -e "${YELLOW}🌱 Chạy database seeders...${NC}"
+npm run db:seed
+echo -e "${GREEN}✅ Database seeders đã hoàn thành${NC}"
+
 # Configure Nginx
 echo -e "${YELLOW}🌐 Cấu hình Nginx...${NC}"
 sudo tee /etc/nginx/sites-available/videcoder.io.vn > /dev/null <<'EOF'

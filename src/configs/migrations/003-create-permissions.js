@@ -16,6 +16,14 @@ export async function up(queryInterface, Sequelize) {
         name: {
             type: Sequelize.STRING(100),
             allowNull: false,
+            comment:
+                "Tên hiển thị quyền hạn bằng tiếng Việt: Bảng điều khiển, Chỉnh sửa công việc...",
+        },
+        code: {
+            type: Sequelize.STRING(100),
+            allowNull: false,
+            comment:
+                "Mã quyền hạn dùng trong logic: dashboard_permission, edit_work, approve_report...",
         },
         description: {
             type: Sequelize.TEXT,
@@ -53,7 +61,7 @@ export async function up(queryInterface, Sequelize) {
         },
     });
 
-    await queryInterface.addIndex("permissions", ["name", "is_deleted"], {
+    await queryInterface.addIndex("permissions", ["code", "is_deleted"], {
         unique: true,
     }); // Composite unique index for active records
     await queryInterface.addIndex("permissions", ["category"]);

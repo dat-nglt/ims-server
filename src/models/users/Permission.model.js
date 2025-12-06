@@ -12,7 +12,12 @@ export default (sequelize, DataTypes) => {
             name: {
                 type: DataTypes.STRING(100),
                 allowNull: false,
-                comment: "Tên quyền hạn: edit_work, approve_report...",
+                comment: "Tên hiển thị quyền hạn bằng tiếng Việt: Bảng điều khiển, Chỉnh sửa công việc...",
+            },
+            code: {
+                type: DataTypes.STRING(100),
+                allowNull: false,
+                comment: "Mã quyền hạn dùng trong logic: dashboard_permission, edit_work, approve_report...",
             },
             description: {
                 type: DataTypes.TEXT,
@@ -55,7 +60,7 @@ export default (sequelize, DataTypes) => {
             tableName: "permissions",
             timestamps: false,
             indexes: [
-                { fields: ["name", "is_deleted"], unique: true }, // Composite unique index for active records
+                { fields: ["code", "is_deleted"], unique: true }, // Composite unique index for active records
                 { fields: ["category"] },
                 { fields: ["is_deleted"] },
             ],
