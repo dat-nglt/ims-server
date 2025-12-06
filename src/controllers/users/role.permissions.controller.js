@@ -76,6 +76,7 @@ const bulkAssignPermissions = async (req, res) => {
             message: `Đã đồng bộ quyền thành công cho ${
                 Object.keys(rolePermissionMap).length
             } vai trò`,
+            success: true,
             data: assignments,
         });
     } catch (error) {
