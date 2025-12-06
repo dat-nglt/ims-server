@@ -80,6 +80,12 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DECIMAL(3, 2),
         comment: 'Đánh giá hiệu suất (1-5)',
       },
+      // Lương theo ngày
+      dailySalary: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 500000.00,
+        comment: 'Lương theo ngày (VND)',
+      },
       // Trạng thái hoạt động (for soft delete)
       is_active: {
         type: DataTypes.BOOLEAN,

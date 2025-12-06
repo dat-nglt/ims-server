@@ -67,6 +67,11 @@ export async function up(queryInterface, Sequelize) {
       type: Sequelize.DECIMAL(3, 2),
       comment: 'Đánh giá hiệu suất (1-5)',
     },
+    dailySalary: {
+      type: Sequelize.DECIMAL(10, 2),
+      defaultValue: 500000.00,
+      comment: 'Lương theo ngày (VND)',
+    },
     is_active: {
       type: Sequelize.BOOLEAN,
       defaultValue: true,
