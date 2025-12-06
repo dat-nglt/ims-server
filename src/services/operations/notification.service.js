@@ -50,7 +50,7 @@ export const createNotificationService = async (notificationData) => {
 
     return { success: true, data: notification };
   } catch (error) {
-    logger.error("Error in createNotificationService:", error.message);
+    logger.error("Error in createNotificationService:" + error.message);
     throw error;
   }
 };
@@ -73,7 +73,7 @@ export const getAllNotificationsService = async (userId) => {
 
     return { success: true, data: notifications };
   } catch (error) {
-    logger.error("Error in getAllNotificationsService:", error.message);
+    logger.error("Error in getAllNotificationsService:" + error.message);
     throw error;
   }
 };
@@ -96,7 +96,7 @@ export const getNotificationByIdService = async (id) => {
 
     return { success: true, data: notification };
   } catch (error) {
-    logger.error("Error in getNotificationByIdService:", error.message);
+    logger.error("Error in getNotificationByIdService:" + error.message);
     throw error;
   }
 };
@@ -118,7 +118,7 @@ export const markNotificationAsReadService = async (id) => {
 
     return { success: true, data: notification };
   } catch (error) {
-    logger.error("Error in markNotificationAsReadService:", error.message);
+    logger.error("Error in markNotificationAsReadService:" + error.message);
     throw error;
   }
 };
@@ -137,7 +137,7 @@ export const deleteNotificationService = async (id) => {
 
     return { success: true, message: "Xóa thông báo thành công" };
   } catch (error) {
-    logger.error("Error in deleteNotificationService:", error.message);
+    logger.error("Error in deleteNotificationService:" + error.message);
     throw error;
   }
 };
@@ -160,7 +160,7 @@ export const getUnreadNotificationsCountService = async (userId) => {
 
     return { success: true, data: { count } };
   } catch (error) {
-    logger.error("Error in getUnreadNotificationsCountService:", error.message);
+    logger.error("Error in getUnreadNotificationsCountService:" + error.message);
     throw error;
   }
 };
@@ -180,7 +180,7 @@ export const getAllSystemNotificationsService = async () => {
 
     return { success: true, data: notifications };
   } catch (error) {
-    logger.error("Error in getAllSystemNotificationsService:", error.message);
+    logger.error("Error in getAllSystemNotificationsService:" + error.message);
     throw error;
   }
 };
@@ -209,7 +209,7 @@ export const markAllNotificationsAsReadService = async (userId) => {
 
     return { success: true, data: { affectedRows } };
   } catch (error) {
-    logger.error("Error in markAllNotificationsAsReadService:", error.message);
+    logger.error("Error in markAllNotificationsAsReadService:" + error.message);
     throw error;
   }
 };

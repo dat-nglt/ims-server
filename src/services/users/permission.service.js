@@ -27,7 +27,7 @@ export const getAllPermissionsService = async () => {
         });
         return { success: true, data: permissions };
     } catch (error) {
-        logger.error("Error in getAllPermissionsService:", error.message);
+        logger.error("Error in getAllPermissionsService:" + error.message);
         throw error;
     }
 };
@@ -57,7 +57,7 @@ export const getPermissionByIdService = async (id) => {
         }
         return { success: true, data: permission };
     } catch (error) {
-        logger.error("Error in getPermissionByIdService:", error.message);
+        logger.error("Error in getPermissionByIdService:" + error.message);
         throw error;
     }
 };
@@ -98,7 +98,7 @@ export const createPermissionService = async (permissionData) => {
 
     return { success: true, data: permission };
   } catch (error) {
-    logger.error("Error in createPermissionService:", error.message);
+    logger.error("Error in createPermissionService:" + error.message);
     throw error;
   }
 };
@@ -145,7 +145,7 @@ export const updatePermissionService = async (id, updateData) => {
 
     return { success: true, data: permission };
   } catch (error) {
-    logger.error("Error in updatePermissionService:", error.message);
+    logger.error("Error in updatePermissionService:" + error.message);
     throw error;
   }
 };
@@ -186,7 +186,7 @@ export const deletePermissionService = async (id, deleted_by) => {
 
     return { success: true, message: "Xóa quyền hạn thành công" };
   } catch (error) {
-    logger.error("Error in deletePermissionService:", error.message);
+    logger.error("Error in deletePermissionService:" + error.message);
     throw error;
   }
 };

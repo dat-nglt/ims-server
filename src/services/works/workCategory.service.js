@@ -44,7 +44,7 @@ export const getAllWorkCategoriesService = async (queryParams = {}) => {
             },
         };
     } catch (error) {
-        logger.error("Error in getAllWorkCategoriesService:", error.message);
+        logger.error("Error in getAllWorkCategoriesService:" + error.message);
         throw error;
     }
 };
@@ -60,7 +60,7 @@ export const getWorkCategoryByIdService = async (id) => {
         }
         return { success: true, data: category };
     } catch (error) {
-        logger.error("Error in getWorkCategoryByIdService:", error.message);
+        logger.error("Error in getWorkCategoryByIdService:" + error.message);
         throw error;
     }
 };
@@ -95,7 +95,7 @@ export const createWorkCategoryService = async (categoryData) => {
 
         return { success: true, data: category };
     } catch (error) {
-        logger.error("Error in createWorkCategoryService:", error.message);
+        logger.error("Error in createWorkCategoryService:" + error.message);
         throw error;
     }
 };
@@ -136,7 +136,7 @@ export const updateWorkCategoryService = async (id, updateData) => {
 
         return { success: true, data: category };
     } catch (error) {
-        logger.error("Error in updateWorkCategoryService:", error.message);
+        logger.error("Error in updateWorkCategoryService:" + error.message);
         throw error;
     }
 };
@@ -169,7 +169,7 @@ export const deleteWorkCategoryService = async (id) => {
             message: "Xóa danh mục công việc thành công (soft delete)",
         };
     } catch (error) {
-        logger.error("Error in deleteWorkCategoryService:", error.message);
+        logger.error("Error in deleteWorkCategoryService:" + error.message);
         throw error;
     }
 };

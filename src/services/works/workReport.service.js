@@ -16,7 +16,7 @@ export const getAllWorkReportsService = async () => {
     });
     return { success: true, data: reports };
   } catch (error) {
-    logger.error("Error in getAllWorkReportsService:", error.message);
+    logger.error("Error in getAllWorkReportsService:" + error.message);
     throw error;
   }
 };
@@ -38,7 +38,7 @@ export const getWorkReportByIdService = async (id) => {
     }
     return { success: true, data: report };
   } catch (error) {
-    logger.error("Error in getWorkReportByIdService:", error.message);
+    logger.error("Error in getWorkReportByIdService:" + error.message);
     throw error;
   }
 };
@@ -109,7 +109,7 @@ export const createWorkReportService = async (reportData) => {
 
     return { success: true, data: report };
   } catch (error) {
-    logger.error("Error in createWorkReportService:", error.message);
+    logger.error("Error in createWorkReportService:" + error.message);
     throw error;
   }
 };
@@ -159,7 +159,7 @@ export const updateWorkReportService = async (id, updateData) => {
 
     return { success: true, data: report };
   } catch (error) {
-    logger.error("Error in updateWorkReportService:", error.message);
+    logger.error("Error in updateWorkReportService:" + error.message);
     throw error;
   }
 };
@@ -206,7 +206,7 @@ export const approveWorkReportService = async (id, approvalData) => {
 
     return { success: true, data: report };
   } catch (error) {
-    logger.error("Error in approveWorkReportService:", error.message);
+    logger.error("Error in approveWorkReportService:" + error.message);
     throw error;
   }
 };
@@ -252,7 +252,7 @@ export const rejectWorkReportService = async (id, rejectionData) => {
 
     return { success: true, data: report };
   } catch (error) {
-    logger.error("Error in rejectWorkReportService:", error.message);
+    logger.error("Error in rejectWorkReportService:" + error.message);
     throw error;
   }
 };

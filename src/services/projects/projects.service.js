@@ -108,7 +108,7 @@ export const getProjectsService = async (filters) => {
             },
         };
     } catch (error) {
-        logger.error("Error in getProjectsService:", error.message);
+        logger.error("Error in getProjectsService:" + error.message);
         throw error;
     }
 };
@@ -163,7 +163,7 @@ export const getStatisticsService = async () => {
             },
         };
     } catch (error) {
-        logger.error("Error in getStatisticsService:", error.message);
+        logger.error("Error in getStatisticsService:" + error.message);
         throw error;
     }
 };
@@ -209,7 +209,7 @@ export const getDistributionService = async () => {
             data: { statusDistribution, taskDistribution },
         };
     } catch (error) {
-        logger.error("Error in getDistributionService:", error.message);
+        logger.error("Error in getDistributionService:" + error.message);
         throw error;
     }
 };
@@ -268,7 +268,7 @@ export const createProjectService = async (data) => {
             throw error;
         }
     } catch (error) {
-        logger.error("Error in createProjectService:", error.message);
+        logger.error("Error in createProjectService:" + error.message);
         throw error;
     }
 };
@@ -337,7 +337,7 @@ export const updateProjectService = async (id, data) => {
             throw error;
         }
     } catch (error) {
-        logger.error("Error in updateProjectService:", error.message);
+        logger.error("Error in updateProjectService:" + error.message);
         throw error;
     }
 };
@@ -398,7 +398,7 @@ export const deleteProjectService = async (id) => {
             throw error;
         }
     } catch (error) {
-        logger.error("Error in deleteProjectService:", error.message);
+        logger.error("Error in deleteProjectService:" + error.message);
         throw error;
     }
 };

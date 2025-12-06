@@ -21,7 +21,7 @@ export const createWorkHistoryService = async (historyData) => {
     const history = await db.WorkHistory.create(historyData);
     return { success: true, data: history };
   } catch (error) {
-    logger.error("Error in createWorkHistoryService:", error.message);
+    logger.error("Error in createWorkHistoryService:" + error.message);
     throw error;
   }
 };

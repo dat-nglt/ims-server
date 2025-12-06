@@ -118,7 +118,7 @@ export const loginController = async (req, res) => {
             message: "Đăng nhập thành công",
         });
     } catch (error) {
-        logger.error(`[${req.id}] Error in loginController:`, error.message);
+        logger.error(`[${req.id}] Error in loginController:` + error.message);
         res.status(500).json({
             status: "error",
             message: "Lỗi server",
@@ -259,8 +259,7 @@ export const zaloLoginController = async (req, res) => {
         });
     } catch (error) {
         logger.error(
-            `[${req.id}] Error in zaloLoginController:`,
-            error.message
+            `[${req.id}] Error in zaloLoginController:` + error.message
         );
 
         // Handle Zalo API errors
@@ -339,7 +338,7 @@ export const registerController = async (req, res) => {
             message: "Đăng ký thành công",
         });
     } catch (error) {
-        logger.error(`[${req.id}] Error in registerController:`, error.message);
+        logger.error(`[${req.id}] Error in registerController:` + error.message);
         if (
             error.message.includes("duplicate") ||
             error.message.includes("unique")

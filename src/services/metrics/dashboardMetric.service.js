@@ -97,7 +97,7 @@ export const getAllDashboardMetricsService = async () => {
 
     return { success: true, data: metrics };
   } catch (error) {
-    logger.error("Error in getAllDashboardMetricsService:", error.message);
+    logger.error("Error in getAllDashboardMetricsService:" + error.message);
     throw error;
   }
 };
@@ -313,7 +313,7 @@ export const getDashboardMetricsByDateService = async (date) => {
 
     return { success: true, data: metrics };
   } catch (error) {
-    logger.error("Error in getDashboardMetricsByDateService:", error.message);
+    logger.error("Error in getDashboardMetricsByDateService:" + error.message);
     throw error;
   }
 };

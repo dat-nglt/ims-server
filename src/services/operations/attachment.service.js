@@ -16,7 +16,7 @@ export const getAllAttachmentsService = async () => {
 
     return { success: true, data: attachments };
   } catch (error) {
-    logger.error("Error in getAllAttachmentsService:", error.message);
+    logger.error("Error in getAllAttachmentsService:" + error.message);
     throw error;
   }
 };
@@ -40,7 +40,7 @@ export const getAttachmentByIdService = async (id) => {
 
     return { success: true, data: attachment };
   } catch (error) {
-    logger.error("Error in getAttachmentByIdService:", error.message);
+    logger.error("Error in getAttachmentByIdService:" + error.message);
     throw error;
   }
 };
@@ -77,7 +77,7 @@ export const uploadAttachmentService = async (attachmentData) => {
 
     return { success: true, data: attachment };
   } catch (error) {
-    logger.error("Error in uploadAttachmentService:", error.message);
+    logger.error("Error in uploadAttachmentService:" + error.message);
     throw error;
   }
 };
@@ -96,7 +96,7 @@ export const deleteAttachmentService = async (id) => {
 
     return { success: true, message: "Xóa tập tin thành công" };
   } catch (error) {
-    logger.error("Error in deleteAttachmentService:", error.message);
+    logger.error("Error in deleteAttachmentService:" + error.message);
     throw error;
   }
 };
@@ -113,7 +113,7 @@ export const getAttachmentsByWorkIdService = async (workId) => {
 
     return { success: true, data: attachments };
   } catch (error) {
-    logger.error("Error in getAttachmentsByWorkIdService:", error.message);
+    logger.error("Error in getAttachmentsByWorkIdService:" + error.message);
     throw error;
   }
 };

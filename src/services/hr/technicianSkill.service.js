@@ -14,7 +14,7 @@ export const getAllTechnicianSkillsService = async () => {
 
         return { success: true, data: skills };
     } catch (error) {
-        logger.error("Error in getAllTechnicianSkillsService:", error.message);
+        logger.error("Error in getAllTechnicianSkillsService:" + error.message);
         throw error;
     }
 };
@@ -90,7 +90,7 @@ export const createTechnicianSkillService = async (skillData) => {
 
         return { success: true, data: skill };
     } catch (error) {
-        logger.error("Error in createTechnicianSkillService:", error.message);
+        logger.error("Error in createTechnicianSkillService:" + error.message);
         throw error;
     }
 };
@@ -124,7 +124,7 @@ export const updateTechnicianSkillService = async (
 
         return { success: true, data: skill };
     } catch (error) {
-        logger.error("Error in updateTechnicianSkillService:", error.message);
+        logger.error("Error in updateTechnicianSkillService:" + error.message);
         throw error;
     }
 };
@@ -147,7 +147,7 @@ export const deleteTechnicianSkillService = async (id) => {
             message: "Xóa kỹ năng kỹ thuật viên thành công",
         };
     } catch (error) {
-        logger.error("Error in deleteTechnicianSkillService:", error.message);
+        logger.error("Error in deleteTechnicianSkillService:" + error.message);
         throw error;
     }
 };

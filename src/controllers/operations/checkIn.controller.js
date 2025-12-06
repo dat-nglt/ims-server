@@ -75,7 +75,7 @@ export const checkInController = async (req, res) => {
             message: "Check-in thành công",
         });
     } catch (error) {
-        logger.error(`[${req.id}] Error in checkInController:`, error.message);
+        logger.error(`[${req.id}] Error in checkInController:` + error.message);
         res.status(400).json({ error: error.message });
     }
 };
@@ -93,7 +93,7 @@ export const checkOutController = async (req, res) => {
             message: "Check-out thành công",
         });
     } catch (error) {
-        logger.error(`[${req.id}] Error in checkOutController:`, error.message);
+        logger.error(`[${req.id}] Error in checkOutController:` + error.message);
         res.status(400).json({ error: error.message });
     }
 };

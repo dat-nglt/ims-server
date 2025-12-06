@@ -89,7 +89,7 @@ export const getAttendanceSummaryService = async (params) => {
 
     return { success: true, data: summary };
   } catch (error) {
-    logger.error("Error in getAttendanceSummaryService:", error.message);
+    logger.error("Error in getAttendanceSummaryService:" + error.message);
     throw error;
   }
 };
@@ -115,7 +115,7 @@ export const getAttendanceStatisticsService = async (params) => {
 
     return { success: true, data: stats };
   } catch (error) {
-    logger.error("Error in getAttendanceStatisticsService:", error.message);
+    logger.error("Error in getAttendanceStatisticsService:" + error.message);
     throw error;
   }
 };

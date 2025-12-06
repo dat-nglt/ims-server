@@ -13,7 +13,7 @@ export const getAllSalesReportsService = async () => {
 
     return { success: true, data: reports };
   } catch (error) {
-    logger.error("Error in getAllSalesReportsService:", error.message);
+    logger.error("Error in getAllSalesReportsService:" + error.message);
     throw error;
   }
 };
@@ -33,7 +33,7 @@ export const getSalesReportByIdService = async (id) => {
 
     return { success: true, data: report };
   } catch (error) {
-    logger.error("Error in getSalesReportByIdService:", error.message);
+    logger.error("Error in getSalesReportByIdService:" + error.message);
     throw error;
   }
 };
@@ -64,7 +64,7 @@ export const createSalesReportService = async (reportData) => {
 
     return { success: true, data: report };
   } catch (error) {
-    logger.error("Error in createSalesReportService:", error.message);
+    logger.error("Error in createSalesReportService:" + error.message);
     throw error;
   }
 };
@@ -92,7 +92,7 @@ export const updateSalesReportService = async (id, updateData) => {
 
     return { success: true, data: report };
   } catch (error) {
-    logger.error("Error in updateSalesReportService:", error.message);
+    logger.error("Error in updateSalesReportService:" + error.message);
     throw error;
   }
 };

@@ -29,7 +29,7 @@ export const getAttendanceSummaryController = async (req, res) => {
       message: "Lấy dữ liệu tổng quan chấm công thành công",
     });
   } catch (error) {
-    logger.error(`[${req.id}] Error in getAttendanceSummaryController:`, error.message);
+    logger.error(`[${req.id}] Error in getAttendanceSummaryController:` + error.message);
     res.status(500).json({ error: error.message });
   }
 };
@@ -62,7 +62,7 @@ export const getAttendanceStatisticsController = async (req, res) => {
       message: "Lấy thống kê chấm công thành công",
     });
   } catch (error) {
-    logger.error(`[${req.id}] Error in getAttendanceStatisticsController:`, error.message);
+    logger.error(`[${req.id}] Error in getAttendanceStatisticsController:` + error.message);
     res.status(500).json({ error: error.message });
   }
 };

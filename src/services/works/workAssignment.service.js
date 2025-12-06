@@ -18,7 +18,7 @@ export const getAllWorkAssignmentsService = async () => {
     });
     return { success: true, data: assignments };
   } catch (error) {
-    logger.error("Error in getAllWorkAssignmentsService:", error.message);
+    logger.error("Error in getAllWorkAssignmentsService:" + error.message);
     throw error;
   }
 };
@@ -59,7 +59,7 @@ export const getWorkAssignmentsService = async (queryParams = {}) => {
       }
     };
   } catch (error) {
-    logger.error("Error in getWorkAssignmentsService:", error.message);
+    logger.error("Error in getWorkAssignmentsService:" + error.message);
     throw error;
   }
 };
@@ -81,7 +81,7 @@ export const getWorkAssignmentByIdService = async (id) => {
     }
     return { success: true, data: assignment };
   } catch (error) {
-    logger.error("Error in getWorkAssignmentByIdService:", error.message);
+    logger.error("Error in getWorkAssignmentByIdService:" + error.message);
     throw error;
   }
 };
@@ -155,7 +155,7 @@ export const createWorkAssignmentService = async (assignmentData) => {
 
     return { success: true, data: assignment };
   } catch (error) {
-    logger.error("Error in createWorkAssignmentService:", error.message);
+    logger.error("Error in createWorkAssignmentService:" + error.message);
     throw error;
   }
 };
@@ -189,7 +189,7 @@ export const acceptWorkAssignmentService = async (id) => {
 
     return { success: true, data: assignment };
   } catch (error) {
-    logger.error("Error in acceptWorkAssignmentService:", error.message);
+    logger.error("Error in acceptWorkAssignmentService:" + error.message);
     throw error;
   }
 };
@@ -225,7 +225,7 @@ export const rejectWorkAssignmentService = async (id, rejectionData) => {
 
     return { success: true, data: assignment };
   } catch (error) {
-    logger.error("Error in rejectWorkAssignmentService:", error.message);
+    logger.error("Error in rejectWorkAssignmentService:" + error.message);
     throw error;
   }
 };
@@ -259,7 +259,7 @@ export const completeWorkAssignmentService = async (id) => {
 
     return { success: true, data: assignment };
   } catch (error) {
-    logger.error("Error in completeWorkAssignmentService:", error.message);
+    logger.error("Error in completeWorkAssignmentService:" + error.message);
     throw error;
   }
 };
@@ -297,7 +297,7 @@ export const updateWorkAssignmentService = async (id, updateData) => {
 
     return { success: true, data: assignment };
   } catch (error) {
-    logger.error("Error in updateWorkAssignmentService:", error.message);
+    logger.error("Error in updateWorkAssignmentService:" + error.message);
     throw error;
   }
 };
@@ -335,7 +335,7 @@ export const startWorkAssignmentService = async (id) => {
 
     return { success: true, data: assignment };
   } catch (error) {
-    logger.error("Error in startWorkAssignmentService:", error.message);
+    logger.error("Error in startWorkAssignmentService:" + error.message);
     throw error;
   }
 };
@@ -408,7 +408,7 @@ export const assignTechnicianToWorkService = async (workId, technicianData) => {
 
     return { success: true, data: assignment };
   } catch (error) {
-    logger.error("Error in assignTechnicianToWorkService:", error.message);
+    logger.error("Error in assignTechnicianToWorkService:" + error.message);
     throw error;
   }
 };
@@ -439,7 +439,7 @@ export const getWorkAssignmentsByWorkIdService = async (workId) => {
       data: assignments,
     };
   } catch (error) {
-    logger.error("Error in getWorkAssignmentsByWorkIdService:", error.message);
+    logger.error("Error in getWorkAssignmentsByWorkIdService:" + error.message);
     throw error;
   }
 };

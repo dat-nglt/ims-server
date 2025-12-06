@@ -16,7 +16,7 @@ export const getAllCheckInsService = async () => {
         });
         return { success: true, data: checkIns };
     } catch (error) {
-        logger.error("Error in getAllCheckInsService:", error.message);
+        logger.error("Error in getAllCheckInsService:" + error.message);
         throw error;
     }
 };
@@ -36,7 +36,7 @@ export const getLocationService = async (accessToken, code) => {
         });
         return { success: true, data: response.data };
     } catch (error) {
-        logger.error("Error in getLocationService:", error.message);
+        logger.error("Error in getLocationService:" + error.message);
         throw error;
     }
 };
@@ -57,7 +57,7 @@ export const getCheckInByIdService = async (id) => {
         }
         return { success: true, data: checkIn };
     } catch (error) {
-        logger.error("Error in getCheckInByIdService:", error.message);
+        logger.error("Error in getCheckInByIdService:" + error.message);
         throw error;
     }
 };
@@ -125,7 +125,7 @@ export const checkInService = async (checkInData) => {
 
         return { success: true, data: checkIn };
     } catch (error) {
-        logger.error("Error in checkInService:", error.message);
+        logger.error("Error in checkInService:" + error.message);
         throw error;
     }
 };
@@ -157,7 +157,7 @@ export const checkOutService = async (id) => {
 
         return { success: true, data: checkIn };
     } catch (error) {
-        logger.error("Error in checkOutService:", error.message);
+        logger.error("Error in checkOutService:" + error.message);
         throw error;
     }
 };
@@ -218,7 +218,7 @@ export const getTechniciansLocationsService = async ({
 
         return { success: true, data };
     } catch (error) {
-        logger.error("Error in getTechniciansLocationsService:", error.message);
+        logger.error("Error in getTechniciansLocationsService:" + error.message);
         throw error;
     }
 };
@@ -248,7 +248,7 @@ export const getOfficeLocationService = async () => {
 
         return { success: true, data };
     } catch (error) {
-        logger.error("Error in getOfficeLocationService:", error.message);
+        logger.error("Error in getOfficeLocationService:" + error.message);
         throw error;
     }
 };
@@ -331,7 +331,7 @@ export const getJobItemsLocationsService = async ({
 
         return { success: true, data };
     } catch (error) {
-        logger.error("Error in getJobItemsLocationsService:", error.message);
+        logger.error("Error in getJobItemsLocationsService:" + error.message);
         throw error;
     }
 };
@@ -367,7 +367,7 @@ export const getGeocodingReverseService = async ({ lat, lng, language }) => {
 
         return { success: true, data: result };
     } catch (error) {
-        logger.error("Error in getGeocodingReverseService:", error.message);
+        logger.error("Error in getGeocodingReverseService:" + error.message);
         throw error;
     }
 };

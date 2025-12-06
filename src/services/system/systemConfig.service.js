@@ -12,7 +12,7 @@ export const getAllSystemConfigService = async () => {
 
     return { success: true, data: configs };
   } catch (error) {
-    logger.error("Error in getAllSystemConfigService:", error.message);
+    logger.error("Error in getAllSystemConfigService:" + error.message);
     throw error;
   }
 };
@@ -33,7 +33,7 @@ export const getSystemConfigByKeyService = async (key) => {
 
     return { success: true, data: config };
   } catch (error) {
-    logger.error("Error in getSystemConfigByKeyService:", error.message);
+    logger.error("Error in getSystemConfigByKeyService:" + error.message);
     throw error;
   }
 };
@@ -53,7 +53,7 @@ export const createSystemConfigService = async (configData) => {
 
     return { success: true, data: config };
   } catch (error) {
-    logger.error("Error in createSystemConfigService:", error.message);
+    logger.error("Error in createSystemConfigService:" + error.message);
     throw error;
   }
 };
@@ -78,7 +78,7 @@ export const updateSystemConfigService = async (key, updateData) => {
 
     return { success: true, data: config };
   } catch (error) {
-    logger.error("Error in updateSystemConfigService:", error.message);
+    logger.error("Error in updateSystemConfigService:" + error.message);
     throw error;
   }
 };
@@ -100,7 +100,7 @@ export const deleteSystemConfigService = async (key) => {
 
     return { success: true, message: "Xóa cấu hình thành công" };
   } catch (error) {
-    logger.error("Error in deleteSystemConfigService:", error.message);
+    logger.error("Error in deleteSystemConfigService:" + error.message);
     throw error;
   }
 };
@@ -169,7 +169,7 @@ export const getSystemSettingsService = async () => {
 
     return { success: true, data: config.settings };
   } catch (error) {
-    logger.error("Error in getSystemSettingsService:", error.message);
+    logger.error("Error in getSystemSettingsService:" + error.message);
     throw error;
   }
 };
@@ -192,7 +192,7 @@ export const updateSystemSettingsService = async (settingsData) => {
 
     return { success: true, data: config.settings };
   } catch (error) {
-    logger.error("Error in updateSystemSettingsService:", error.message);
+    logger.error("Error in updateSystemSettingsService:" + error.message);
     throw error;
   }
 };

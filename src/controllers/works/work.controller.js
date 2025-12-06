@@ -33,7 +33,7 @@ export const getWorksController = async (req, res) => {
             message: "Lấy danh sách công việc thành công",
         });
     } catch (error) {
-        logger.error(`[${req.id}] Error in getWorksController:`, error.message);
+        logger.error(`[${req.id}] Error in getWorksController:` + error.message);
         res.status(500).json({ error: error.message });
     }
 };

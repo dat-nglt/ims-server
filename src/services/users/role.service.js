@@ -27,7 +27,7 @@ export const getAllRolesService = async () => {
         });
         return { success: true, data: roles };
     } catch (error) {
-        logger.error("Error in getAllRolesService:", error.message);
+        logger.error("Error in getAllRolesService:" + error.message);
         throw error;
     }
 };
@@ -57,7 +57,7 @@ export const getRoleByIdService = async (id) => {
         }
         return { success: true, data: role };
     } catch (error) {
-        logger.error("Error in getRoleByIdService:", error.message);
+        logger.error("Error in getRoleByIdService:" + error.message);
         throw error;
     }
 };
@@ -98,7 +98,7 @@ export const createRoleService = async (roleData) => {
 
     return { success: true, data: role };
   } catch (error) {
-    logger.error("Error in createRoleService:", error.message);
+    logger.error("Error in createRoleService:" + error.message);
     throw error;
   }
 };
@@ -145,7 +145,7 @@ export const updateRoleService = async (id, updateData) => {
 
     return { success: true, data: role };
   } catch (error) {
-    logger.error("Error in updateRoleService:", error.message);
+    logger.error("Error in updateRoleService:" + error.message);
     throw error;
   }
 };
@@ -194,7 +194,7 @@ export const deleteRoleService = async (id, deleted_by) => {
 
     return { success: true, message: "Xóa vai trò thành công" };
   } catch (error) {
-    logger.error("Error in deleteRoleService:", error.message);
+    logger.error("Error in deleteRoleService:" + error.message);
     throw error;
   }
 };

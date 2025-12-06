@@ -21,7 +21,7 @@ export const createProjectHistoryService = async (historyData) => {
     const history = await db.ProjectHistory.create(historyData);
     return { success: true, data: history };
   } catch (error) {
-    logger.error("Error in createProjectHistoryService:", error.message);
+    logger.error("Error in createProjectHistoryService:" + error.message);
     throw error;
   }
 };
@@ -47,7 +47,7 @@ export const getAllProjectHistoriesService = async (projectId) => {
 
     return { success: true, data: histories };
   } catch (error) {
-    logger.error("Error in getAllProjectHistoriesService:", error.message);
+    logger.error("Error in getAllProjectHistoriesService:" + error.message);
     throw error;
   }
 };

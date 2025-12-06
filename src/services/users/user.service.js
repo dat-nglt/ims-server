@@ -33,7 +33,7 @@ export const getAllUsersService = async () => {
         });
         return { success: true, data: users };
     } catch (error) {
-        logger.error("Error in getAllUsersService:", error.message);
+        logger.error("Error in getAllUsersService:" + error.message);
         throw error;
     }
 };
@@ -77,7 +77,7 @@ export const getUserByIdService = async (id) => {
 
         return { success: true, data: user };
     } catch (error) {
-        logger.error("Error in getUserByIdService:", error.message);
+        logger.error("Error in getUserByIdService:" + error.message);
         throw error;
     }
 };
@@ -215,7 +215,7 @@ export const updateUserService = async (id, updateData) => {
 
         return { success: true, data: user };
     } catch (error) {
-        logger.error("Error in updateUserService:", error.message);
+        logger.error("Error in updateUserService:" + error.message);
         throw error;
     }
 };
@@ -241,7 +241,7 @@ export const deleteUserService = async (id) => {
 
         return { success: true, message: "Xóa người dùng thành công" };
     } catch (error) {
-        logger.error("Error in deleteUserService:", error.message);
+        logger.error("Error in deleteUserService:" + error.message);
         throw error;
     }
 };
@@ -268,7 +268,7 @@ export const getUserByPhoneService = async (phone) => {
 
         return { success: true, data: user };
     } catch (error) {
-        logger.error("Error in getUserByPhoneService:", error.message);
+        logger.error("Error in getUserByPhoneService:" + error.message);
         throw error;
     }
 };
@@ -295,7 +295,7 @@ export const getUserByZaloIdService = async (zalo_id) => {
 
         return { success: true, data: user };
     } catch (error) {
-        logger.error("Error in getUserByZaloIdService:", error.message);
+        logger.error("Error in getUserByZaloIdService:" + error.message);
         throw error;
     }
 };
@@ -313,7 +313,7 @@ export const getUserRolesService = async (userId) => {
         const roles = userRoles.map((ur) => ur.role).filter((r) => r);
         return { success: true, data: roles };
     } catch (error) {
-        logger.error("Error in getUserRolesService:", error.message);
+        logger.error("Error in getUserRolesService:" + error.message);
         throw error;
     }
 };
@@ -361,7 +361,7 @@ export const getUserPermissionsService = async (userId) => {
 
         return { success: true, data: uniquePermissions };
     } catch (error) {
-        logger.error("Error in getUserPermissionsService:", error.message);
+        logger.error("Error in getUserPermissionsService:" + error.message);
         throw error;
     }
 };

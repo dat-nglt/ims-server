@@ -14,7 +14,7 @@ export const getAllEmployeeProfilesService = async () => {
 
     return { success: true, data: profiles };
   } catch (error) {
-    logger.error("Error in getAllEmployeeProfilesService:", error.message);
+    logger.error("Error in getAllEmployeeProfilesService:" + error.message);
     throw error;
   }
 };
@@ -36,7 +36,7 @@ export const getEmployeeProfileByUserIdService = async (userId) => {
 
     return { success: true, data: profile };
   } catch (error) {
-    logger.error("Error in getEmployeeProfileByUserIdService:", error.message);
+    logger.error("Error in getEmployeeProfileByUserIdService:" + error.message);
     throw error;
   }
 };
@@ -74,7 +74,7 @@ export const createEmployeeProfileService = async (profileData) => {
 
     return { success: true, data: profile };
   } catch (error) {
-    logger.error("Error in createEmployeeProfileService:", error.message);
+    logger.error("Error in createEmployeeProfileService:" + error.message);
     throw error;
   }
 };
@@ -102,7 +102,7 @@ export const updateEmployeeProfileService = async (userId, updateData) => {
 
     return { success: true, data: profile };
   } catch (error) {
-    logger.error("Error in updateEmployeeProfileService:", error.message);
+    logger.error("Error in updateEmployeeProfileService:" + error.message);
     throw error;
   }
 };
