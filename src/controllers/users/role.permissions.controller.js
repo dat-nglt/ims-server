@@ -2,9 +2,18 @@ import rolePermissionsService from '../../services/users/rolePermissions.service
 
 const assignPermission = async (req, res) => {
     try {
-        const { roleId, permissionId } = req.body;
-        const assignment = await rolePermissionsService.assignPermissionToRole(roleId, permissionId);
-        res.status(201).json({ message: 'Gán quyền thành công', data: assignment });
+        const { roleId, permissionIds } = req.body;
+
+        // Validate input
+        if (!roleId || !Array.isArray(permissionIds) || permissionIds.length === 0) {
+            return res.status(400).json({ error: 'roleId và permissionIds (mảng) là bắt buộc' });
+        }
+
+        const assignments = await rolePermissionsService.assignPermissionsToRole(roleId, permissionIds);
+        res.status(201).json({
+            message: `Gán ${assignments.length} quyền thành công`,
+            data: assignments
+        });
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
@@ -12,13 +21,17 @@ const assignPermission = async (req, res) => {
 
 const removePermission = async (req, res) => {
     try {
-        const { roleId, permissionId } = req.body;
-        const removed = await rolePermissionsService.removePermissionFromRole(roleId, permissionId);
-        if (removed) {
-            res.json({ message: 'Permission removed successfully' });
-        } else {
-            res.status(404).json({ error: 'Assignment not found' });
+        const { roleId, permissionIds } = req.body;
+
+        // Validate input
+        if (!roleId || !Array.isArray(permissionIds) || permissionIds.length === 0) {
+            return res.status(400).json({ error: 'roleId và permissionIds (mảng) là bắt buộc' });
         }
+
+        const removedCount = await rolePermissionsService.removePermissionsFromRole(roleId, permissionIds);
+        res.json({
+            message: `Đã gỡ ${removedCount} quyền thành công`
+        });
     } catch (error) {
         res.status(400).json({ error: error.message });
     }

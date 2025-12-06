@@ -3,10 +3,12 @@ import rolePermissionsController from '../../controllers/users/role.permissions.
 
 const router = express.Router();
 
-// POST route to assign a permission to a role
+// POST route to assign multiple permissions to a role
+// Body: { roleId: number, permissionIds: number[] }
 router.post('/assign', rolePermissionsController.assignPermission);
 
-// DELETE route to remove a permission from a role
+// DELETE route to remove multiple permissions from a role
+// Body: { roleId: number, permissionIds: number[] }
 router.delete('/remove', rolePermissionsController.removePermission);
 
 export default router;
