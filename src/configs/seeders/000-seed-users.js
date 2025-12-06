@@ -26,9 +26,6 @@ export async function up(queryInterface, Sequelize) {
             last_login: null,
             created_at: new Date("2025-12-06T07:56:29.400Z"),
             updated_at: new Date("2025-12-06T07:56:29.400Z"),
-            userRoles: [],
-            profile: null,
-            skills: [],
         },
     ];
 
