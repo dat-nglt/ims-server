@@ -8,6 +8,9 @@
  */
 
 export async function up(queryInterface, Sequelize) {
+  // Drop any existing conflicting types
+  await queryInterface.sequelize.query('DROP TYPE IF EXISTS work_reports CASCADE;');
+  
   await queryInterface.createTable('work_reports', {
     id: {
       type: Sequelize.INTEGER,

@@ -33,20 +33,6 @@ export default (sequelize, DataTypes) => {
                 defaultValue: false,
                 comment: "Soft delete flag",
             },
-            created_by: {
-                type: DataTypes.INTEGER,
-                references: {
-                    model: "users",
-                    key: "id",
-                },
-            },
-            updated_by: {
-                type: DataTypes.INTEGER,
-                references: {
-                    model: "users",
-                    key: "id",
-                },
-            },
             created_at: {
                 type: DataTypes.DATE,
                 defaultValue: DataTypes.NOW,
@@ -81,16 +67,6 @@ export default (sequelize, DataTypes) => {
             foreignKey: "permission_id",
             otherKey: "role_id",
             as: "roles",
-        });
-
-        // Người tạo/sửa permission
-        Permission.belongsTo(models.User, {
-            foreignKey: "created_by",
-            as: "creator",
-        });
-        Permission.belongsTo(models.User, {
-            foreignKey: "updated_by",
-            as: "updater",
         });
     };
 

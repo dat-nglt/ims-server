@@ -37,20 +37,6 @@ export async function up(queryInterface, Sequelize) {
             defaultValue: false,
             comment: "Soft delete flag",
         },
-        created_by: {
-            type: Sequelize.INTEGER,
-            references: {
-                model: "users",
-                key: "id",
-            },
-        },
-        updated_by: {
-            type: Sequelize.INTEGER,
-            references: {
-                model: "users",
-                key: "id",
-            },
-        },
         created_at: {
             type: Sequelize.DATE,
             defaultValue: Sequelize.NOW,
