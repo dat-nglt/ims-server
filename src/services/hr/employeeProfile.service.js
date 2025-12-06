@@ -106,3 +106,31 @@ export const updateEmployeeProfileService = async (userId, updateData) => {
     throw error;
   }
 };
+
+/**
+ * Duyệt tài khoản người dùng
+ * SQL: UPDATE users SET approved = true, updated_at = NOW() WHERE id = ?;
+ */
+export const approveEmployeeService = async (userId) => {
+  try {
+    const user = await db.User.findByPk(userId);
+
+    if (!user) {
+      throw new Error("Người dùng không tồn tại");
+    }
+
+    if (user.approved) {
+      throw new Error("Tài khoản đã được duyệt");
+    }
+
+    await user.update({
+      approved: true,
+      updated_at: new Date(),
+    });
+
+    return { success: true, data: user };
+  } catch (error) {
+    logger.error("Error in approveEmployeeService:" + error.message);
+    throw error;
+  }
+};

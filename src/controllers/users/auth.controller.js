@@ -55,6 +55,18 @@ export const loginController = async (req, res) => {
             });
         }
 
+        // Kiểm tra trạng thái phê duyệt
+        if (user.approved !== "approved") {
+            return res.status(200).json({
+                status: "error",
+                success: false,
+                message:
+                    user.approved === "rejected"
+                        ? "Tài khoản đã bị từ chối phê duyệt"
+                        : "Tài khoản đang chờ phê duyệt",
+            });
+        }
+
         // Kiểm tra mật khẩu
         if (!user.password) {
             return res.status(200).json({
@@ -198,7 +210,7 @@ export const zaloLoginController = async (req, res) => {
                 status: "active",
                 is_active: true,
                 department: "Technical",
-                approved: false,
+                approved: "pending",
             };
 
             const createResult = await userService.createUserService(userData);
@@ -215,10 +227,20 @@ export const zaloLoginController = async (req, res) => {
 
         // Kiểm tra trạng thái
         if (!user.is_active || user.status !== "active") {
-            return res.status(403).json({
-                status: "error",
+            return res.status(200).json({
+                status: "success",
+                message: "Tài khoản đã bị khóa hoặc không hoạt động",
+            });
+        }
+
+        // Kiểm tra trạng thái phê duyệt
+        if (user.approved !== "approved") {
+            return res.status(200).json({
+                status: "success",
                 message:
-                    "Tài khoản đã bị khóa, không hoạt động hoặc chưa được phê duyệt",
+                    user.approved === "rejected"
+                        ? "Tài khoản đã bị từ chối phê duyệt"
+                        : "Tài khoản đang chờ phê duyệt",
             });
         }
 
@@ -327,7 +349,7 @@ export const registerController = async (req, res) => {
             position: "Staff",
             status: "active",
             is_active: true,
-            approved: false,
+            approved: "pending",
         };
 
         const result = await userService.createUserService(userData);
@@ -338,7 +360,9 @@ export const registerController = async (req, res) => {
             message: "Đăng ký thành công",
         });
     } catch (error) {
-        logger.error(`[${req.id}] Error in registerController:` + error.message);
+        logger.error(
+            `[${req.id}] Error in registerController:` + error.message
+        );
         if (
             error.message.includes("duplicate") ||
             error.message.includes("unique")

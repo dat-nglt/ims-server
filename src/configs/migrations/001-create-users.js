@@ -62,9 +62,9 @@ export async function up(queryInterface, Sequelize) {
             defaultValue: true,
         },
         approved: {
-            type: Sequelize.BOOLEAN,
-            defaultValue: false,
-            comment: 'Trạng thái phê duyệt tài khoản',
+            type: Sequelize.ENUM('pending', 'approved', 'rejected'),
+            defaultValue: 'pending',
+            comment: 'Trạng thái phê duyệt tài khoản: pending, approved, rejected',
         },
         last_login: {
             type: Sequelize.DATE,

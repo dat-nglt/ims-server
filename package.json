@@ -4,6 +4,7 @@
     "main": "server.js",
     "type": "module",
     "scripts": {
+        "lint": "eslint .",
         "dev": "nodemon --exec babel-node src/server.js",
         "start": "node dist/server.js",
         "clean": "rimraf dist",
