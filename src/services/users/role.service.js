@@ -19,6 +19,12 @@ export const getAllRolesService = async () => {
                     as: "updater",
                     attributes: ["id", "name"],
                 },
+                {
+                    model: db.Permission,
+                    as: "permissions",
+                    through: { attributes: [] },
+                    attributes: ["id", "name", "description"],
+                },
             ],
             order: [
                 ["level", "ASC"],
@@ -49,6 +55,12 @@ export const getRoleByIdService = async (id) => {
                     model: db.User,
                     as: "updater",
                     attributes: ["id", "name"],
+                },
+                {
+                    model: db.Permission,
+                    as: "permissions",
+                    through: { attributes: [] },
+                    attributes: ["id", "name", "description"],
                 },
             ],
         });

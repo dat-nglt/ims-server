@@ -102,7 +102,7 @@ export default (sequelize, DataTypes) => {
     };
 
     // Helper method for assigning role to user
-    Role.prototype.assignToUser = async function(userId, assignedById) {
+    Role.prototype.assignToUser = async function (userId, assignedById) {
         const UserRoles = this.sequelize.models.UserRoles;
         return await UserRoles.create({
             user_id: userId,
