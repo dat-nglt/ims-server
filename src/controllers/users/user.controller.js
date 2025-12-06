@@ -102,3 +102,45 @@ export const deleteUserController = async (req, res) => {
         res.status(404).json({ error: error.message });
     }
 };
+
+/**
+ * Duyệt tài khoản người dùng
+ */
+export const approveUserController = async (req, res) => {
+    try {
+        const { zalo_id } = req.params;
+        const result = await userService.approveUserService(zalo_id);
+        res.json({
+            status: "success",
+            data: result.data,
+            message: "Duyệt tài khoản người dùng thành công",
+        });
+    } catch (error) {
+        logger.error(
+            `[${req.id}] Error in approveUserController:`,
+            error.message
+        );
+        res.status(400).json({ error: error.message });
+    }
+};
+
+/**
+ * Từ chối tài khoản người dùng
+ */
+export const rejectUserController = async (req, res) => {
+    try {
+        const { zalo_id } = req.params;
+        const result = await userService.rejectUserService(zalo_id);
+        res.json({
+            status: "success",
+            data: result.data,
+            message: "Từ chối tài khoản người dùng thành công",
+        });
+    } catch (error) {
+        logger.error(
+            `[${req.id}] Error in rejectUserController:`,
+            error.message
+        );
+        res.status(400).json({ error: error.message });
+    }
+};

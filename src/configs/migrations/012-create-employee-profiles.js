@@ -9,9 +9,8 @@
 export async function up(queryInterface, Sequelize) {
   await queryInterface.createTable('employee_profiles', {
     id: {
-      type: Sequelize.INTEGER,
+      type: Sequelize.STRING(255),
       primaryKey: true,
-      autoIncrement: true,
     },
     user_id: {
       type: Sequelize.INTEGER,

@@ -6,6 +6,7 @@
  * Đại diện cho bảng users với tất cả thông tin người dùng:
  * - Thông tin cá nhân: tên, email, điện thoại
  * - Thông tin công ty: vị trí, phòng ban, quản lý
+ * 
  * - Vai trò: tham chiếu đến bảng roles
  * - Trạng thái: active, inactive, suspended
  */

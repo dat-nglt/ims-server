@@ -14,14 +14,11 @@ router.get("/", getAllEmployeeProfilesController);
 
 // GET employee profile by user ID
 router.get("/user/:userId", getEmployeeProfileByUserIdController);
-    
+
 // CREATE employee profile
 router.post("/", createEmployeeProfileController);
 
 // UPDATE employee profile
 router.put("/user/:userId", updateEmployeeProfileController);
-
-// APPROVE employee account
-router.put("/user/:userId/approve", approveEmployeeController);
 
 export default router;

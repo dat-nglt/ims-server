@@ -5,6 +5,8 @@ import {
     createUserController,
     updateUserController,
     deleteUserController,
+    approveUserController,
+    rejectUserController,
 } from "../../controllers/users/user.controller.js";
 
 const router = express.Router();
@@ -23,5 +25,11 @@ router.put("/:id", updateUserController);
 
 // DELETE user
 router.delete("/:id", deleteUserController);
+
+// APPROVE user
+router.put("/:zalo_id/approve", approveUserController);
+
+// REJECT user
+router.put("/:zalo_id/reject", rejectUserController);
 
 export default router;

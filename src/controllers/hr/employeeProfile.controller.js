@@ -91,24 +91,3 @@ export const updateEmployeeProfileController = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 };
-
-/**
- * Duyệt tài khoản người dùng
- */
-export const approveEmployeeController = async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const result = await employeeProfileService.approveEmployeeService(userId);
-        res.json({
-            status: "success",
-            data: result.data,
-            message: "Duyệt tài khoản người dùng thành công",
-        });
-    } catch (error) {
-        logger.error(
-            `[${req.id}] Error in approveEmployeeController:`,
-            error.message
-        );
-        res.status(400).json({ error: error.message });
-    }
-};

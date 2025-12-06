@@ -10,9 +10,8 @@ export default (sequelize, DataTypes) => {
     'EmployeeProfile',
     {
       id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING(255),
         primaryKey: true,
-        autoIncrement: true,
       },
       // ID người dùng (FK)
       user_id: {

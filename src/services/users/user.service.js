@@ -247,6 +247,62 @@ export const deleteUserService = async (id) => {
 };
 
 /**
+ * Duyệt tài khoản người dùng
+ * SQL: UPDATE users SET approved = 'approved', updated_at = NOW() WHERE id = ?;
+ */
+export const approveUserService = async (zalo_id) => {
+    try {
+        const user = await db.User.findOne({ where: { zalo_id } });
+        if (!user) {
+            throw new Error("Người dùng không tồn tại");
+        }
+
+        // Kiểm tra trạng thái hiện tại
+        if (user.approved === "approved") {
+            throw new Error("Tài khoản đã được duyệt");
+        }
+
+        await user.update({
+            approved: "approved",
+            updated_at: new Date(),
+        });
+
+        return { success: true, data: user };
+    } catch (error) {
+        logger.error("Error in approveUserService:" + error.message);
+        throw error;
+    }
+};
+
+/**
+ * Từ chối tài khoản người dùng
+ * SQL: UPDATE users SET approved = 'rejected', updated_at = NOW() WHERE zalo_id = ?;
+ */
+export const rejectUserService = async (zalo_id) => {
+    try {
+        const user = await db.User.findOne({ where: { zalo_id } });
+        if (!user) {
+            throw new Error("Người dùng không tồn tại");
+        }
+
+        // Kiểm tra trạng thái hiện tại
+        if (user.approved === "rejected") {
+            throw new Error("Tài khoản đã bị từ chối");
+        }
+
+        await user.update({
+            approved: "rejected",
+            updated_at: new Date(),
+        });
+
+        return { success: true, data: user };
+    } catch (error) {
+        logger.error("Error in rejectUserService:" + error.message);
+        throw error;
+    }
+};
+
+/**
  * Lấy thông tin người dùng theo số điện thoại
  */
 export const getUserByPhoneService = async (phone) => {
