@@ -83,4 +83,30 @@ const bulkAssignPermissions = async (req, res) => {
     }
 };
 
-export default { assignPermission, removePermission, bulkAssignPermissions };
+const bulkRemovePermissions = async (req, res) => {
+    try {
+        const rolePermissionMap = req.body;
+
+        // Validate input
+        if (!rolePermissionMap || typeof rolePermissionMap !== "object") {
+            return res.status(400).json({
+                error: "Dữ liệu phải là object với key là roleId và value là mảng permissionIds",
+            });
+        }
+
+        const removedCount =
+            await rolePermissionsService.bulkRemovePermissionsFromRoles(
+                rolePermissionMap
+            );
+        res.json({
+            message: `Đã gỡ quyền thành công cho ${
+                Object.keys(rolePermissionMap).length
+            } vai trò`,
+            data: removedCount,
+        });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+
+export default { assignPermission, removePermission, bulkAssignPermissions, bulkRemovePermissions };

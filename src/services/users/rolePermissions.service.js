@@ -74,7 +74,7 @@ const removePermissionsFromRole = async (roleId, permissionIds) => {
 
 const bulkAssignPermissionsToRoles = async (rolePermissionMap) => {
     try {
-        const allAssignments = [];
+        const results = {};
 
         for (const [roleIdStr, permissionIds] of Object.entries(rolePermissionMap)) {
             const roleId = parseInt(roleIdStr);
@@ -104,6 +104,8 @@ const bulkAssignPermissionsToRoles = async (rolePermissionMap) => {
             const existingPermissionIds = existingAssignments.map(a => a.permission_id);
             const newPermissionIds = permissionIds.filter(id => !existingPermissionIds.includes(id));
 
+            results[roleId] = { assigned: 0, skipped: permissionIds.length - newPermissionIds.length };
+
             if (newPermissionIds.length > 0) {
                 // Bulk create assignments
                 const assignments = await db.RolePermissions.bulkCreate(
@@ -112,14 +114,55 @@ const bulkAssignPermissionsToRoles = async (rolePermissionMap) => {
                         permission_id: permissionId,
                     }))
                 );
-                allAssignments.push(...assignments);
+                results[roleId].assigned = assignments.length;
             }
         }
 
-        return allAssignments;
+        return results;
     } catch (error) {
         throw error;
     }
 };
 
-export default { assignPermissionsToRole, removePermissionsFromRole, bulkAssignPermissionsToRoles };
+const bulkRemovePermissionsFromRoles = async (rolePermissionMap) => {
+    try {
+        const results = {};
+
+        for (const [roleIdStr, permissionIds] of Object.entries(rolePermissionMap)) {
+            const roleId = parseInt(roleIdStr);
+            if (!Array.isArray(permissionIds) || permissionIds.length === 0) {
+                throw new Error(`permissionIds cho role ${roleId} phải là mảng không rỗng`);
+            }
+
+            // Kiểm tra role tồn tại
+            const role = await db.Role.findByPk(roleId);
+            if (!role) {
+                throw new Error(`Vai trò ${roleId} không tồn tại`);
+            }
+
+            // Kiểm tra permissions tồn tại
+            const permissions = await db.Permission.findAll({
+                where: { id: permissionIds }
+            });
+            if (permissions.length !== permissionIds.length) {
+                throw new Error(`Một hoặc nhiều quyền hạn cho role ${roleId} không tồn tại`);
+            }
+
+            // Xóa assignments
+            const deletedCount = await db.RolePermissions.destroy({
+                where: {
+                    role_id: roleId,
+                    permission_id: permissionIds
+                },
+            });
+
+            results[roleId] = { removed: deletedCount };
+        }
+
+        return results;
+    } catch (error) {
+        throw error;
+    }
+};
+
+export default { assignPermissionsToRole, removePermissionsFromRole, bulkAssignPermissionsToRoles, bulkRemovePermissionsFromRoles };
