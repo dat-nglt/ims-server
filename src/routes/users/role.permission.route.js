@@ -11,4 +11,8 @@ router.post('/assign', rolePermissionsController.assignPermission);
 // Body: { roleId: number, permissionIds: number[] }
 router.delete('/remove', rolePermissionsController.removePermission);
 
+// POST route to bulk assign permissions to multiple roles
+// Body: { "roleId": [permissionIds], ... }
+router.post('/bulk-assign', rolePermissionsController.bulkAssignPermissions);
+
 export default router;
