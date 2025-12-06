@@ -4,7 +4,6 @@ import {
     getEmployeeProfileByUserIdController,
     createEmployeeProfileController,
     updateEmployeeProfileController,
-    approveEmployeeController,
 } from "../../controllers/hr/employeeProfile.controller.js";
 
 const router = express.Router();
