@@ -180,3 +180,36 @@ export const updateRoleService = async (id, updateData) => {
     throw error;
   }
 };
+
+/**
+ * Xóa mềm vai trò
+ */
+export const deleteRoleService = async (id, deleted_by) => {
+    try {
+        const role = await db.Role.findOne({
+            where: { id, is_deleted: false },
+        });
+        if (!role) {
+            throw new Error("Vai trò không tồn tại");
+        }
+
+        // Kiểm tra deleted_by tồn tại
+        if (deleted_by) {
+            const deleter = await db.User.findByPk(deleted_by);
+            if (!deleter) {
+                throw new Error("Người xóa không tồn tại");
+            }
+        }
+
+        await role.update({
+            is_deleted: true,
+            updated_by: deleted_by,
+            updated_at: new Date(),
+        });
+
+        return { success: true, message: "Xóa vai trò thành công" };
+    } catch (error) {
+        logger.error("Error in deleteRoleService:" + error.message);
+        throw error;
+    }
+};
