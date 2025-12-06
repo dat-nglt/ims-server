@@ -72,8 +72,8 @@ const bulkAssignPermissions = async (req, res) => {
             await rolePermissionsService.bulkAssignPermissionsToRoles(
                 rolePermissionMap
             );
-        res.status(201).json({
-            message: `Gán quyền thành công cho ${
+        res.status(200).json({
+            message: `Đã đồng bộ quyền thành công cho ${
                 Object.keys(rolePermissionMap).length
             } vai trò`,
             data: assignments,
@@ -83,30 +83,4 @@ const bulkAssignPermissions = async (req, res) => {
     }
 };
 
-const bulkRemovePermissions = async (req, res) => {
-    try {
-        const rolePermissionMap = req.body;
-
-        // Validate input
-        if (!rolePermissionMap || typeof rolePermissionMap !== "object") {
-            return res.status(400).json({
-                error: "Dữ liệu phải là object với key là roleId và value là mảng permissionIds",
-            });
-        }
-
-        const removedCount =
-            await rolePermissionsService.bulkRemovePermissionsFromRoles(
-                rolePermissionMap
-            );
-        res.json({
-            message: `Đã gỡ quyền thành công cho ${
-                Object.keys(rolePermissionMap).length
-            } vai trò`,
-            data: removedCount,
-        });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-};
-
-export default { assignPermission, removePermission, bulkAssignPermissions, bulkRemovePermissions };
+export default { assignPermission, removePermission, bulkAssignPermissions };
