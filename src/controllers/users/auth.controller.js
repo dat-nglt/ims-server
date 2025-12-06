@@ -229,6 +229,11 @@ export const zaloLoginController = async (req, res) => {
         if (!user.is_active || user.status !== "active") {
             return res.status(200).json({
                 status: "success",
+                data: {
+                    user: user,
+                    access_token: null,
+                    refresh_token: null,
+                },
                 message: "Tài khoản đã bị khóa hoặc không hoạt động",
             });
         }
@@ -237,6 +242,11 @@ export const zaloLoginController = async (req, res) => {
         if (user.approved !== "approved") {
             return res.status(200).json({
                 status: "success",
+                data: {
+                    user: user,
+                    access_token: null,
+                    refresh_token: null,
+                },
                 message:
                     user.approved === "rejected"
                         ? "Tài khoản đã bị từ chối phê duyệt"
