@@ -48,8 +48,10 @@ export const createRoleController = async (req, res) => {
         const created_by = 1; // Sử dụng req.user.id từ middleware auth
         // const created_by = req.user?.id; // Sử dụng req.user.id từ middleware auth
 
+        console.log(req.body);
+
         // Single create
-        const { name, description, level, permissions } = req.body.roleData;
+        const { name, description, level, permissions } = req.body;
         const roleData = {
             name,
             description,
