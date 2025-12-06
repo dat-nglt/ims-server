@@ -45,11 +45,15 @@ export const getRoleByIdController = async (req, res) => {
  */
 export const createRoleController = async (req, res) => {
     try {
-        const created_by = req.user?.id; // Giả sử middleware auth set req.user
+        // const created_by = req.user?.id; // Giả sử middleware auth set req.user
+        const created_by = 1;
 
         if (Array.isArray(req.body)) {
             // Bulk create
-            const result = await roleService.bulkCreateRolesService(req.body, created_by);
+            const result = await roleService.bulkCreateRolesService(
+                req.body,
+                created_by
+            );
             res.status(201).json({
                 status: "success",
                 data: result.data,
@@ -69,7 +73,9 @@ export const createRoleController = async (req, res) => {
             });
         }
     } catch (error) {
-        logger.error(`[${req.id}] Error in createRoleController: ${error.message}`);
+        logger.error(
+            `[${req.id}] Error in createRoleController: ${error.message}`
+        );
         res.status(400).json({ error: error.message });
     }
 };
