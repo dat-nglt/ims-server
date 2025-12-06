@@ -79,7 +79,7 @@ export const getRoleByIdService = async (id) => {
  */
 export const createRoleService = async (roleData) => {
   try {
-    const { name, description, level, created_by } = roleData;
+    const { name, description, level, created_by, permissions } = roleData;
 
     if (!name) {
       throw new Error("Tên vai trò là bắt buộc");
@@ -107,6 +107,25 @@ export const createRoleService = async (roleData) => {
       level: level || 10,
       created_by,
     });
+
+    // Gán permissions nếu có
+    if (permissions && permissions.length > 0) {
+      // Kiểm tra permissions tồn tại
+      const perms = await db.Permission.findAll({
+        where: { id: permissions },
+      });
+      if (perms.length !== permissions.length) {
+        throw new Error("Một hoặc nhiều quyền hạn không tồn tại");
+      }
+
+      // Gán permissions
+      await db.RolePermissions.bulkCreate(
+        permissions.map((permissionId) => ({
+          role_id: role.id,
+          permission_id: permissionId,
+        }))
+      );
+    }
 
     return { success: true, data: role };
   } catch (error) {
@@ -163,50 +182,60 @@ export const updateRoleService = async (id, updateData) => {
 };
 
 /**
- * Xóa vai trò (soft delete)
+ * Tạo nhiều vai trò cùng lúc
  */
-export const deleteRoleService = async (id, deleted_by) => {
-  try {
-    const role = await db.Role.findOne({
-      where: { id, is_deleted: false },
-    });
-    if (!role) {
-      throw new Error("Vai trò không tồn tại");
+export const bulkCreateRolesService = async (rolesData, created_by) => {
+    try {
+        const results = [];
+
+        for (const roleData of rolesData) {
+            const { name, description, level, permissions } = roleData;
+
+            if (!name) {
+                throw new Error("Tên vai trò là bắt buộc");
+            }
+
+            // Kiểm tra tên đã tồn tại
+            const existingRole = await db.Role.findOne({
+                where: { name, is_deleted: false },
+            });
+            if (existingRole) {
+                throw new Error(`Tên vai trò '${name}' đã tồn tại`);
+            }
+
+            // Tạo role
+            const role = await db.Role.create({
+                name,
+                description,
+                level: level || 10,
+                created_by,
+            });
+
+            // Gán permissions nếu có
+            if (permissions && permissions.length > 0) {
+                // Kiểm tra permissions tồn tại
+                const perms = await db.Permission.findAll({
+                    where: { id: permissions },
+                });
+                if (perms.length !== permissions.length) {
+                    throw new Error(`Một hoặc nhiều quyền hạn cho role '${name}' không tồn tại`);
+                }
+
+                // Gán permissions
+                await db.RolePermissions.bulkCreate(
+                    permissions.map((permissionId) => ({
+                        role_id: role.id,
+                        permission_id: permissionId,
+                    }))
+                );
+            }
+
+            results.push(role);
+        }
+
+        return { success: true, data: results };
+    } catch (error) {
+        logger.error("Error in bulkCreateRolesService:" + error.message);
+        throw error;
     }
-
-    // Kiểm tra có user nào đang dùng role này không
-    const assignedUsersCount = await db.UserRoles.count({
-      where: { role_id: id },
-      include: [
-        {
-          model: db.User,
-          as: "user", // Specify the association alias
-          where: { is_active: true },
-          required: true,
-        },
-      ],
-    });
-    if (assignedUsersCount > 0) {
-      throw new Error("Không thể xóa vai trò đang được sử dụng");
-    }
-
-    // Kiểm tra deleted_by tồn tại
-    if (deleted_by) {
-      const deleter = await db.User.findByPk(deleted_by);
-      if (!deleter) {
-        throw new Error("Người xóa không tồn tại");
-      }
-    }
-
-    await role.update({
-      is_deleted: true,
-      updated_by: deleted_by,
-      updated_at: new Date(),
-    });
-
-    return { success: true, message: "Xóa vai trò thành công" };
-  } catch (error) {
-    logger.error("Error in deleteRoleService:" + error.message);
-    throw error;
-  }
 };

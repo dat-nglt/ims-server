@@ -41,20 +41,33 @@ export const getRoleByIdController = async (req, res) => {
 };
 
 /**
- * Tạo vai trò mới
+ * Tạo vai trò mới (single hoặc bulk)
  */
 export const createRoleController = async (req, res) => {
     try {
-        const roleData = {
-            ...req.body,
-            created_by: req.user?.id, // Giả sử middleware auth set req.user
-        };
-        const result = await roleService.createRoleService(roleData);
-        res.status(201).json({
-            status: "success",
-            data: result.data,
-            message: "Tạo vai trò thành công",
-        });
+        const created_by = req.user?.id; // Giả sử middleware auth set req.user
+
+        if (Array.isArray(req.body)) {
+            // Bulk create
+            const result = await roleService.bulkCreateRolesService(req.body, created_by);
+            res.status(201).json({
+                status: "success",
+                data: result.data,
+                message: `Tạo ${result.data.length} vai trò thành công`,
+            });
+        } else {
+            // Single create
+            const roleData = {
+                ...req.body,
+                created_by,
+            };
+            const result = await roleService.createRoleService(roleData);
+            res.status(201).json({
+                status: "success",
+                data: result.data,
+                message: "Tạo vai trò thành công",
+            });
+        }
     } catch (error) {
         logger.error(`[${req.id}] Error in createRoleController: ${error.message}`);
         res.status(400).json({ error: error.message });
