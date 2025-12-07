@@ -1,1 +1,1 @@
-export { default as SystemConfig } from './SystemConfig.model.js';
+export { default as SystemConfig } from './system-config.model.js';

@@ -318,6 +318,8 @@ export const getUserByPhoneService = async (phone) => {
             ],
         });
 
+        console.log(user);
+
         if (!user) {
             return { success: false, message: "Người dùng không tồn tại" };
         }

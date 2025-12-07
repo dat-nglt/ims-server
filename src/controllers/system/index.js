@@ -1,1 +1,1 @@
-export * from './systemConfig.controller.js';
+export * from './system-config.controller.js';

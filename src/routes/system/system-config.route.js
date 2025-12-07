@@ -7,7 +7,7 @@ import {
     deleteSystemConfigController,
     getSystemSettingsController,
     updateSystemSettingsController,
-} from "../../controllers/system/systemConfig.controller.js";
+} from "../../controllers/system/system-config.controller.js";
 
 const router = express.Router();
 

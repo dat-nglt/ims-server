@@ -3,7 +3,7 @@ import {
     getAllDashboardMetricsController,
     getDashboardMetricsByUserIdController,
     getDashboardMetricsByDateController,
-} from "../../controllers/metrics/dashboardMetric.controller.js";
+} from "../../controllers/metrics/dashboard-metric.controller.js";
 
 const router = express.Router();
 

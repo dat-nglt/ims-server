@@ -1,2 +1,2 @@
-export * from './dashboardMetric.controller.js';
-export * from './performanceMetric.controller.js';
+export * from './dashboard-metric.controller.js';
+export * from './performance-metric.controller.js';

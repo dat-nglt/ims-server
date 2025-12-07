@@ -5,7 +5,7 @@ import {
     getUserRolesController,
     revokeRoleController,
     getUserPermissionsController,
-} from "../../controllers/users/user.role.controller.js";
+} from "../../controllers/users/user-role.controller.js";
 
 const router = express.Router();
 

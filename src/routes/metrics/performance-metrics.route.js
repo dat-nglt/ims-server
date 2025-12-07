@@ -2,7 +2,7 @@ import express from "express";
 import {
     getAllPerformanceMetricsController,
     getPerformanceMetricByUserAndMonthController,
-} from "../../controllers/metrics/performanceMetric.controller.js";
+} from "../../controllers/metrics/performance-metric.controller.js";
 
 const router = express.Router();
 

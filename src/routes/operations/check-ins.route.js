@@ -11,7 +11,7 @@ import {
     getOfficeLocationController,
     getTechnicianLocationHistoryController,
     getJobItemsLocationsController,
-} from "../../controllers/operations/checkIn.controller.js";
+} from "../../controllers/operations/check-in.controller.js";
 
 const router = express.Router();
 

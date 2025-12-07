@@ -1,4 +1,4 @@
-import rolePermissionsService from "../../services/users/rolePermissions.service.js";
+import rolePermissionsService from "../../services/users/role-permissions.service.js";
 
 const assignPermission = async (req, res) => {
     try {

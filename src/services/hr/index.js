@@ -1,2 +1,2 @@
-export * from './employeeProfile.service.js';
-export * from './technicianSkill.service.js';
+export * from './employee-profile.service.js';
+export * from './technician-skill.service.js';

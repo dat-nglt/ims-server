@@ -1,1 +1,1 @@
-export * from './systemConfig.service.js';
+export * from './system-config.service.js';

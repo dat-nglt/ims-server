@@ -1,1 +1,1 @@
-export { default as SalesReportDaily } from './SalesReportDaily.model.js';
+export { default as SalesReportDaily } from './sales-report-daily.model.js';

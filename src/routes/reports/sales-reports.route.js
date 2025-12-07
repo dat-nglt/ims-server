@@ -5,7 +5,7 @@ import {
     createSalesReportController,
     updateSalesReportController,
     getSalesReportsByDateRangeController,
-} from "../../controllers/reports/salesReport.controller.js";
+} from "../../controllers/reports/sales-report.controller.js";
 
 const router = express.Router();
 

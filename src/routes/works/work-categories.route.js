@@ -5,7 +5,7 @@ import {
     createWorkCategoryController,
     updateWorkCategoryController,
     deleteWorkCategoryController,
-} from "../../controllers/works/workCategory.controller.js";
+} from "../../controllers/works/work-category.controller.js";
 
 const router = express.Router();
 

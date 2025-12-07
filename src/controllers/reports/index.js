@@ -1,1 +1,1 @@
-export * from './salesReport.controller.js';
+export * from './sales-report.controller.js';

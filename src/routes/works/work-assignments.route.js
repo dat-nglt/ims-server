@@ -10,7 +10,7 @@ import {
   startWorkAssignmentController,
   completeWorkAssignmentController,
   getWorkAssignmentsByWorkIdController,
-} from "../../controllers/works/workAssignment.controller.js";
+} from "../../controllers/works/work-assignment.controller.js";
 
 const router = express.Router();
 

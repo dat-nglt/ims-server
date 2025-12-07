@@ -6,7 +6,7 @@ import {
     updateWorkReportController,
     approveWorkReportController,
     rejectWorkReportController,
-} from "../../controllers/works/workReport.controller.js";
+} from "../../controllers/works/work-report.controller.js";
 
 const router = express.Router();
 

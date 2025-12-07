@@ -5,7 +5,7 @@ import {
     updateTechnicianSkillController,
     deleteTechnicianSkillController,
     createTechnicianSkillController,
-} from "../../controllers/hr/technicianSkill.controller.js";
+} from "../../controllers/hr/technician-skill.controller.js";
 
 const router = express.Router();
 

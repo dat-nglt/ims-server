@@ -1,2 +1,2 @@
-export * from './employeeProfile.controller.js';
-export * from './technicianSkill.controller.js';
+export * from './employee-profile.controller.js';
+export * from './technician-skill.controller.js';

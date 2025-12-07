@@ -1,5 +1,5 @@
 import logger from "../../utils/logger.js";
-import * as userRoleService from "../../services/users/user.role.service.js";
+import * as userRoleService from "../../services/users/user-role.service.js";
 
 /**
  * Gán role cho user
