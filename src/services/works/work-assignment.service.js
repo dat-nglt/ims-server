@@ -1,7 +1,7 @@
 import db from "../../models/index.js";
 import logger from "../../utils/logger.js";
 import { Op } from "sequelize";
-import { createWorkHistoryService } from "./workHistory.service.js";
+import { createWorkHistoryService } from "./work-history.service.js";
 
 /**
  * Lấy danh sách tất cả phân công (legacy)

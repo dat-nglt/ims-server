@@ -2,7 +2,7 @@ import { Op } from "sequelize";
 import db from "../../models/index.js"; // Updated to use centralized db
 import logger from "../../utils/logger.js"; // Added for consistent logging
 import { createNotificationService } from "../operations/notification.service.js";
-import { createProjectHistoryService } from "./projectHistory.service.js";
+import { createProjectHistoryService } from "./project-history.service.js";
 
 // Fetch projects with filters, includes, and computed fields
 export const getProjectsService = async (filters) => {
@@ -243,7 +243,10 @@ export const createProjectService = async (data) => {
                     notes: "Dự án được tạo",
                 });
             } catch (historyError) {
-                logger.error("Failed to log project history for creation: " + historyError.message);
+                logger.error(
+                    "Failed to log project history for creation: " +
+                        historyError.message
+                );
             }
 
             // Create notification for project manager if assigned
@@ -258,7 +261,10 @@ export const createProjectService = async (data) => {
                         action_url: `/projects/${project.id}`,
                     });
                 } catch (notificationError) {
-                    logger.error("Failed to create notification for project creation: " + notificationError.message);
+                    logger.error(
+                        "Failed to create notification for project creation: " +
+                            notificationError.message
+                    );
                 }
             }
 
@@ -309,7 +315,10 @@ export const updateProjectService = async (id, data) => {
                         notes: "Dự án được cập nhật",
                     });
                 } catch (historyError) {
-                    logger.error("Failed to log project history for update: " + historyError.message);
+                    logger.error(
+                        "Failed to log project history for update: " +
+                            historyError.message
+                    );
                 }
 
                 // Create notification for project manager
@@ -325,7 +334,10 @@ export const updateProjectService = async (id, data) => {
                             action_url: `/projects/${id}`,
                         });
                     } catch (notificationError) {
-                        logger.error("Failed to create notification for project update: " + notificationError.message);
+                        logger.error(
+                            "Failed to create notification for project update: " +
+                                notificationError.message
+                        );
                     }
                 }
 
@@ -362,7 +374,10 @@ export const deleteProjectService = async (id) => {
                     notes: "Dự án bị xóa",
                 });
             } catch (historyError) {
-                logger.error("Failed to log project history for deletion: " + historyError.message);
+                logger.error(
+                    "Failed to log project history for deletion: " +
+                        historyError.message
+                );
             }
 
             // Create notification for project manager before deletion
@@ -377,7 +392,10 @@ export const deleteProjectService = async (id) => {
                         action_url: `/projects`, // Redirect to projects list
                     });
                 } catch (notificationError) {
-                    logger.error("Failed to create notification for project deletion: " + notificationError.message);
+                    logger.error(
+                        "Failed to create notification for project deletion: " +
+                            notificationError.message
+                    );
                 }
             }
 

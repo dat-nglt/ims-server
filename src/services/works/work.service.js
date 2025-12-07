@@ -3,7 +3,7 @@ import logger from "../../utils/logger.js";
 import { Op } from "sequelize";
 import { Parser } from "json2csv";
 import ExcelJS from "exceljs";
-import { createWorkHistoryService } from "./workHistory.service.js";
+import { createWorkHistoryService } from "./work-history.service.js";
 import { createNotificationService } from "../operations/notification.service.js";
 
 /**
@@ -94,7 +94,7 @@ export const createWorkService = async (workData) => {
             if (!category) {
                 throw new Error("Danh mục công việc không tồn tại");
             }
-        }   
+        }
 
         if (project_id) {
             const project = await db.Project.findByPk(project_id);
@@ -137,28 +137,34 @@ export const createWorkService = async (workData) => {
 
         // Log work history
         try {
-          await createWorkHistoryService({
-            work_id: work.id,
-            action: "created",
-            changed_by: assigned_user_id,
-            notes: "Công việc được tạo",
-          });
+            await createWorkHistoryService({
+                work_id: work.id,
+                action: "created",
+                changed_by: assigned_user_id,
+                notes: "Công việc được tạo",
+            });
         } catch (historyError) {
-          logger.error("Failed to log work history for creation: " + historyError.message);
+            logger.error(
+                "Failed to log work history for creation: " +
+                    historyError.message
+            );
         }
 
         // Create notification for assigned user
         try {
-          await createNotificationService({
-            user_id: assigned_user_id,
-            title: "Công việc mới được giao",
-            message: `Công việc "${title}" đã được tạo và giao cho bạn.`,
-            type: "work_assigned",
-            related_work_id: work.id,
-            action_url: `/works/${work.id}`,
-          });
+            await createNotificationService({
+                user_id: assigned_user_id,
+                title: "Công việc mới được giao",
+                message: `Công việc "${title}" đã được tạo và giao cho bạn.`,
+                type: "work_assigned",
+                related_work_id: work.id,
+                action_url: `/works/${work.id}`,
+            });
         } catch (notificationError) {
-          logger.error("Failed to create notification for work creation: " + notificationError.message);
+            logger.error(
+                "Failed to create notification for work creation: " +
+                    notificationError.message
+            );
         }
 
         return { success: true, data: work };
@@ -172,198 +178,221 @@ export const createWorkService = async (workData) => {
  * Cập nhật công việc (including optional technician assignment if needed)
  */
 export const updateWorkService = async (id, updateData) => {
-  try {
-    const work = await db.Work.findByPk(id);
-    if (!work) {
-      throw new Error("Công việc không tồn tại");
-    }
-
-    // Kiểm tra assigned_user_id nếu được cung cấp
-    if (updateData.assigned_user_id) {
-      const assignedUser = await db.User.findByPk(updateData.assigned_user_id);
-      if (!assignedUser) {
-        throw new Error("Người dùng được giao không tồn tại");
-      }
-    }
-
-    // Kiểm tra category_id nếu được cung cấp
-    if (updateData.category_id) {
-      const category = await db.WorkCategory.findByPk(updateData.category_id);
-      if (!category) {
-        throw new Error("Danh mục công việc không tồn tại");
-      }
-    }
-
-    // Kiểm tra project_id nếu được cung cấp
-    if (updateData.project_id) {
-      const project = await db.Project.findByPk(updateData.project_id);
-      if (!project) {
-        throw new Error("Dự án không tồn tại");
-      }
-    }
-
-    // Kiểm tra created_by_sales_id nếu được cung cấp
-    if (updateData.created_by_sales_id) {
-      const salesPerson = await db.User.findByPk(updateData.created_by_sales_id);
-      if (!salesPerson) {
-        throw new Error("Nhân viên kinh doanh không tồn tại");
-      }
-    }
-
-    // Removed technician assignment logic to separate phases
-    await work.update({
-      ...updateData,
-      updated_at: new Date(),
-    });
-
-    // Log work history
     try {
-      await createWorkHistoryService({
-        work_id: id,
-        action: "updated",
-        changed_by: updateData.changed_by || work.assigned_user_id, // Use provided or existing
-        notes: "Công việc được cập nhật",
-      });
-    } catch (historyError) {
-      logger.error("Failed to log work history for update: " + historyError.message);
-    }
+        const work = await db.Work.findByPk(id);
+        if (!work) {
+            throw new Error("Công việc không tồn tại");
+        }
 
-    // Create notification for assigned user
-    try {
-      await createNotificationService({
-        user_id: work.assigned_user_id,
-        title: "Công việc được cập nhật",
-        message: `Công việc "${work.title}" đã được cập nhật.`,
-        type: "work_updated",
-        related_work_id: id,
-        action_url: `/works/${id}`,
-      });
-    } catch (notificationError) {
-      logger.error("Failed to create notification for work update: " + notificationError.message);
-    }
+        // Kiểm tra assigned_user_id nếu được cung cấp
+        if (updateData.assigned_user_id) {
+            const assignedUser = await db.User.findByPk(
+                updateData.assigned_user_id
+            );
+            if (!assignedUser) {
+                throw new Error("Người dùng được giao không tồn tại");
+            }
+        }
 
-    return { success: true, data: work };
-  } catch (error) {
-    logger.error("Error in updateWorkService: " + error.message);
-    throw error;
-  }
+        // Kiểm tra category_id nếu được cung cấp
+        if (updateData.category_id) {
+            const category = await db.WorkCategory.findByPk(
+                updateData.category_id
+            );
+            if (!category) {
+                throw new Error("Danh mục công việc không tồn tại");
+            }
+        }
+
+        // Kiểm tra project_id nếu được cung cấp
+        if (updateData.project_id) {
+            const project = await db.Project.findByPk(updateData.project_id);
+            if (!project) {
+                throw new Error("Dự án không tồn tại");
+            }
+        }
+
+        // Kiểm tra created_by_sales_id nếu được cung cấp
+        if (updateData.created_by_sales_id) {
+            const salesPerson = await db.User.findByPk(
+                updateData.created_by_sales_id
+            );
+            if (!salesPerson) {
+                throw new Error("Nhân viên kinh doanh không tồn tại");
+            }
+        }
+
+        // Removed technician assignment logic to separate phases
+        await work.update({
+            ...updateData,
+            updated_at: new Date(),
+        });
+
+        // Log work history
+        try {
+            await createWorkHistoryService({
+                work_id: id,
+                action: "updated",
+                changed_by: updateData.changed_by || work.assigned_user_id, // Use provided or existing
+                notes: "Công việc được cập nhật",
+            });
+        } catch (historyError) {
+            logger.error(
+                "Failed to log work history for update: " + historyError.message
+            );
+        }
+
+        // Create notification for assigned user
+        try {
+            await createNotificationService({
+                user_id: work.assigned_user_id,
+                title: "Công việc được cập nhật",
+                message: `Công việc "${work.title}" đã được cập nhật.`,
+                type: "work_updated",
+                related_work_id: id,
+                action_url: `/works/${id}`,
+            });
+        } catch (notificationError) {
+            logger.error(
+                "Failed to create notification for work update: " +
+                    notificationError.message
+            );
+        }
+
+        return { success: true, data: work };
+    } catch (error) {
+        logger.error("Error in updateWorkService: " + error.message);
+        throw error;
+    }
 };
 
 /**
  * Phê duyệt công việc
  */
 export const approveWorkService = async (id, approvalData) => {
-  try {
-    const { approved_by, notes } = approvalData;
-
-    const work = await db.Work.findByPk(id);
-    if (!work) {
-      throw new Error("Công việc không tồn tại");
-    }
-
-    if (work.status !== "pending") {
-      throw new Error("Công việc không ở trạng thái chờ phê duyệt");
-    }
-
-    // Kiểm tra approved_by tồn tại
-    if (approved_by) {
-      const approver = await db.User.findByPk(approved_by);
-      if (!approver) {
-        throw new Error("Người phê duyệt không tồn tại");
-      }
-    }
-
-    // Update work status
-    await work.update({
-      status: "assigned",
-      updated_at: new Date(),
-    });
-
-    // Create approval workflow record
-    await db.ApprovalWorkflow.create({
-      work_id: id,
-      approved_by,
-      status: "approved",
-      notes,
-      approved_at: new Date(),
-    });
-
-    // Log work history
     try {
-      await createWorkHistoryService({
-        work_id: id,
-        action: "approved",
-        changed_by: approved_by,
-        notes: "Công việc được phê duyệt",
-      });
-    } catch (historyError) {
-      logger.error("Failed to log work history for approval: " + historyError.message);
-    }
+        const { approved_by, notes } = approvalData;
 
-    // Create notification for assigned user
-    try {
-      await createNotificationService({
-        user_id: work.assigned_user_id,
-        title: "Công việc được phê duyệt",
-        message: `Công việc "${work.title}" đã được phê duyệt và sẵn sàng để thực hiện.`,
-        type: "work_approved",
-        related_work_id: id,
-        action_url: `/works/${id}`,
-      });
-    } catch (notificationError) {
-      logger.error("Failed to create notification for work approval: " + notificationError.message);
-    }
+        const work = await db.Work.findByPk(id);
+        if (!work) {
+            throw new Error("Công việc không tồn tại");
+        }
 
-    return { success: true, data: work };
-  } catch (error) {
-    logger.error("Error in approveWorkService: " + error.message);
-    throw error;
-  }
+        if (work.status !== "pending") {
+            throw new Error("Công việc không ở trạng thái chờ phê duyệt");
+        }
+
+        // Kiểm tra approved_by tồn tại
+        if (approved_by) {
+            const approver = await db.User.findByPk(approved_by);
+            if (!approver) {
+                throw new Error("Người phê duyệt không tồn tại");
+            }
+        }
+
+        // Update work status
+        await work.update({
+            status: "assigned",
+            updated_at: new Date(),
+        });
+
+        // Create approval workflow record
+        await db.ApprovalWorkflow.create({
+            work_id: id,
+            approved_by,
+            status: "approved",
+            notes,
+            approved_at: new Date(),
+        });
+
+        // Log work history
+        try {
+            await createWorkHistoryService({
+                work_id: id,
+                action: "approved",
+                changed_by: approved_by,
+                notes: "Công việc được phê duyệt",
+            });
+        } catch (historyError) {
+            logger.error(
+                "Failed to log work history for approval: " +
+                    historyError.message
+            );
+        }
+
+        // Create notification for assigned user
+        try {
+            await createNotificationService({
+                user_id: work.assigned_user_id,
+                title: "Công việc được phê duyệt",
+                message: `Công việc "${work.title}" đã được phê duyệt và sẵn sàng để thực hiện.`,
+                type: "work_approved",
+                related_work_id: id,
+                action_url: `/works/${id}`,
+            });
+        } catch (notificationError) {
+            logger.error(
+                "Failed to create notification for work approval: " +
+                    notificationError.message
+            );
+        }
+
+        return { success: true, data: work };
+    } catch (error) {
+        logger.error("Error in approveWorkService: " + error.message);
+        throw error;
+    }
 };
 
 /**
  * Xóa công việc
  */
 export const deleteWorkService = async (id) => {
-  try {
-    const work = await db.Work.findByPk(id);
-    if (!work) {
-      throw new Error("Công việc không tồn tại");
-    }
-
-    // Log work history before deletion
     try {
-      await createWorkHistoryService({
-        work_id: id,
-        action: "deleted",
-        changed_by: work.assigned_user_id,
-        notes: "Công việc bị xóa",
-      });
-    } catch (historyError) {
-      logger.error("Failed to log work history for deletion: " + historyError.message);
+        const work = await db.Work.findByPk(id);
+        if (!work) {
+            throw new Error("Công việc không tồn tại");
+        }
+
+        // Log work history before deletion
+        try {
+            await createWorkHistoryService({
+                work_id: id,
+                action: "deleted",
+                changed_by: work.assigned_user_id,
+                notes: "Công việc bị xóa",
+            });
+        } catch (historyError) {
+            logger.error(
+                "Failed to log work history for deletion: " +
+                    historyError.message
+            );
+        }
+
+        // Create notification for assigned user before deletion
+        try {
+            await createNotificationService({
+                user_id: work.assigned_user_id,
+                title: "Công việc bị xóa",
+                message: `Công việc "${work.title}" đã bị xóa khỏi hệ thống.`,
+                type: "work_deleted",
+                related_work_id: id,
+                action_url: `/works`, // Redirect to works list since the specific work is deleted
+            });
+        } catch (notificationError) {
+            logger.error(
+                "Failed to create notification for work deletion: " +
+                    notificationError.message
+            );
+        }
+
+        await work.destroy();
+
+        return { success: true, message: "Xóa công việc thành công" };
+    } catch (error) {
+        logger.error("Error in deleteWorkService: " + error.message);
+        throw error;
     }
-
-    // Create notification for assigned user before deletion
-    try {
-      await createNotificationService({
-        user_id: work.assigned_user_id,
-        title: "Công việc bị xóa",
-        message: `Công việc "${work.title}" đã bị xóa khỏi hệ thống.`,
-        type: "work_deleted",
-        related_work_id: id,
-        action_url: `/works`, // Redirect to works list since the specific work is deleted
-      });
-    } catch (notificationError) {
-      logger.error("Failed to create notification for work deletion: " + notificationError.message);
-    }
-
-    await work.destroy();
-
-    return { success: true, message: "Xóa công việc thành công" };
-  } catch (error) {
-    logger.error("Error in deleteWorkService: " + error.message);
-    throw error;
-  }
 };
 
 /**
@@ -678,7 +707,7 @@ export const getWorksService = async (queryParams) => {
 /**
  * Lấy thống kê công việc
  */
-export const  getWorksStatisticsService = async (dateRange = "all") => {
+export const getWorksStatisticsService = async (dateRange = "all") => {
     try {
         const where = {};
 
