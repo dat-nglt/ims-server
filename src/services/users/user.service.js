@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import db from "../../models/index.js";
 import logger from "../../utils/logger.js";
 /**
@@ -86,6 +87,7 @@ export const getUserByIdService = async (id) => {
  * Tạo người dùng mới
  * SQL: INSERT INTO users (employee_id, name, position, email, phone, department, manager_id, avatar_url, zalo_id, status, is_active, created_at, updated_at)
  * VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW());
+ * Note: Chỉ validate conflict với user có is_active = true, cho phép tạo trùng với user đã bị deactivate
  */
 export const createUserService = async (userData) => {
     try {
@@ -103,43 +105,47 @@ export const createUserService = async (userData) => {
             is_active = true, // Default is_active
         } = userData;
 
-        // Validation
+        // Validation cơ bản
         if (!employee_id || !name || !position) {
             throw new Error(
                 "Thiếu thông tin bắt buộc: employee_id, name, position"
             );
         }
 
-        // Kiểm tra email đã tồn tại nếu có email
-        if (email) {
-            const existingUser = await db.User.findOne({ where: { email } });
-            if (existingUser) {
-                throw new Error("Email đã được sử dụng");
-            }
-        }
+        // Validation conflict với user active - sử dụng 1 query duy nhất
+        const whereConditions = { is_active: true };
+        const orConditions = [];
 
-        // Kiểm tra phone đã tồn tại nếu có phone
-        if (phone) {
-            const existingPhone = await db.User.findOne({ where: { phone } });
-            if (existingPhone) {
-                throw new Error("Số điện thoại đã được sử dụng");
-            }
-        }
-
-        // Kiểm tra employee_id đã tồn tại
-        const existingEmployee = await db.User.findOne({
-            where: { employee_id },
-        });
-
-        if (existingEmployee) {
-            throw new Error("Mã nhân viên đã tồn tại");
-        }
-
-        // Kiểm tra zalo_id đã tồn tại nếu có
         if (zalo_id) {
-            const existingZalo = await db.User.findOne({ where: { zalo_id } });
-            if (existingZalo) {
-                throw new Error("Zalo ID đã được sử dụng");
+            orConditions.push({ zalo_id });
+        }
+        if (email) {
+            orConditions.push({ email });
+        }
+        if (phone) {
+            orConditions.push({ phone });
+        }
+        orConditions.push({ employee_id }); // Luôn kiểm tra employee_id
+
+        if (orConditions.length > 0) {
+            whereConditions[Op.or] = orConditions;
+
+            const existingUser = await db.User.findOne({
+                where: whereConditions,
+            });
+            if (existingUser) {
+                // Xác định trường nào bị conflict
+                let conflictField = "";
+                if (existingUser.employee_id === employee_id) {
+                    conflictField = "Mã nhân viên";
+                } else if (zalo_id && existingUser.zalo_id === zalo_id) {
+                    conflictField = "Zalo ID";
+                } else if (email && existingUser.email === email) {
+                    conflictField = "Email";
+                } else if (phone && existingUser.phone === phone) {
+                    conflictField = "Số điện thoại";
+                }
+                throw new Error(`${conflictField} đã tồn tại trong hệ thống`);
             }
         }
 
@@ -156,6 +162,7 @@ export const createUserService = async (userData) => {
             status,
             is_active,
         });
+        console.log(user);
 
         return { success: true, data: user };
     } catch (error) {
@@ -166,8 +173,9 @@ export const createUserService = async (userData) => {
 
 /**
  * Cập nhật thông tin người dùng
- * SQL: UPDATE users SET name = ?, position = ?, email = ?, phone = ?, role_id = ?, department = ?, manager_id = ?, status = ?, is_active = ?, updated_at = NOW()
+ * SQL: UPDATE users SET name = ?, position = ?, email = ?, phone = ?, zalo_id = ?, employee_id = ?, role_id = ?, department = ?, manager_id = ?, status = ?, is_active = ?, approved = ?, updated_at = NOW()
  * WHERE id = ?;
+ * Note: Chỉ validate conflict với user có is_active = true, cho phép cập nhật trùng với user đã bị deactivate
  */
 export const updateUserService = async (id, updateData) => {
     try {
@@ -181,6 +189,8 @@ export const updateUserService = async (id, updateData) => {
             position,
             email,
             phone,
+            zalo_id,
+            employee_id,
             role_id,
             department,
             manager_id,
@@ -190,11 +200,46 @@ export const updateUserService = async (id, updateData) => {
             password,
         } = updateData;
 
-        // Kiểm tra email nếu thay đổi
+        // Validation conflict với user active khác - sử dụng 1 query duy nhất
+        const whereConditions = {
+            is_active: true,
+            id: { [Op.ne]: id }, // Exclude current user
+        };
+        const orConditions = [];
+
+        // Chỉ kiểm tra các trường được cung cấp và khác với giá trị hiện tại
+        if (zalo_id && zalo_id !== user.zalo_id) {
+            orConditions.push({ zalo_id });
+        }
         if (email && email !== user.email) {
-            const existingUser = await db.User.findOne({ where: { email } });
+            orConditions.push({ email });
+        }
+        if (phone && phone !== user.phone) {
+            orConditions.push({ phone });
+        }
+        if (employee_id && employee_id !== user.employee_id) {
+            orConditions.push({ employee_id });
+        }
+
+        if (orConditions.length > 0) {
+            whereConditions[Op.or] = orConditions;
+
+            const existingUser = await db.User.findOne({
+                where: whereConditions,
+            });
             if (existingUser) {
-                throw new Error("Email đã được sử dụng");
+                // Xác định trường nào bị conflict
+                let conflictField = "";
+                if (employee_id && existingUser.employee_id === employee_id) {
+                    conflictField = "Mã nhân viên";
+                } else if (zalo_id && existingUser.zalo_id === zalo_id) {
+                    conflictField = "Zalo ID";
+                } else if (email && existingUser.email === email) {
+                    conflictField = "Email";
+                } else if (phone && existingUser.phone === phone) {
+                    conflictField = "Số điện thoại";
+                }
+                throw new Error(`${conflictField} đã tồn tại trong hệ thống`);
             }
         }
 
@@ -203,6 +248,8 @@ export const updateUserService = async (id, updateData) => {
             position,
             email,
             phone,
+            zalo_id,
+            employee_id,
             role_id,
             department,
             manager_id,

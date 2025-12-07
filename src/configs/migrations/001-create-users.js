@@ -1,7 +1,8 @@
 "use strict";
 
 /**
- * Migration 003: Tạo bảng Users (Người dùng)
+ * Migration 001: Tạo bảng Users (Người dùng)
+ * Note: Không sử dụng unique constraints vì hệ thống thực hiện soft delete
  */
 
 export async function up(queryInterface, Sequelize) {
@@ -13,7 +14,6 @@ export async function up(queryInterface, Sequelize) {
         },
         employee_id: {
             type: Sequelize.STRING(50),
-            unique: true, // Đã tự động tạo index unique
             allowNull: false,
         },
         name: {
@@ -33,7 +33,6 @@ export async function up(queryInterface, Sequelize) {
         },
         email: {
             type: Sequelize.STRING(255),
-            unique: true, // Đã tự động tạo index unique
             allowNull: true, // Updated to allow null as per later migration
         },
         password: {
@@ -44,7 +43,6 @@ export async function up(queryInterface, Sequelize) {
         zalo_id: {
             type: Sequelize.STRING(100),
             allowNull: true,
-            unique: true,
             comment: 'Zalo ID của người dùng',
         },
         status: {
@@ -79,7 +77,7 @@ export async function up(queryInterface, Sequelize) {
         },
     });
 
-    // Đã xóa addIndex cho employee_id và email vì đã có unique: true ở trên
+    // Đã xóa unique constraints vì hệ thống sử dụng soft delete
     await queryInterface.addIndex("users", ["department"]);
     await queryInterface.addIndex("users", ["is_active"]);
     await queryInterface.addIndex("users", ["manager_id"]);

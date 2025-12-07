@@ -6,9 +6,11 @@
  * Đại diện cho bảng users với tất cả thông tin người dùng:
  * - Thông tin cá nhân: tên, email, điện thoại
  * - Thông tin công ty: vị trí, phòng ban, quản lý
- * 
+ *
  * - Vai trò: tham chiếu đến bảng roles
  * - Trạng thái: active, inactive, suspended
+ *
+ * Note: Không sử dụng unique constraints vì hệ thống thực hiện soft delete
  */
 export default (sequelize, DataTypes) => {
     const User = sequelize.define(
@@ -20,12 +22,11 @@ export default (sequelize, DataTypes) => {
                 primaryKey: true,
                 autoIncrement: true,
             },
-            // Mã nhân viên: duy nhất, không được null
+            // Mã nhân viên: không được null (validation trong service)
             employee_id: {
                 type: DataTypes.STRING(50),
-                unique: true,
                 allowNull: false,
-                comment: "Mã nhân viên duy nhất (vd: EMP001)",
+                comment: "Mã nhân viên (vd: EMP001)",
             },
             // Tên đầy đủ
             name: {
@@ -53,15 +54,14 @@ export default (sequelize, DataTypes) => {
                 },
                 comment: "Số điện thoại liên lạc",
             },
-            // Email: duy nhất với validation
+            // Email: với validation
             email: {
                 type: DataTypes.STRING(255),
-                unique: true,
                 allowNull: true, // Cho phép null cho Zalo users
                 validate: {
                     isEmail: true,
                 },
-                comment: "Email duy nhất của người dùng",
+                comment: "Email của người dùng",
             },
             // Mật khẩu: hash bcrypt
             password: {
@@ -72,7 +72,6 @@ export default (sequelize, DataTypes) => {
             // Zalo ID: cho đăng nhập qua Zalo Mini App
             zalo_id: {
                 type: DataTypes.STRING(100),
-                unique: true,
                 allowNull: true,
                 comment: "Zalo ID của người dùng",
             },
