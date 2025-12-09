@@ -71,8 +71,8 @@ async function startServer() {
         // --- DETAILED CORS CONFIGURATION ---
         // Define allowed origins for CORS, including production and development domains
         const allowedOrigins = [
-            "https://videcoder.io.vn",
-            "https://www.videcoder.io.vn",
+            "https://lamquangdai.vn",
+            "https://www.lamquangdai.vn",
             "https://h5.zdn.vn",
         ];
 
@@ -233,8 +233,8 @@ async function startServer() {
             logger.info(
                 `Server đang chạy tại cổng ${PORT} [${process.env.NODE_ENV}]`
             );
-            logger.info(`Health Check: https://videcoder.io.vn/health`);
-            logger.info(`API - v.1.0: https://videcoder.io.vn/api/v1`);
+            logger.info(`Health Check: https://lamquangdai.vn/health`);
+            logger.info(`API - v.1.0: https://lamquangdai.vn/api/v1`);
         });
 
         // --- GRACEFUL SHUTDOWN ---

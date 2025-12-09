@@ -43,9 +43,9 @@ fi
 
 # Remove Nginx configuration
 echo -e "${YELLOW}🌐 Xóa cấu hình Nginx...${NC}"
-if [ -f "/etc/nginx/sites-available/videcoder.io.vn" ]; then
-    sudo rm -f /etc/nginx/sites-enabled/videcoder.io.vn
-    sudo rm -f /etc/nginx/sites-available/videcoder.io.vn
+if [ -f "/etc/nginx/sites-available/lamquangdai.vn" ]; then
+    sudo rm -f /etc/nginx/sites-enabled/lamquangdai.vn
+    sudo rm -f /etc/nginx/sites-available/lamquangdai.vn
     sudo systemctl reload nginx
     echo -e "${GREEN}✅ Đã xóa cấu hình Nginx${NC}"
 else
@@ -54,8 +54,8 @@ fi
 
 # Remove SSL certificates
 echo -e "${YELLOW}🔒 Xóa SSL certificates...${NC}"
-if sudo certbot certificates | grep -q "videcoder.io.vn"; then
-    sudo certbot delete --cert-name videcoder.io.vn --non-interactive || echo -e "${YELLOW}⚠️ Không thể xóa certificate tự động, hãy xóa thủ công${NC}"
+if sudo certbot certificates | grep -q "lamquangdai.vn"; then
+    sudo certbot delete --cert-name lamquangdai.vn --non-interactive || echo -e "${YELLOW}⚠️ Không thể xóa certificate tự động, hãy xóa thủ công${NC}"
     echo -e "${GREEN}✅ Đã xóa SSL certificates${NC}"
 else
     echo -e "${BLUE}ℹ️ SSL certificates không tồn tại${NC}"

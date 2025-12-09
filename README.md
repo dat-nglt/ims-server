@@ -118,7 +118,7 @@ sudo systemctl reload nginx
 
 ## API Documentation
 
-- **Base URL**: `https://videcoder.io.vn/api/v1/ims`
+- **Base URL**: `https://lamquangdai.vn/api/v1/ims`
 - **Health Check**: `GET /health`
 - **API Endpoints**:
   - `/auth`: Xác thực (đăng nhập, đăng ký, refresh token)
@@ -263,9 +263,9 @@ ISC License
 
 ## Liên Hệ
 
-- **Domain**: https://videcoder.io.vn
+- **Domain**: https://lamquangdai.vn
 - **Repository**: https://github.com/dat-nglt/ims-server
-- **Email**: admin@videcoder.io.vn
+- **Email**: admin@lamquangdai.vn
 
 ---
 

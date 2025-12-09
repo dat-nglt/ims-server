@@ -16,7 +16,7 @@ Tài liệu này cung cấp hướng dẫn chi tiết để triển khai hệ th
 
 ### Domain & DNS
 
-- Domain: `videcoder.io.vn`
+- Domain: `lamquangdai.vn`
 - Cần cấu hình DNS trỏ về IP VPS: `14.225.218.37`
 
 ### Repository
@@ -93,10 +93,10 @@ Trên máy local (không phải trên VPS):
 
 ```bash
 # Tạo SSH key pair mới (không ghi đè key hiện có)
-ssh-keygen -t rsa -b 4096 -C "github-actions@videcoder.io.vn" -f ~/.ssh/github_actions_key
+ssh-keygen -t rsa -b 4096 -C "github-actions@lamquangdai.vn" -f ~/.ssh/github_actions_key
 
 # Hoặc nếu muốn sử dụng key mặc định (có thể ghi đè)
-ssh-keygen -t rsa -b 4096 -C "github-actions@videcoder.io.vn"
+ssh-keygen -t rsa -b 4096 -C "github-actions@lamquangdai.vn"
 ```
 
 **Quan trọng:** Khi được hỏi passphrase, hãy nhấn Enter để không đặt passphrase (GitHub Actions cần key không có passphrase).
@@ -322,7 +322,7 @@ sudo tail -f /var/log/nginx/error.log
 sudo certbot renew
 
 # Reconfigure certificate
-sudo certbot --nginx -d videcoder.io.vn -d www.videcoder.io.vn
+sudo certbot --nginx -d lamquangdai.vn -d www.lamquangdai.vn
 ```
 
 ## Bảo Mật
@@ -359,5 +359,5 @@ Nếu gặp vấn đề, kiểm tra:
 3. Cấu hình files (.env, nginx config)
 4. Network connectivity
 
-Domain: `https://videcoder.io.vn`
-Health Check: `https://videcoder.io.vn/health`
+Domain: `https://lamquangdai.vn`
+Health Check: `https://lamquangdai.vn/health`
