@@ -235,6 +235,8 @@ async function startServer() {
             );
             logger.info(`Health Check: https://lamquangdai.vn/health`);
             logger.info(`API - v.1.0: https://lamquangdai.vn/api/v1`);
+            logger.info(`Health Check: http://localhost:${PORT}/health`);
+            logger.info(`API - v.1.0: http://localhost:${PORT}/api/v1`);
         });
 
         // --- GRACEFUL SHUTDOWN ---
