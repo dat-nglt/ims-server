@@ -22,7 +22,7 @@ export async function up(queryInterface, Sequelize) {
             department: "Nhân Sự",
             manager_id: 1,
             is_active: true,
-            approved: "pending",
+            approved: "approved",
             last_login: null,
             created_at: new Date("2025-12-06T07:56:29.400Z"),
             updated_at: new Date("2025-12-06T07:56:29.400Z"),

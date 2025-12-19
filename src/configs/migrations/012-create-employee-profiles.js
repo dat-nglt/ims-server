@@ -58,6 +58,19 @@ export async function up(queryInterface, Sequelize) {
       type: Sequelize.DATE,
       comment: 'Ngày bắt đầu làm việc',
     },
+    contract_date: {
+      type: Sequelize.DATE,
+      comment: 'Ngày ký hợp đồng',
+    },
+    bank_account_number: {
+      type: Sequelize.STRING(50),
+      comment: 'Số tài khoản ngân hàng',
+    },
+    bank_name: {
+      type: Sequelize.STRING(100),
+      defaultValue: 'ACB',
+      comment: 'Tên ngân hàng',
+    },
     total_experience_years: {
       type: Sequelize.INTEGER,
       comment: 'Tổng năm kinh nghiệm',

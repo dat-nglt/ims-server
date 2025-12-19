@@ -155,6 +155,15 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.TEXT,
                 comment: "Địa chỉ đầy đủ khách hàng",
             },
+            // Nếu công việc gắn với bản ghi khách hàng (nullable)
+            customer_id: {
+                type: DataTypes.INTEGER,
+                references: {
+                    model: 'customers',
+                    key: 'id',
+                },
+                comment: 'ID khách hàng (nullable) liên kết với bảng customers',
+            },
             // Vĩ độ (latitude)
             location_lat: {
                 type: DataTypes.DECIMAL(10, 8),
@@ -276,6 +285,12 @@ export default (sequelize, DataTypes) => {
         Work.belongsTo(models.User, {
             foreignKey: "created_by",
             as: "creator",
+        });
+
+        // Nếu liên kết với bản ghi khách hàng
+        Work.belongsTo(models.Customer, {
+            foreignKey: "customer_id",
+            as: "customer",
         });
 
         // Một công việc có nhiều báo cáo

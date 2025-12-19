@@ -69,6 +69,22 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         comment: 'Ngày bắt đầu làm việc',
       },
+      // Ngày ký hợp đồng
+      contract_date: {
+        type: DataTypes.DATE,
+        comment: 'Ngày ký hợp đồng',
+      },
+      // Số tài khoản ngân hàng
+      bank_account_number: {
+        type: DataTypes.STRING(50),
+        comment: 'Số tài khoản ngân hàng',
+      },
+      // Tên ngân hàng (mặc định ACB)
+      bank_name: {
+        type: DataTypes.STRING(100),
+        defaultValue: 'ACB',
+        comment: 'Tên ngân hàng',
+      },
       // Tổng kinh nghiệm
       total_experience_years: {
         type: DataTypes.INTEGER,

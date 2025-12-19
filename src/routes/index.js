@@ -8,6 +8,7 @@ import {
     routeForAuth,
 } from "./users/index.js";
 import { routeForProject } from "./projects/index.js";
+import { routeForCustomers } from "./customers/index.js";
 import {
     routeForWorks,
     routeForWorkCategories,
@@ -45,6 +46,9 @@ const mainRouter = (server) => {
 
     // Project Management
     server.use("/api/v1/ims/projects", routeForProject);
+
+    // Customer Management
+    server.use("/api/v1/ims/customers", routeForCustomers);
 
     // Work Management
     server.use("/api/v1/ims/works", routeForWorks);

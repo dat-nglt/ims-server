@@ -30,6 +30,8 @@ import {
     WorkHistory,
     WorkReport,
 } from "./works/index.js";
+import { Material, MaterialUsage, WorkMaterial } from "./materials/index.js";
+import { Customer } from "./customers/index.js";
 
 dotenv.config();
 
@@ -77,6 +79,10 @@ const models = [
     WorkCategory,
     WorkHistory,
     WorkReport,
+    Material,
+    MaterialUsage,
+    WorkMaterial,
+    Customer,
 ];
 
 // Register models
