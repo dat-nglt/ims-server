@@ -25,7 +25,7 @@ Return attendance + sessionId
 
 ### 2. **Check-out Flow (Option 1 - By Attendance)**
 ```
-POST /attendance/:id/check-out
+POST /attendance/check-out
   ↓
 Update Attendance: set check_out_time + status='checked_out'
   ↓
@@ -91,7 +91,7 @@ Delete session from attendance_sessions
 ```
 GET    /attendance
 POST   /attendance/check-in
-POST   /attendance/:id/check-out
+POST   /attendance/check-out
 GET    /attendance/:id
 GET    /attendance/user/:userId
 ```

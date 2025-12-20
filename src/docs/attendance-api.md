@@ -91,7 +91,9 @@ Return { Attendance record, sessionId }
 
 ### 2. Check-out Flow (By Attendance Record)
 ```
-User → POST /attendance/:id/check-out
+User → POST /attendance/check-out
+  ↓
+Body must contain `id` (attendance id)
   ↓
 Service validates:
   - Attendance exists
@@ -206,9 +208,16 @@ Response:
 }
 ```
 
-#### POST /attendance/:id/check-out
-Check-out theo attendance ID
+#### POST /attendance/check-out
+Check-out theo attendance ID (id truyền trong body)
 ```
+Body:
+{
+  "id": 123,
+  "location": { "lat": 21.0285, "lng": 105.8542 },
+  "note": "Completed tasks"
+}
+
 Response:
 {
   "status": "success",

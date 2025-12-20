@@ -120,11 +120,7 @@ export async function up(queryInterface, Sequelize) {
             type: Sequelize.DECIMAL(10, 2),
             comment: "Khoảng cách vi phạm vị trí",
         },
-        photo_urls: {
-            type: Sequelize.TEXT,
-            allowNull: true,
-            comment: "URL ảnh (1 ảnh duy nhất cho mỗi bản ghi)",
-        },
+
         technicians: {
             type: Sequelize.JSONB,
             allowNull: true,

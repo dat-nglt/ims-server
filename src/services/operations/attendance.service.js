@@ -47,96 +47,201 @@ export const getAttendanceByIdService = async (id) => {
 };
 
 /**
+ * Lấy thông tin phiên chấm công đang mở của user (nếu có). Trả về session, work và thời điểm check-in gần nhất.
+ * @param {number} userId
+ * @returns {Object|null} { session, work, check_in_time, check_in_id } hoặc null
+ */
+export const getOpenSessionSummaryByUser = async (userId) => {
+  try {
+    const session = await db.AttendanceSession.findOne({
+      where: { user_id: userId, status: 'open', ended_at: null },
+      include: [{ model: db.Work, as: 'work' }],
+    });
+
+    if (!session) return null;
+
+    const latestAttendance = await db.Attendance.findOne({
+      where: { attendance_session_id: session.id, user_id: userId, parent_attendance_id: null },
+      order: [['check_in_time', 'DESC']],
+      attributes: ['id', 'check_in_time'],
+    });
+
+    return {
+      session,
+      work: session.work || null,
+      check_in_time: latestAttendance ? latestAttendance.check_in_time : null,
+      check_in_id: latestAttendance ? latestAttendance.id : null,
+    };
+  } catch (error) {
+    logger.error('Error in getOpenSessionSummaryByUser:' + error.message);
+    throw error;
+  }
+};
+
+/**
  * Check-in người dùng (hỗ trợ multi-technician)
  * @param {Object} checkInData - { user_id, work_id, project_id, latitude, longitude, ..., technicians: [id1, id2, ...], check_in_type_id }
  */
 export const checkInService = async (checkInData) => {
   try {
+    // Support flexible input keys and types
     const {
       user_id,
+      userId,
       work_id,
+      workId,
       project_id,
+      projectId,
       latitude,
       longitude,
       location_name,
       address,
       photo_urls,
+      photo_url,
+      photo,
       device_info,
+      device,
       ip_address,
       notes,
       check_in_type_id,
+      typeId,
       violation_distance,
+      violationDistance,
       technicians = [],
-    } = checkInData;
+      location,
+    } = checkInData || {};
 
-    if (!user_id || !latitude || !longitude) {
-      throw new Error("Thiếu thông tin bắt buộc: user_id, latitude, longitude");
+    const resolvedUserId = user_id || userId;
+    const resolvedWorkId = work_id || workId || null;
+    const resolvedProjectId = project_id || projectId || null;
+    const lat = location?.lat ?? location?.latitude ?? (latitude != null ? parseFloat(latitude) : null);
+    const lng = location?.lng ?? location?.longitude ?? (longitude != null ? parseFloat(longitude) : null);
+    const locName = location?.name ?? location_name ?? null;
+    const addr = location?.address ?? address ?? null;
+    const photos = photo_urls ?? photo_url ?? photo ?? null;
+    const resolvedDevice = device_info ?? device ?? null;
+    const resolvedIp = ip_address ?? null;
+    const resolvedTypeId = check_in_type_id ?? typeId ?? null;
+    const resolvedViolation = violation_distance ?? violationDistance ?? null;
+
+    // Basic validation
+    if (!resolvedUserId) {
+      throw new Error("Thiếu user_id");
+    }
+    if (lat == null || lng == null || isNaN(parseFloat(lat)) || isNaN(parseFloat(lng))) {
+      throw new Error("Thiếu hoặc không hợp lệ: latitude và longitude");
     }
 
-    // Kiểm tra user_id tồn tại
-    const user = await db.User.findByPk(user_id);
-    if (!user) {
-      throw new Error("Người dùng không tồn tại");
-    }
+    // Kiểm tra user tồn tại
+    const user = await db.User.findByPk(resolvedUserId);
+    if (!user) throw new Error("Người dùng không tồn tại");
 
-    // Kiểm tra work_id tồn tại nếu có
-    if (work_id) {
-      const work = await db.Work.findByPk(work_id);
-      if (!work) {
-        throw new Error("Công việc không tồn tại");
+    // Normalize photos to a single URL (take first element if an array or JSON array string)
+    let photoUrlNormalized = null;
+    if (Array.isArray(photos)) {
+      photoUrlNormalized = photos.length > 0 ? String(photos[0]) : null;
+    } else if (typeof photos === 'string') {
+      // Try to parse JSON array string like '["url1","url2"]'
+      try {
+        const parsed = JSON.parse(photos);
+        if (Array.isArray(parsed)) {
+          photoUrlNormalized = parsed.length > 0 ? String(parsed[0]) : null;
+        } else {
+          photoUrlNormalized = photos;
+        }
+      } catch (e) {
+        photoUrlNormalized = photos;
       }
+    } else if (photos !== null && photos !== undefined) {
+      photoUrlNormalized = String(photos);
     }
 
-    // Kiểm tra project_id tồn tại nếu có
-    if (project_id) {
-      const project = await db.Project.findByPk(project_id);
-      if (!project) {
-        throw new Error("Dự án không tồn tại");
+    // Validate work/project/type existence
+    if (resolvedWorkId) {
+      const work = await db.Work.findByPk(resolvedWorkId);
+      if (!work) throw new Error("Công việc không tồn tại");
+    }
+
+    if (resolvedProjectId) {
+      const project = await db.Project.findByPk(resolvedProjectId);
+      if (!project) throw new Error("Dự án không tồn tại");
+    }
+
+    if (resolvedTypeId) {
+      const checkInType = await db.CheckInType.findByPk(resolvedTypeId);
+      if (!checkInType) throw new Error("Loại chấm công không tồn tại");
+    }
+
+    // Kiểm tra session open (sử dụng helper để lấy thêm thông tin work và thời điểm check-in)
+    const openSummary = await getOpenSessionSummaryByUser(resolvedUserId);
+    if (openSummary && openSummary.session) {
+      const wk = openSummary.work;
+      const workInfo = wk ? { id: wk.id, title: wk.title } : null;
+      const checkInAt = openSummary.check_in_time ? openSummary.check_in_time.toISOString() : null;
+
+      // Trả về thông tin để controller hiển thị thông báo (HTTP 200)
+      return {
+        success: true,
+        alreadyCheckedIn: true,
+        message: `Người dùng đã check-in vào phiên công việc đang mở.`,
+        session: {
+          id: openSummary.session.id,
+          work: workInfo,
+          check_in_time: checkInAt,
+          check_in_id: openSummary.check_in_id,
+        },
+      };
+    }
+
+    // Normalize technicians
+    let techArr = [];
+    if (Array.isArray(technicians) && technicians.length > 0) {
+      techArr = technicians.map((t) => (typeof t === "string" ? parseInt(t, 10) : t));
+    } else if (technicians) {
+      techArr = [typeof technicians === "string" ? parseInt(technicians, 10) : technicians];
+    } else {
+      techArr = [resolvedUserId];
+    }
+
+    // Coerce numeric IDs and normalize photos
+    const uid = Number.isFinite(Number(resolvedUserId)) ? parseInt(resolvedUserId, 10) : resolvedUserId;
+    const wid = resolvedWorkId ? (Number.isFinite(Number(resolvedWorkId)) ? parseInt(resolvedWorkId, 10) : resolvedWorkId) : null;
+    const pid = resolvedProjectId ? (Number.isFinite(Number(resolvedProjectId)) ? parseInt(resolvedProjectId, 10) : resolvedProjectId) : null;
+    const typeIdInt = resolvedTypeId ? (Number.isFinite(Number(resolvedTypeId)) ? parseInt(resolvedTypeId, 10) : resolvedTypeId) : null;
+
+    // Create attendance record with improved validation error handling
+    let attendance;
+    try {
+
+      
+      attendance = await db.Attendance.create({
+        user_id: uid,
+        work_id: wid,
+        project_id: pid,
+        check_in_time: new Date(),
+        latitude: parseFloat(lat),
+        longitude: parseFloat(lng),
+        location_name: locName,
+        address: addr,
+        photo_url: photoUrlNormalized,
+        status: "checked_in",
+        device_info: resolvedDevice,
+        ip_address: resolvedIp,
+        notes,
+        check_in_type_id: typeIdInt,
+        violation_distance: resolvedViolation,
+        technicians: techArr,
+      });
+    } catch (err) {
+      // Handle Sequelize validation/database errors with more context
+      if (err && (err.name === 'SequelizeValidationError' || err.name === 'SequelizeDatabaseError')) {
+        logger.error('Sequelize error creating Attendance', { message: err.message, errors: err.errors, payload: { user_id: uid, work_id: wid, project_id: pid, latitude: lat, longitude: lng, check_in_type_id: typeIdInt, technicians: techArr, photo_url: photoUrlNormalized } });
+        const messages = err.errors && Array.isArray(err.errors) ? err.errors.map((e) => e.message).join('; ') : err.message;
+        throw new Error(`Validation error: ${messages}`);
       }
+      throw err;
     }
 
-    // Kiểm tra check_in_type_id nếu có
-    if (check_in_type_id) {
-      const checkInType = await db.CheckInType.findByPk(check_in_type_id);
-      if (!checkInType) {
-        throw new Error("Loại chấm công không tồn tại");
-      }
-    }
-
-    // Kiểm tra xem user đã có session open chưa
-    const existingSession = await db.AttendanceSession.findOne({
-      where: {
-        user_id,
-        status: "open",
-        ended_at: null,
-      },
-    });
-
-    if (existingSession) {
-      throw new Error(`Người dùng đã check-in vào phiên công việc: ${existingSession.id}`);
-    }
-
-    // Tạo bản ghi check-in với session
-    const attendance = await db.Attendance.create({
-      user_id,
-      work_id,
-      project_id,
-      check_in_time: new Date(),
-      latitude,
-      longitude,
-      location_name,
-      address,
-      photo_urls,
-      status: "checked_in",
-      device_info,
-      ip_address,
-      notes,
-      check_in_type_id,
-      violation_distance,
-      technicians: technicians.length > 0 ? technicians : [user_id],
-    });
-
-    // Hook trong model sẽ tự động tạo AttendanceSession
     return { success: true, data: attendance, sessionId: attendance.attendance_session_id };
   } catch (error) {
     logger.error("Error in checkInService:" + error.message);

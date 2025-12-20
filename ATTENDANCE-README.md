@@ -122,7 +122,7 @@ afterCreate  → Create child records for user 2, 3
 ### 2. Check-out Flow (Option 1: By Attendance ID)
 
 ```javascript
-POST /attendance/:id/check-out
+POST /attendance/check-out
 
 // Service updates Attendance
 {
@@ -173,7 +173,7 @@ attendance #3 { user_id: 3, parent_attendance_id: 1 }
 ### Check-in/Check-out
 ```
 POST   /attendance/check-in                    # Check-in user(s)
-POST   /attendance/:id/check-out              # Check-out by attendance
+POST   /attendance/check-out              # Check-out by attendance (id in body)
 GET    /attendance                            # Get all attendance
 GET    /attendance/:id                        # Get by ID
 GET    /attendance/user/:userId               # Get user history

@@ -220,7 +220,7 @@ curl "http://localhost:3000/api/attendance/reports/summary?start_date=2025-12-01
 ```
 GET    /attendance
 POST   /attendance/check-in
-POST   /attendance/:id/check-out
+POST   /attendance/check-out
 GET    /attendance/:id
 GET    /attendance/user/:userId
 ```

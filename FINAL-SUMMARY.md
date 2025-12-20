@@ -189,7 +189,7 @@ GET /attendance/reports/statistics
 ```
 GET    /attendance                           ← List all
 POST   /attendance/check-in                  ← Check-in
-POST   /attendance/:id/check-out            ← Check-out
+POST   /attendance/check-out            ← Check-out
 GET    /attendance/:id                       ← Get details
 GET    /attendance/user/:userId              ← User history
 ```

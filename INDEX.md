@@ -263,7 +263,7 @@ ims-server/
 ```
 GET    /attendance
 POST   /attendance/check-in
-POST   /attendance/:id/check-out
+POST   /attendance/check-out
 GET    /attendance/:id
 GET    /attendance/user/:userId
 ```
