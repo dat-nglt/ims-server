@@ -19,6 +19,7 @@ import {
     routeForAttachments,
     routeForNotifications,
     routeForAttendance,
+    routeForUploads
 } from "./operations/index.js";
 import {
     routeForEmployeeProfiles,
