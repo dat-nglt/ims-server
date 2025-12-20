@@ -36,13 +36,11 @@ export default (sequelize, DataTypes) => {
       status: {
         type: DataTypes.ENUM('active', 'in_progress', 'completed', 'on_hold', 'cancelled'),
         defaultValue: 'active',
-        comment: 'Trạng thái dự án',
       },
       // Mức độ ưu tiên
       priority: {
         type: DataTypes.ENUM('low', 'medium', 'high'),
         defaultValue: 'medium',
-        comment: 'Mức ưu tiên dự án',
       },
       // Tiến độ hoàn thành (%)
       progress: {
@@ -84,29 +82,51 @@ export default (sequelize, DataTypes) => {
         defaultValue: 0,
         comment: 'Số tiền đã chi tiêu',
       },
-      // Tổng số công việc
-      totalTasks: {
+      // Tổng số công việc (snake_case)
+      total_tasks: {
         type: DataTypes.INTEGER,
         defaultValue: 0,
         comment: 'Tổng số công việc trong dự án',
       },
       // Số công việc hoàn thành
-      completedTasks: {
+      completed_tasks: {
         type: DataTypes.INTEGER,
         defaultValue: 0,
         comment: 'Số công việc đã hoàn thành',
       },
       // Số công việc quá hạn
-      overdueTasks: {
+      overdue_tasks: {
         type: DataTypes.INTEGER,
         defaultValue: 0,
         comment: 'Số công việc quá hạn',
       },
       // Số báo cáo chờ xử lý
-      pendingReports: {
+      pending_reports: {
         type: DataTypes.INTEGER,
         defaultValue: 0,
         comment: 'Số báo cáo đang chờ xử lý',
+      },
+      // Planned manpower (person-days)
+      planned_manpower: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        comment: 'Planned manpower (person-days)',
+      },
+      // Consumed manpower (person-days)
+      consumed_manpower: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        comment: 'Consumed manpower (person-days)',
+      },
+      // Timeline (array of objects) - JSONB
+      timeline: {
+        type: DataTypes.JSONB,
+        comment: 'Timeline points e.g. [{month, progress, completed, manpower}]',
+      },
+      // Budget breakdown
+      budget_details: {
+        type: DataTypes.JSONB,
+        comment: 'Budget breakdown by category: [{category, allocated, spent}]',
       },
       // Người tạo (FK)
       created_by: {
@@ -117,20 +137,11 @@ export default (sequelize, DataTypes) => {
         },
         comment: 'ID người tạo dự án',
       },
-      created_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-        comment: 'Thời gian tạo bản ghi (tự động)',
-      },
-      updated_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-        comment: 'Thời gian cập nhật bản ghi cuối cùng (tự động)',
-      },
     },
     {
       tableName: 'projects',
-      timestamps: false,
+      timestamps: true,
+      underscored: true,
       indexes: [
         { fields: ['name'] },
         { fields: ['status'] },
@@ -139,10 +150,12 @@ export default (sequelize, DataTypes) => {
         { fields: ['end_date'] },
         { fields: ['manager_id'] },
         { fields: ['created_by'] },
-        { fields: ['totalTasks'] },
-        { fields: ['completedTasks'] },
-        { fields: ['overdueTasks'] },
-        { fields: ['pendingReports'] },
+        { fields: ['total_tasks'] },
+        { fields: ['completed_tasks'] },
+        { fields: ['overdue_tasks'] },
+        { fields: ['pending_reports'] },
+        { fields: ['planned_manpower'] },
+        { fields: ['consumed_manpower'] },
       ],
     }
   );
@@ -177,6 +190,12 @@ export default (sequelize, DataTypes) => {
     Project.hasMany(models.Notification, {
       foreignKey: 'related_project_id',
       as: 'notifications',
+    });
+
+    // Danh sách thành viên dự án (chi tiết) - normalized table
+    Project.hasMany(models.ProjectTeamMember, {
+      foreignKey: 'project_id',
+      as: 'teamMembers',
     });
 
     // Một dự án có nhiều thành viên (many-to-many với User qua bảng project_members)

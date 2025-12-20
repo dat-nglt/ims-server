@@ -14,6 +14,8 @@ export const createNotificationService = async (notificationData) => {
       related_work_id,
       related_project_id,
       action_url,
+      priority = 'low',
+      meta = null,
     } = notificationData;
 
     // Validate user_id
@@ -46,6 +48,8 @@ export const createNotificationService = async (notificationData) => {
       related_work_id,
       related_project_id,
       action_url,
+      priority,
+      meta,
     });
 
     return { success: true, data: notification };

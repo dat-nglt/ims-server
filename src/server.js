@@ -70,11 +70,7 @@ async function startServer() {
 
         // --- DETAILED CORS CONFIGURATION ---
         // Define allowed origins for CORS, including production and development domains
-        const allowedOrigins = [
-            "https://lamquangdai.vn",
-            "https://www.lamquangdai.vn",
-            "https://h5.zdn.vn",
-        ];
+        const allowedOrigins = ["https://lamquangdai.vn", "https://www.lamquangdai.vn", "https://h5.zdn.vn"];
 
         // Add localhost origins if in development mode
         if (process.env.NODE_ENV === "development") {
@@ -123,11 +119,7 @@ async function startServer() {
         // --- REQUEST DETAILS LOGGING MIDDLEWARE ---
         // Log detailed request info including method, path, and user agent
         app.use((req, res, next) => {
-            logger.info(
-                `[${req.id}] ${req.method} ${req.path} - User Agent: ${req.get(
-                    "user-agent"
-                )}`
-            );
+            logger.info(`[${req.id}] ${req.method} ${req.path} - User Agent: ${req.get("user-agent")}`);
             next();
         });
 
@@ -144,11 +136,9 @@ async function startServer() {
 
         // In development, sync database schema without forcing data loss
         if (process.env.NODE_ENV === "development") {
-            logger.info(
-                "---- Đang đồng bộ CSDL (chỉ tạo bảng nếu chưa tồn tại)"
-            );
+            logger.info("---- Đang đồng bộ CSDL (chỉ tạo bảng nếu chưa tồn tại)");
             // Sync with force: false to avoid dropping tables
-            await db.sequelize.sync({ force: false });
+            await db.sequelize.sync({ force: false, logging: false });
             logger.info("Đồng bộ CSDL thành công");
         }
 
@@ -185,11 +175,7 @@ async function startServer() {
             const errorId = req.id;
 
             // Log error with stack trace
-            logger.error(
-                `[${errorId}] ${error.status || 500} ${error.message}\n${
-                    error.stack
-                }`
-            );
+            logger.error(`[${errorId}] ${error.status || 500} ${error.message}\n${error.stack}`);
 
             // Skip if response already sent
             if (res.headersSent) {
@@ -198,10 +184,7 @@ async function startServer() {
 
             // Determine status and message based on environment
             const status = error.status || 500;
-            const message =
-                process.env.NODE_ENV === "development"
-                    ? error.message
-                    : "Đã có lỗi xảy ra ở server.";
+            const message = process.env.NODE_ENV === "development" ? error.message : "Đã có lỗi xảy ra ở server.";
 
             // Send error response
             res.status(status).json({
@@ -230,9 +213,7 @@ async function startServer() {
 
         // Listen on the port
         server.listen(PORT, () => {
-            logger.info(
-                `Server đang chạy tại cổng ${PORT} [${process.env.NODE_ENV}]`
-            );
+            logger.info(`Server đang chạy tại cổng ${PORT} [${process.env.NODE_ENV}]`);
             logger.info(`Health Check: https://lamquangdai.vn/health`);
             logger.info(`API - v.1.0: https://lamquangdai.vn/api/v1`);
             logger.info(`Health Check: http://localhost:${PORT}/health`);

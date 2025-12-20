@@ -12,7 +12,7 @@ export default (sequelize, DataTypes) => {
             name: {
                 type: DataTypes.STRING(100),
                 allowNull: false,
-                comment: "Tên hiển thị quyền hạn bằng tiếng Việt: Bảng điều khiển, Chỉnh sửa công việc...",
+                comment: "Tên hiển thị quyền hạn bằng tiếng Việt: Tổng quan hệ thống, Chỉnh sửa công việc...",
             },
             code: {
                 type: DataTypes.STRING(100),

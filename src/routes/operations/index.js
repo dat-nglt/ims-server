@@ -1,11 +1,11 @@
-import routeForCheckIns from "./check-ins.route.js";
+import routeForAttendance from "./attendance.route.js";
 import routeForAttachments from "./attachments.route.js";
 import routeForNotifications from "./notifications.route.js";
-import attendanceRoute from "./attendance.route.js"; // Thêm import mới
+import routeForUploads from "./uploads.route.js";
 
 export {    
-    routeForCheckIns,
+    routeForAttendance,
     routeForAttachments,
     routeForNotifications,
-    attendanceRoute, // Export mới để tách biệt nếu cần
+    routeForUploads,
 };

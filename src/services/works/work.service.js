@@ -110,10 +110,17 @@ export const createWorkService = async (workData) => {
             }
         }
 
-        // work_code is now auto-generated UUID, so no need to check uniqueness
+        // Ensure work_code exists and uses system string format when not provided
+        const generatedWorkCode = work_code || `lqd_work_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+        const timeSlotValue = workData.timeSlot !== undefined && workData.timeSlot !== null
+            ? workData.timeSlot
+            : workData.required_time_hour
+            ? parseInt(String(workData.required_time_hour), 10)
+            : null;
 
         const work = await db.Work.create({
-            work_code, // will be auto-generated if not provided
+            work_code: generatedWorkCode,
             title,
             description,
             category_id,
@@ -124,6 +131,10 @@ export const createWorkService = async (workData) => {
             status: status || "pending",
             service_type,
             due_date,
+            required_date: workData.required_date || null,
+            required_time_hour: workData.required_time_hour || null,
+            required_time_minute: workData.required_time_minute || null,
+            timeSlot: timeSlotValue,
             location,
             customer_name,
             customer_phone,

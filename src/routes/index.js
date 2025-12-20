@@ -8,6 +8,7 @@ import {
     routeForAuth,
 } from "./users/index.js";
 import { routeForProject } from "./projects/index.js";
+import { routeForCustomers } from "./customers/index.js";
 import {
     routeForWorks,
     routeForWorkCategories,
@@ -15,10 +16,10 @@ import {
     routeForWorkReports,
 } from "./works/index.js";
 import {
-    routeForCheckIns,
     routeForAttachments,
     routeForNotifications,
-    attendanceRoute, // Thêm import mới nếu muốn tách biệt
+    routeForAttendance,
+    routeForUploads
 } from "./operations/index.js";
 import {
     routeForEmployeeProfiles,
@@ -46,6 +47,9 @@ const mainRouter = (server) => {
     // Project Management
     server.use("/api/v1/ims/projects", routeForProject);
 
+    // Customer Management
+    server.use("/api/v1/ims/customers", routeForCustomers);
+
     // Work Management
     server.use("/api/v1/ims/works", routeForWorks);
     server.use("/api/v1/ims/work-categories", routeForWorkCategories);
@@ -53,11 +57,10 @@ const mainRouter = (server) => {
     server.use("/api/v1/ims/work-reports", routeForWorkReports);
 
     // Operations
-    server.use("/api/v1/ims/check-ins", routeForCheckIns);
+    server.use("/api/v1/ims/attendance", routeForAttendance);
+    server.use("/api/v1/ims/uploads", routeForUploads);
     server.use("/api/v1/ims/attachments", routeForAttachments);
     server.use("/api/v1/ims/notifications", routeForNotifications);
-    // Thêm use mới nếu muốn tách biệt attendance
-    server.use("/api/v1/ims/attendance", attendanceRoute);
 
     // HR & Management
     server.use("/api/v1/ims/employee-profiles", routeForEmployeeProfiles);

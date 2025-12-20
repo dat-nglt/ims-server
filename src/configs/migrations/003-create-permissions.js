@@ -17,7 +17,7 @@ export async function up(queryInterface, Sequelize) {
             type: Sequelize.STRING(100),
             allowNull: false,
             comment:
-                "Tên hiển thị quyền hạn bằng tiếng Việt: Bảng điều khiển, Chỉnh sửa công việc...",
+                "Tên hiển thị quyền hạn bằng tiếng Việt: Tổng quan hệ thống, Chỉnh sửa công việc...",
         },
         code: {
             type: Sequelize.STRING(100),

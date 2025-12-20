@@ -9,8 +9,8 @@
 export async function up(queryInterface, Sequelize) {
     const permissionLabels = {
         bang_dieu_khien: {
-            label: "Bảng Điều Khiển",
-            description: "Truy cập trang bảng điều khiển chính",
+            label: "Tổng quan hệ thống",
+            description: "Truy cập trang Tổng quan hệ thống chính",
             category: "general",
         },
         thong_bao: {
@@ -64,7 +64,7 @@ export async function up(queryInterface, Sequelize) {
             category: "user",
         },
         bang_dieu_khien_hieu_suat: {
-            label: "Bảng Điều Khiển Hiệu Suất",
+            label: "Tổng quan hệ thống Hiệu Suất",
             description: "Xem thống kê hiệu suất tổng quan",
             category: "analytics",
         },

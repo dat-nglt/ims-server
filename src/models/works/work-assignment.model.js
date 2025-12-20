@@ -60,8 +60,6 @@ export default (sequelize, DataTypes) => {
                     "completed"
                 ),
                 defaultValue: "pending",
-                comment:
-                    "pending=chờ chấp nhận, accepted=đã nhận, rejected=từ chối, completed=hoàn thành",
             },
             // Thời gian chấp nhận
             accepted_at: {

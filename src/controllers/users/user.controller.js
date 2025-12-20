@@ -7,16 +7,14 @@ import * as userService from "../../services/users/index.js";
 export const getAllUsersController = async (req, res) => {
     try {
         const result = await userService.getAllUsersService();
+
         res.json({
             status: "success",
             data: result.data,
             message: "Lấy danh sách người dùng hệ thống thành công",
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in getAllUsersController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in getAllUsersController:`, error.message);
         res.status(500).json({ error: error.message });
     }
 };
@@ -34,10 +32,7 @@ export const getUserByIdController = async (req, res) => {
             message: "Lấy thông tin người dùng thành công",
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in getUserByIdController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in getUserByIdController:`, error.message);
         res.status(404).json({ error: error.message });
     }
 };
@@ -54,10 +49,7 @@ export const createUserController = async (req, res) => {
             message: "Tạo người dùng thành công",
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in createUserController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in createUserController:`, error.message);
         res.status(400).json({ error: error.message });
     }
 };
@@ -75,10 +67,7 @@ export const updateUserController = async (req, res) => {
             message: "Cập nhật người dùng thành công",
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in updateUserController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in updateUserController:`, error.message);
         res.status(400).json({ error: error.message });
     }
 };
@@ -95,10 +84,7 @@ export const deleteUserController = async (req, res) => {
             message: result.message,
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in deleteUserController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in deleteUserController:`, error.message);
         res.status(404).json({ error: error.message });
     }
 };
@@ -116,10 +102,7 @@ export const approveUserController = async (req, res) => {
             message: "Duyệt tài khoản người dùng thành công",
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in approveUserController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in approveUserController:`, error.message);
         res.status(400).json({ error: error.message });
     }
 };
@@ -137,10 +120,7 @@ export const rejectUserController = async (req, res) => {
             message: "Từ chối tài khoản người dùng thành công",
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in rejectUserController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in rejectUserController:`, error.message);
         res.status(400).json({ error: error.message });
     }
 };

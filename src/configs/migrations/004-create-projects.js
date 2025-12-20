@@ -73,25 +73,43 @@ export async function up(queryInterface, Sequelize) {
             defaultValue: 0,
             comment: "Số tiền đã chi tiêu",
         },
-        totalTasks: {
+        total_tasks: {
             type: Sequelize.INTEGER,
             defaultValue: 0,
             comment: "Tổng số công việc trong dự án",
         },
-        completedTasks: {
+        completed_tasks: {
             type: Sequelize.INTEGER,
             defaultValue: 0,
             comment: "Số công việc đã hoàn thành",
         },
-        overdueTasks: {
+        overdue_tasks: {
             type: Sequelize.INTEGER,
             defaultValue: 0,
             comment: "Số công việc quá hạn",
         },
-        pendingReports: {
+        pending_reports: {
             type: Sequelize.INTEGER,
             defaultValue: 0,
             comment: "Số báo cáo đang chờ xử lý",
+        },
+        planned_manpower: {
+            type: Sequelize.INTEGER,
+            defaultValue: 0,
+            comment: "Planned manpower (person-days)",
+        },
+        consumed_manpower: {
+            type: Sequelize.INTEGER,
+            defaultValue: 0,
+            comment: "Consumed manpower (person-days)",
+        },
+        timeline: {
+            type: Sequelize.JSONB,
+            comment: "Project timeline points",
+        },
+        budget_details: {
+            type: Sequelize.JSONB,
+            comment: "Budget breakdown by category",
         },
         created_by: {
             type: Sequelize.INTEGER,
@@ -120,12 +138,44 @@ export async function up(queryInterface, Sequelize) {
     await queryInterface.addIndex("projects", ["end_date"]);
     await queryInterface.addIndex("projects", ["manager_id"]);
     await queryInterface.addIndex("projects", ["created_by"]);
-    await queryInterface.addIndex("projects", ["totalTasks"]);
-    await queryInterface.addIndex("projects", ["completedTasks"]);
-    await queryInterface.addIndex("projects", ["overdueTasks"]);
-    await queryInterface.addIndex("projects", ["pendingReports"]);
+    await queryInterface.addIndex("projects", ["total_tasks"]);
+    await queryInterface.addIndex("projects", ["completed_tasks"]);
+    await queryInterface.addIndex("projects", ["overdue_tasks"]);
+    await queryInterface.addIndex("projects", ["pending_reports"]);
+    await queryInterface.addIndex("projects", ["planned_manpower"]);
+    await queryInterface.addIndex("projects", ["consumed_manpower"]);
+
+    // Create project_team_members table
+    await queryInterface.createTable("project_team_members", {
+        id: {
+            type: Sequelize.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        project_id: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: { model: "projects", key: "id" },
+            onDelete: "CASCADE",
+        },
+        user_id: {
+            type: Sequelize.INTEGER,
+            references: { model: "users", key: "id" },
+            onDelete: "SET NULL",
+        },
+        name: { type: Sequelize.STRING(255) },
+        role: { type: Sequelize.STRING(100) },
+        days_worked: { type: Sequelize.INTEGER, defaultValue: 0 },
+        allocation_percent: { type: Sequelize.DECIMAL(5, 2), defaultValue: 0 },
+        created_at: { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
+        updated_at: { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
+    });
+
+    await queryInterface.addIndex("project_team_members", ["project_id"]);
+    await queryInterface.addIndex("project_team_members", ["user_id"]);
 }
 
 export async function down(queryInterface, Sequelize) {
+    await queryInterface.dropTable("project_team_members");
     await queryInterface.dropTable("projects");
 }
