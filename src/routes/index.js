@@ -57,6 +57,7 @@ const mainRouter = (server) => {
 
     // Operations
     server.use("/api/v1/ims/attendance", routeForAttendance);
+    server.use("/api/v1/ims/uploads", routeForUploads);
     server.use("/api/v1/ims/attachments", routeForAttachments);
     server.use("/api/v1/ims/notifications", routeForNotifications);
 

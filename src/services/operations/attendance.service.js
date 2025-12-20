@@ -2,6 +2,7 @@ import db from "../../models/index.js";
 import logger from "../../utils/logger.js";
 import axios from "axios";
 import { Op } from "sequelize";
+import * as cloudinaryService from "../storage/cloudinary.service.js";
 
 // ==================== CHECK-IN/OUT SERVICES ====================
 
@@ -119,6 +120,7 @@ export const checkInService = async (checkInData) => {
     const locName = location?.name ?? location_name ?? null;
     const addr = location?.address ?? address ?? null;
     const photos = photo_urls ?? photo_url ?? photo ?? null;
+    const photoPublicId = checkInData.photo_public_id ?? checkInData.photoPublicId ?? null;
     const resolvedDevice = device_info ?? device ?? null;
     const resolvedIp = ip_address ?? null;
     const resolvedTypeId = check_in_type_id ?? typeId ?? null;
@@ -233,6 +235,15 @@ export const checkInService = async (checkInData) => {
         technicians: techArr,
       });
     } catch (err) {
+      // If a photo was uploaded directly by client (public id provided), attempt cleanup to avoid orphans
+      if (photoPublicId) {
+        try {
+          await cloudinaryService.deleteImage(photoPublicId);
+        } catch (delErr) {
+          logger.error('Failed to cleanup public image after attendance create error: ' + delErr.message);
+        }
+      }
+
       // Handle Sequelize validation/database errors with more context
       if (err && (err.name === 'SequelizeValidationError' || err.name === 'SequelizeDatabaseError')) {
         logger.error('Sequelize error creating Attendance', { message: err.message, errors: err.errors, payload: { user_id: uid, work_id: wid, project_id: pid, latitude: lat, longitude: lng, check_in_type_id: typeIdInt, technicians: techArr, photo_url: photoUrlNormalized } });
