@@ -78,6 +78,8 @@ export async function up(queryInterface, Sequelize) {
     });
 
     // Đã xóa unique constraints vì hệ thống sử dụng soft delete
+    await queryInterface.addIndex("users", ["employee_id"]);
+    await queryInterface.addIndex("users", ["email"]);
     await queryInterface.addIndex("users", ["department"]);
     await queryInterface.addIndex("users", ["is_active"]);
     await queryInterface.addIndex("users", ["manager_id"]);

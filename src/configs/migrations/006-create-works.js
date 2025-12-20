@@ -14,11 +14,27 @@ export async function up(queryInterface, Sequelize) {
       autoIncrement: true,
     },
     work_code: {
-      type: Sequelize.UUID,
-      defaultValue: Sequelize.UUIDV4,
+      type: Sequelize.STRING(64),
       unique: true,
       allowNull: false,
-      comment: "Mã công việc duy nhất (UUID tự động tạo)",
+      comment: "Mã công việc duy nhất (chuỗi do hệ thống tạo)",
+    },
+    // Fields for scheduling/time slots
+    required_date: {
+      type: Sequelize.DATE,
+      comment: "Ngày yêu cầu thực hiện công việc (date only)",
+    },
+    required_time_hour: {
+      type: Sequelize.STRING(2),
+      comment: "Giờ yêu cầu (HH)",
+    },
+    required_time_minute: {
+      type: Sequelize.STRING(2),
+      comment: "Phút yêu cầu (MM)",
+    },
+    timeSlot: {
+      type: Sequelize.INTEGER,
+      comment: "Time slot index / hour bucket để sắp xếp",
     },
     title: {
       type: Sequelize.STRING(255),
@@ -171,13 +187,15 @@ export async function up(queryInterface, Sequelize) {
     },
   });
 
-  await queryInterface.addIndex('works', ['work_code']);
+  await queryInterface.addIndex('works', ['work_code'], { unique: true, name: 'uniq_works_work_code' });
   await queryInterface.addIndex('works', ['assigned_user_id']);
   await queryInterface.addIndex('works', ['assigned_to_technician_id']);
   await queryInterface.addIndex('works', ['created_by_sales_id']);
   await queryInterface.addIndex('works', ['status']);
   await queryInterface.addIndex('works', ['priority']);
   await queryInterface.addIndex('works', ['due_date']);
+  await queryInterface.addIndex('works', ['required_date']);
+  await queryInterface.addIndex('works', ['timeSlot']);
   await queryInterface.addIndex('works', ['category_id']);
   await queryInterface.addIndex('works', ['project_id']);
   await queryInterface.addIndex('works', ['payment_status']);

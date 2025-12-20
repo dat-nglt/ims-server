@@ -12,13 +12,13 @@ export async function up(queryInterface, Sequelize) {
       autoIncrement: true,
     },
     work_code: {
-      type: Sequelize.UUID,
+      type: Sequelize.STRING(64),
       allowNull: false,
       references: {
         model: 'works',
         key: 'work_code'
       },
-      comment: 'Mã công việc liên quan (work_code - UUID)'
+      comment: 'Mã công việc liên quan (work_code - chuỗi hệ thống)'
     },
     material_id: {
       type: Sequelize.INTEGER,

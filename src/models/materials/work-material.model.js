@@ -17,13 +17,13 @@ export default (sequelize, DataTypes) => {
                 autoIncrement: true,
             },
             work_code: {
-                type: DataTypes.UUID,
+                type: DataTypes.STRING(64),
                 allowNull: false,
                 references: {
                     model: "works",
                     key: "work_code",
                 },
-                comment: "Mã công việc liên quan (work_code - UUID)",
+                comment: "Mã công việc liên quan (work_code - chuỗi hệ thống)",
             },
             material_id: {
                 type: DataTypes.INTEGER,
@@ -78,9 +78,13 @@ export default (sequelize, DataTypes) => {
             },
             // Trạng thái allocation
             status: {
-                type: DataTypes.ENUM("allocated", "in_progress", "completed", "cancelled"),
+                type: DataTypes.ENUM(
+                    "allocated",
+                    "in_progress",
+                    "completed",
+                    "cancelled"
+                ),
                 defaultValue: "allocated",
-                comment: "Trạng thái allocation",
             },
             notes: {
                 type: DataTypes.TEXT,

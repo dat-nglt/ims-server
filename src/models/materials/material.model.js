@@ -20,14 +20,12 @@ export default (sequelize, DataTypes) => {
             material_code: {
                 type: DataTypes.UUID,
                 defaultValue: DataTypes.UUIDV4,
-                unique: true,
                 allowNull: false,
                 comment: "Mã vật tư duy nhất (UUID)",
             },
             // Mã/ngắn gọn (ví dụ MAT001)
             code: {
                 type: DataTypes.STRING(100),
-                unique: true,
                 comment: "Mã ngắn của vật tư (ví dụ MAT001)",
             },
             // Tên vật tư
@@ -84,7 +82,6 @@ export default (sequelize, DataTypes) => {
             status: {
                 type: DataTypes.ENUM("active", "low_stock", "out_of_stock", "inactive"),
                 defaultValue: "active",
-                comment: "Trạng thái vật tư",
             },
             // Người tạo
             created_by: {

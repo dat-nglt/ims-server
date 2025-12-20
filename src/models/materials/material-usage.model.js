@@ -25,14 +25,14 @@ export default (sequelize, DataTypes) => {
                 },
                 comment: "ID vật tư",
             },
-            // Tham chiếu tới công việc bằng work_code (UUID)
+            // Tham chiếu tới công việc bằng work_code (chuỗi hệ thống)
             work_code: {
-                type: DataTypes.UUID,
+                type: DataTypes.STRING(64),
                 references: {
                     model: "works",
                     key: "work_code",
                 },
-                comment: "Mã công việc liên quan (work_code - UUID)",
+                comment: "Mã công việc liên quan (work_code - chuỗi hệ thống)",
             },
             // Tên công việc con / sub-work
             sub_work_name: {
@@ -62,7 +62,6 @@ export default (sequelize, DataTypes) => {
             usage_type: {
                 type: DataTypes.ENUM("used", "damaged", "issued", "returned"),
                 defaultValue: "used",
-                comment: "Loại ghi nhận",
             },
             // Giá đơn vị tại thời điểm ghi nhận (snapshot) để tính giá trị
             unit_price: {

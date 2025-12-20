@@ -20,13 +20,11 @@ export default (sequelize, DataTypes) => {
                 primaryKey: true,
                 autoIncrement: true,
             },
-            // Mã công việc: duy nhất (UUID)
+            // Mã công việc: chuỗi hệ thống (vd: lqd_work_1766193537920296)
             work_code: {
-                type: DataTypes.UUID,
-                defaultValue: DataTypes.UUIDV4,
-                unique: true,
+                type: DataTypes.STRING(64),
                 allowNull: false,
-                comment: "Mã công việc duy nhất (UUID tự động tạo)",
+                comment: "Mã công việc duy nhất (chuỗi do hệ thống tạo)",
             },
             // Tiêu đề công việc
             title: {
@@ -99,7 +97,6 @@ export default (sequelize, DataTypes) => {
             priority: {
                 type: DataTypes.ENUM("low", "medium", "high", "urgent"),
                 defaultValue: "medium",
-                comment: "Mức ưu tiên công việc",
             },
             // Trạng thái
             status: {
@@ -112,7 +109,6 @@ export default (sequelize, DataTypes) => {
                     "cancelled"
                 ),
                 defaultValue: "pending",
-                comment: "Trạng thái công việc",
             },
             // Loại dịch vụ
             service_type: {
@@ -124,6 +120,31 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.DATE,
                 comment: "Ngày hạn chót hoàn thành",
             },
+            // Ngày yêu cầu thực hiện (dùng cho lịch/scheduling)
+            required_date: {
+                type: DataTypes.DATE,
+                allowNull: true,
+                comment: "Ngày yêu cầu thực hiện công việc (date only)",
+            },
+            // Giờ yêu cầu (HH) — lưu ở dạng string để giữ leading zero nếu cần
+            required_time_hour: {
+                type: DataTypes.STRING(2),
+                allowNull: true,
+                comment: "Giờ yêu cầu (HH)",
+            },
+            // Phút yêu cầu (MM)
+            required_time_minute: {
+                type: DataTypes.STRING(2),
+                allowNull: true,
+                comment: "Phút yêu cầu (MM)",
+            },
+            // Time slot (số nguyên, có thể là giờ bucket như 8, 9, 10...)
+            timeSlot: {
+                type: DataTypes.INTEGER,
+                allowNull: true,
+                comment: "Time slot index / hour bucket để sắp xếp",
+            },
+
             // Ngày tạo
             created_date: {
                 type: DataTypes.DATE,
@@ -206,7 +227,6 @@ export default (sequelize, DataTypes) => {
             payment_status: {
                 type: DataTypes.ENUM("unpaid", "paid", "partial"),
                 defaultValue: "unpaid",
-                comment: "Trạng thái thanh toán",
             },
             // Trạng thái hoạt động
             is_active: {
@@ -234,13 +254,15 @@ export default (sequelize, DataTypes) => {
             tableName: "works",
             timestamps: false,
             indexes: [
-                { fields: ["work_code"] },
+                { fields: ["work_code"], unique: true, name: "uniq_works_work_code" },
                 { fields: ["assigned_user_id"] },
                 { fields: ["assigned_to_technician_id"] },
                 { fields: ["created_by_sales_id"] },
                 { fields: ["status"] },
                 { fields: ["priority"] },
                 { fields: ["due_date"] },
+                { fields: ["required_date"] },
+                { fields: ["timeSlot"] },
                 { fields: ["category_id"] },
                 { fields: ["project_id"] },
                 { fields: ["payment_status"] },
@@ -305,10 +327,10 @@ export default (sequelize, DataTypes) => {
             as: "assignments",
         });
 
-        // Một công việc có nhiều check-in
-        Work.hasMany(models.CheckIn, {
+        // Một công việc có nhiều attendance
+        Work.hasMany(models.Attendance, {
             foreignKey: "work_id",
-            as: "checkIns",
+            as: "attendances",
         });
 
         // Một công việc có nhiều tập tin đính kèm

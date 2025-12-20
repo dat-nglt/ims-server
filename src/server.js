@@ -148,7 +148,7 @@ async function startServer() {
                 "---- Đang đồng bộ CSDL (chỉ tạo bảng nếu chưa tồn tại)"
             );
             // Sync with force: false to avoid dropping tables
-            await db.sequelize.sync({ force: false });
+            await db.sequelize.sync({ force: true, logging: false });
             logger.info("Đồng bộ CSDL thành công");
         }
 

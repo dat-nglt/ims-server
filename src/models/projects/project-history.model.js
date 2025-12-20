@@ -45,8 +45,6 @@ export default (sequelize, DataTypes) => {
                     "report_rejected"
                 ),
                 defaultValue: "updated",
-                comment:
-                    "Hành động thay đổi: created (tạo), updated (cập nhật), approved (phê duyệt), deleted (xóa), assigned (phân công), accepted (chấp nhận), rejected (từ chối), started (bắt đầu), completed (hoàn thành), reported (báo cáo), report_updated (cập nhật báo cáo), report_approved (phê duyệt báo cáo), report_rejected (từ chối báo cáo)",
             },
             // Trường thay đổi (nếu chỉ một trường)
             field_changed: {

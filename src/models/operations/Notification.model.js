@@ -78,9 +78,29 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.STRING(255),
                 comment: "URL để xử lý hành động",
             },
+            // Mức độ ưu tiên: high | medium | low
+            priority: {
+                type: DataTypes.STRING(20),
+                allowNull: false,
+                defaultValue: "low",
+                comment: "Mức độ ưu tiên của thông báo (high, medium, low)",
+            },
+            // Dữ liệu bổ sung (JSON) có thể chứa snapshot của work/project
+            meta: {
+                type: DataTypes.JSON,
+                allowNull: true,
+                comment: "Dữ liệu bổ sung cho thông báo (JSON)",
+            },
             created_at: {
                 type: DataTypes.DATE,
                 defaultValue: DataTypes.NOW,
+            },
+            // Virtual field để client có thể dùng `timestamp`
+            timestamp: {
+                type: DataTypes.VIRTUAL,
+                get() {
+                    return this.getDataValue("created_at");
+                },
             },
         },
         {
@@ -90,6 +110,7 @@ export default (sequelize, DataTypes) => {
                 { fields: ["user_id"] },
                 { fields: ["is_read"] },
                 { fields: ["type"] },
+                { fields: ["priority"] },
                 { fields: ["created_at"] },
                 { fields: ["user_id", "is_read"] }, // Composite index cho thông báo chưa đọc của user
             ],

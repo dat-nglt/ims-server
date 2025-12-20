@@ -36,6 +36,7 @@ export const getProjectsService = async (filters) => {
                     attributes: ["name"],
                     through: { attributes: [] },
                 }, // Many-to-many for team
+                { model: db.ProjectTeamMember, as: "teamMembers", attributes: ["id","user_id","name","role","days_worked","allocation_percent"] },
                 { model: db.Work, as: "works", attributes: [] }, // For counting tasks
                 { model: db.WorkReport, as: "reports", attributes: [] }, // For pending reports
             ],
@@ -49,10 +50,10 @@ export const getProjectsService = async (filters) => {
                 "end_date",
                 "budget",
                 "spent",
-                "totalTasks",
-                "completedTasks",
-                "overdueTasks",
-                "pendingReports", // Use stored fields or compute below
+                "total_tasks",
+                "completed_tasks",
+                "overdue_tasks",
+                "pending_reports", // Use stored fields or compute below
             ],
             limit,
             offset,
@@ -64,18 +65,18 @@ export const getProjectsService = async (filters) => {
         const transformedProjects = projects.rows.map((project) => {
             const data = project.toJSON();
             // Compute if not stored (e.g., from works)
-            if (!data.totalTasks)
-                data.totalTasks = data.works ? data.works.length : 0;
-            if (!data.completedTasks)
-                data.completedTasks = data.works
+            if (!data.total_tasks)
+                data.total_tasks = data.works ? data.works.length : 0;
+            if (!data.completed_tasks)
+                data.completed_tasks = data.works
                     ? data.works.filter((w) => w.status === "completed").length
                     : 0;
-            if (!data.overdueTasks)
-                data.overdueTasks = data.works
+            if (!data.overdue_tasks)
+                data.overdue_tasks = data.works
                     ? data.works.filter((w) => w.status === "overdue").length
                     : 0;
-            if (!data.pendingReports)
-                data.pendingReports = data.reports
+            if (!data.pending_reports)
+                data.pending_reports = data.reports
                     ? data.reports.filter((r) => r.status === "pending").length
                     : 0;
 
@@ -89,10 +90,22 @@ export const getProjectsService = async (filters) => {
                 endDate: data.end_date,
                 manager: data.manager ? data.manager.name : "",
                 team: data.team ? data.team.map((u) => u.name) : [],
-                totalTasks: data.totalTasks,
-                completedTasks: data.completedTasks,
-                overdueTasks: data.overdueTasks,
-                pendingReports: data.pendingReports,
+                teamMembers: data.teamMembers ? data.teamMembers.map((m) => ({
+                    id: m.id,
+                    userId: m.user_id,
+                    name: m.name,
+                    role: m.role,
+                    daysWorked: m.days_worked,
+                    allocation: m.allocation_percent,
+                })) : [],
+                totalTasks: data.total_tasks,
+                completedTasks: data.completed_tasks,
+                overdueTasks: data.overdue_tasks,
+                pendingReports: data.pending_reports,
+                plannedManpower: data.planned_manpower || 0,
+                consumedManpower: data.consumed_manpower || 0,
+                timeline: data.timeline || [],
+                budgetDetails: data.budget_details || [],
                 budget: data.budget,
                 spent: data.spent,
             };

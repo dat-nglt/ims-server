@@ -1,5 +1,7 @@
 # IMS Server - Hệ Thống Quản Lý Nhân Sự
 
+> 🎉 **[NEW] Attendance API Enhancement** - Complete attendance management system with 22 endpoints, multi-technician support, and comprehensive documentation. [Read More →](README-ATTENDANCE.md)
+
 Hệ thống quản lý nhân sự (IMS - Internal Management System) được xây dựng bằng Node.js, Express.js và PostgreSQL, cung cấp API RESTful hoàn chỉnh cho các chức năng quản lý nhân sự, dự án, công việc và báo cáo.
 
 ## Tính Năng Chính

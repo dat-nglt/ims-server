@@ -64,6 +64,17 @@ export async function up(queryInterface, Sequelize) {
             type: Sequelize.STRING(255),
             comment: 'URL để xử lý hành động',
         },
+        priority: {
+            type: Sequelize.STRING(20),
+            allowNull: false,
+            defaultValue: 'low',
+            comment: 'Mức độ ưu tiên: high|medium|low',
+        },
+        meta: {
+            type: Sequelize.JSON,
+            allowNull: true,
+            comment: 'Dữ liệu bổ sung cho thông báo (JSON)',
+        },
         created_at: {
             type: Sequelize.DATE,
             defaultValue: Sequelize.NOW,
@@ -73,6 +84,7 @@ export async function up(queryInterface, Sequelize) {
     await queryInterface.addIndex("notifications", ["user_id"]);
     await queryInterface.addIndex("notifications", ["is_read"]);
     await queryInterface.addIndex("notifications", ["type"]);
+    await queryInterface.addIndex("notifications", ["priority"]);
     await queryInterface.addIndex("notifications", ["created_at"]);
     await queryInterface.addIndex("notifications", ["user_id", "is_read"]);
     await queryInterface.addIndex("notifications", ["related_project_id"]);

@@ -101,7 +101,6 @@ export default (sequelize, DataTypes) => {
             approved: {
                 type: DataTypes.ENUM('pending', 'approved', 'rejected'),
                 defaultValue: 'pending',
-                comment: "Trạng thái phê duyệt tài khoản: pending, approved, rejected",
             },
             // Thời gian đăng nhập lần cuối
             last_login: {
@@ -189,9 +188,9 @@ export default (sequelize, DataTypes) => {
             as: "assignedByMe",
         });
 
-        User.hasMany(models.CheckIn, {
+        User.hasMany(models.Attendance, {
             foreignKey: "user_id",
-            as: "checkIns",
+            as: "attendances",
         });
 
         User.hasMany(models.TechnicianSkill, {

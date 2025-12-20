@@ -50,7 +50,7 @@ export const getAllDashboardMetricsService = async () => {
 
     // Thống kê chấm công hôm nay
     const today = new Date().toISOString().split('T')[0];
-    const attendanceToday = await db.CheckIn.findAll({
+    const attendanceToday = await db.Attendance.findAll({
       attributes: [
         'status',
         [db.sequelize.fn('COUNT', db.sequelize.col('id')), 'count'],
@@ -153,7 +153,7 @@ export const getDashboardMetricsByUserIdService = async (userId) => {
 
     // Thống kê chấm công hôm nay của user
     const today = new Date().toISOString().split('T')[0];
-    const attendanceToday = await db.CheckIn.findAll({
+    const attendanceToday = await db.Attendance.findAll({
       where: {
         user_id: userId,
         [db.sequelize.Op.and]: db.sequelize.where(
@@ -266,7 +266,7 @@ export const getDashboardMetricsByDateService = async (date) => {
     });
 
     // Thống kê chấm công theo ngày
-    const attendanceStatsRaw = await db.CheckIn.findAll({
+    const attendanceStatsRaw = await db.Attendance.findAll({
       attributes: [
         'status',
         [db.sequelize.fn('COUNT', db.sequelize.col('id')), 'count'],

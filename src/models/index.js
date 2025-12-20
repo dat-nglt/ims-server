@@ -8,7 +8,10 @@ import { EmployeeProfile, TechnicianSkill } from "./hr/index.js";
 // Removed DashboardMetric and PerformanceMetric - data calculated from other models
 import {
     Attachment,
-    CheckIn,
+    Attendance,
+    AttendanceSession,
+    AttendanceSessionHistory,
+    CheckInType,
     Notification,
     OfficeLocation,
     LocationHistory,
@@ -22,7 +25,11 @@ import {
     RolePermissions,
     UserRoles,
 } from "./users/index.js";
-import { ProjectHistory, Project } from "./projects/index.js";
+import {
+    ProjectHistory,
+    Project,
+    ProjectTeamMember,
+} from "./projects/index.js";
 import {
     Work,
     WorkAssignment,
@@ -59,9 +66,11 @@ const db = {};
 const models = [
     EmployeeProfile,
     TechnicianSkill,
-    // Removed DashboardMetric and PerformanceMetric
     Attachment,
-    CheckIn,
+    Attendance,
+    AttendanceSession,
+    AttendanceSessionHistory,
+    CheckInType,
     Notification,
     OfficeLocation,
     LocationHistory,
@@ -74,6 +83,7 @@ const models = [
     UserRoles,
     ProjectHistory,
     Project,
+    ProjectTeamMember,
     Work,
     WorkAssignment,
     WorkCategory,
