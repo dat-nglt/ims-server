@@ -205,12 +205,15 @@ export const zaloLoginController = async (req, res) => {
                 phone: null, // Có thể để null hoặc yêu cầu cập nhật sau
                 email: `zalo_${zaloProfile.id}@temp.com`, // Email tạm thời
                 zalo_id: zaloProfile.id,
-                employee_id: `IMS-LQD-${zaloProfile.id}`, // Tạo employee_id từ zalo_id
+                employee_id: `ZALO-${Date.now()}-${zaloProfile.id.slice(-5)}`, // Tạo employee_id unique từ timestamp và phần cuối zalo_id
                 position: "Technician", // Mặc định là kỹ thuật viên
                 status: "active",
                 is_active: true,
                 approved: "pending",
             };
+
+            console.log(userData);
+            
 
             const createResult = await userService.createUserService(userData);
             if (!createResult.success) {
