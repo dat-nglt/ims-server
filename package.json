@@ -29,6 +29,7 @@
         "bcrypt": "^6.0.0",
         "bcryptjs": "^2.4.3",
         "bullmq": "^5.63.0",
+        "cloudinary": "^2.8.0",
         "compression": "^1.8.1",
         "cors": "^2.8.5",
         "docker": "^1.0.0",
