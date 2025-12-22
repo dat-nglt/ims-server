@@ -18,6 +18,20 @@ export const getAllEmployeeProfilesController = async (req, res) => {
     }
 };
 
+export const getAllEmployeeWithProfileController = async (req, res) => {
+    try {
+        const result = await employeeProfileService.getAllEmployeeWithProfileService();
+        res.json({
+            status: "success",
+            data: result.data,
+            message: "Lấy danh sách nhân viên kèm hồ sơ thành công",
+        });
+    } catch (error) {
+        logger.error(`[${req.id}] Error in getAllEmployeeWithProfileController:`, error.message);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 /**
  * Lấy hồ sơ theo user ID
  */

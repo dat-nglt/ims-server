@@ -19,6 +19,43 @@ export const getAllEmployeeProfilesService = async () => {
     }
 };
 
+export const getAllEmployeeWithProfileService = async () => {
+    try {
+        const employees = await db.User.findAll({
+            where: { is_active: true },
+            include: [
+                {
+                    model: db.EmployeeProfile,
+                    as: "profile",
+                    where: { is_active: true },
+                    required: true, // Only users that have an active profile
+                },
+                { model: db.Attendance, as: "attendances" },
+                { model: db.Work, as: "assignedWorks" },
+            ],
+        });
+
+        // Compute derived fields for each user similar to getEmployeeProfileByUserIdService
+        const usersWithTotals = employees.map((user) => {
+            const profile = user.profile || {};
+            const totalWorkDays = user.attendances ? user.attendances.length : 0;
+            const totalWorks = user.assignedWorks ? user.assignedWorks.length : 0;
+            const totalSalary = totalWorkDays * (profile.dailySalary || 0);
+
+            user.setDataValue("totalWorkDays", totalWorkDays);
+            user.setDataValue("totalWorks", totalWorks);
+            user.setDataValue("totalSalary", totalSalary);
+
+            return user;
+        });
+
+        return { success: true, data: usersWithTotals };
+    } catch (error) {
+        logger.error("Error in getAllEmployeeWithProfileService:" + error.message);
+        throw error;
+    }
+};
+
 /**
  * Lấy hồ sơ theo user ID (sử dụng employee_id từ User)
  * SQL: SELECT u.*, ep.* FROM users u LEFT JOIN employee_profiles ep ON u.id = ep.user_id WHERE u.employee_id = ? AND u.is_active = true AND (ep.is_active = true OR ep.is_active IS NULL);
@@ -172,7 +209,11 @@ export const updateEmployeeProfileService = async (userId, updateData) => {
             // List fields: accept array or comma-separated string
             if (["specialization", "certification"].includes(key)) {
                 if (Array.isArray(val)) payload[key] = val;
-                else if (typeof val === "string") payload[key] = val.split(",").map((s) => s.trim()).filter(Boolean);
+                else if (typeof val === "string")
+                    payload[key] = val
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean);
                 else payload[key] = [];
                 continue;
             }
