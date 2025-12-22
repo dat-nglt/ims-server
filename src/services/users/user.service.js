@@ -111,7 +111,7 @@ export const createUserService = async (userData) => {
         }
 
         // Validation conflict với user active - sử dụng 1 query duy nhất
-        const whereConditions = { is_active: true };
+        const whereConditions = {}; // Check all users, not just active, since employee_id should be unique globally
         const orConditions = [];
 
         if (zalo_id) {
@@ -205,8 +205,7 @@ export const updateUserService = async (id, updateData) => {
 
         // Validation conflict với user active khác - sử dụng 1 query duy nhất
         const whereConditions = {
-            is_active: true,
-            id: { [Op.ne]: id }, // Exclude current user
+            id: { [Op.ne]: id }, // Exclude current user, check all users
         };
         const orConditions = [];
 
