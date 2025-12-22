@@ -9,6 +9,7 @@
 export async function up(queryInterface, Sequelize) {
     const usersData = [
         {
+            id: 1,
             employee_id: "EMP001",
             name: "Nhân viên 1",
             position: "Quản lý",
@@ -18,7 +19,6 @@ export async function up(queryInterface, Sequelize) {
             password: "0397364664",
             zalo_id: null,
             status: "active",
-            department: "Nhân Sự",
             manager_id: 1,
             is_active: true,
             approved: "approved",
@@ -32,9 +32,5 @@ export async function up(queryInterface, Sequelize) {
 }
 
 export async function down(queryInterface, Sequelize) {
-    await queryInterface.bulkDelete(
-        "users",
-        { employee_id: "EMP001" },
-        {}
-    );
+    await queryInterface.bulkDelete("users", null, {});
 }

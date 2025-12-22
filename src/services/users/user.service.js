@@ -165,7 +165,7 @@ export const createUserService = async (userData) => {
         return { success: true, data: user };
     } catch (error) {
         if (error instanceof db.Sequelize.ValidationError) {
-            const messages = error.errors.map(e => e.message).join(', ');
+            const messages = error.errors.map((e) => e.message).join(", ");
             logger.error("Validation error in createUserService: " + messages);
             throw new Error("Dữ liệu không hợp lệ: " + messages);
         }
@@ -312,7 +312,7 @@ export const deleteUserService = async (id) => {
 /**
  * Duyệt tài khoản người dùng
  * SQL: UPDATE users SET approved = 'approved', updated_at = NOW() WHERE id = ?;
-*/
+ */
 export const approveUserService = async (employee_id) => {
     try {
         console.log("Đã đến đây" + employee_id);
@@ -325,7 +325,6 @@ export const approveUserService = async (employee_id) => {
         if (user.approved === "approved") {
             throw new Error("Tài khoản đã được duyệt");
         }
-
 
         // Approve and create profile atomically
         const result = await db.sequelize.transaction(async (t) => {
@@ -378,9 +377,9 @@ export const approveUserService = async (employee_id) => {
  * Từ chối tài khoản người dùng
  * SQL: UPDATE users SET approved = 'rejected', updated_at = NOW() WHERE zalo_id = ?;
  */
-export const rejectUserService = async (zalo_id) => {
+export const rejectUserService = async (employee_id) => {
     try {
-        const user = await db.User.findOne({ where: { zalo_id } });
+        const user = await db.User.findOne({ where: { employee_id } });
         if (!user) {
             throw new Error("Người dùng không tồn tại");
         }

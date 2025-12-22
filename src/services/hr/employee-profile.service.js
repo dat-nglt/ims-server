@@ -21,7 +21,7 @@ export const getAllEmployeeProfilesService = async () => {
 
 /**
  * Lấy hồ sơ theo user ID (sử dụng employee_id từ User)
- * SQL: SELECT u.*, ep.* FROM users u LEFT JOIN employee_profiles ep ON u.id = ep.user_id WHERE u.employee_id = ? AND u.is_active = true AND ep.is_active = true;
+ * SQL: SELECT u.*, ep.* FROM users u LEFT JOIN employee_profiles ep ON u.id = ep.user_id WHERE u.employee_id = ? AND u.is_active = true AND (ep.is_active = true OR ep.is_active IS NULL);
  */
 export const getEmployeeProfileByUserIdService = async (employeeId) => {
     try {
@@ -33,23 +33,22 @@ export const getEmployeeProfileByUserIdService = async (employeeId) => {
                     model: db.EmployeeProfile,
                     as: "profile",
                     where: { is_active: true }, // Ensure profile is active
-                    required: true, // Inner join to ensure profile exists
+                    required: false, // Left join to allow users without profiles
                 },
                 { model: db.Attendance, as: "attendances" },
                 { model: db.Work, as: "assignedWorks" },
             ],
         });
 
-        console.log(user.profile);
-
         if (!user) {
-            throw new Error("Hồ sơ nhân viên không tồn tại");
+            throw new Error("Người dùng không tồn tại");
         }
 
-        // Calculate additional fields based on EmployeeDetail.jsx requirements
+        // If no profile, set default values
+        const profile = user.profile || {};
         const totalWorkDays = user.attendances ? user.attendances.length : 0;
         const totalWorks = user.assignedWorks ? user.assignedWorks.length : 0;
-        const totalSalary = totalWorkDays * (user.profile.dailySalary || 0);
+        const totalSalary = totalWorkDays * (profile.dailySalary || 0);
 
         // Normalize approval status
         const normalizeApproval = (val) => {
@@ -66,8 +65,6 @@ export const getEmployeeProfileByUserIdService = async (employeeId) => {
         user.setDataValue("totalWorkDays", totalWorkDays);
         user.setDataValue("totalWorks", totalWorks);
         user.setDataValue("totalSalary", totalSalary);
-
-        console.log(user);
 
         return { success: true, data: user };
     } catch (error) {
@@ -128,10 +125,71 @@ export const updateEmployeeProfileService = async (userId, updateData) => {
             throw new Error("Hồ sơ nhân viên không tồn tại");
         }
 
-        // Optional: Add field validation here if needed (e.g., performance_rating between 1-5)
+        // Allowed fields that can be updated on the profile
+        const allowedFields = [
+            "department",
+            "specialization",
+            "certification",
+            "phone_secondary",
+            "address",
+            "date_of_birth",
+            "gender",
+            "id_number",
+            "hire_date",
+            "contract_date",
+            "bank_account_number",
+            "bank_name",
+            "total_experience_years",
+            "performance_rating",
+            "dailySalary",
+            "is_active",
+        ];
+
+        const payload = {};
+
+        // Sanitize & normalize incoming values
+        for (const key of allowedFields) {
+            if (typeof updateData[key] === "undefined") continue;
+            let val = updateData[key];
+
+            // Date fields: normalize to Date objects or null
+            if (["date_of_birth", "hire_date", "contract_date"].includes(key)) {
+                if (!val) {
+                    payload[key] = null;
+                    continue;
+                }
+                // Accept Date or ISO string; fall back to null for invalid values
+                const d = new Date(val);
+                if (isNaN(d.getTime())) {
+                    logger.warn(`Invalid date for ${key}: ${val}; setting to null`);
+                    payload[key] = null;
+                } else {
+                    payload[key] = d;
+                }
+                continue;
+            }
+
+            // List fields: accept array or comma-separated string
+            if (["specialization", "certification"].includes(key)) {
+                if (Array.isArray(val)) payload[key] = val;
+                else if (typeof val === "string") payload[key] = val.split(",").map((s) => s.trim()).filter(Boolean);
+                else payload[key] = [];
+                continue;
+            }
+
+            // Numeric fields
+            if (["dailySalary", "performance_rating", "total_experience_years"].includes(key)) {
+                const num = Number(val);
+                payload[key] = isNaN(num) ? null : num;
+                continue;
+            }
+
+            // Default: copy through
+            payload[key] = val;
+        }
 
         await profile.update({
-            ...updateData,
+            ...payload,
             updated_at: new Date(),
         });
 

@@ -113,8 +113,8 @@ export const approveUserController = async (req, res) => {
  */
 export const rejectUserController = async (req, res) => {
     try {
-        const { zalo_id } = req.params;
-        const result = await userService.rejectUserService(zalo_id);
+        const { employee_id } = req.params;
+        const result = await userService.rejectUserService(employee_id);
         res.json({
             status: "success",
             data: result.data,
