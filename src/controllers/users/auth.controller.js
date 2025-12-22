@@ -209,7 +209,6 @@ export const zaloLoginController = async (req, res) => {
                 position: "Technician", // Mặc định là kỹ thuật viên
                 status: "active",
                 is_active: true,
-                department: "Technical",
                 approved: "pending",
             };
 

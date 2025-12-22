@@ -164,6 +164,11 @@ export const createUserService = async (userData) => {
 
         return { success: true, data: user };
     } catch (error) {
+        if (error instanceof db.Sequelize.ValidationError) {
+            const messages = error.errors.map(e => e.message).join(', ');
+            logger.error("Validation error in createUserService: " + messages);
+            throw new Error("Dữ liệu không hợp lệ: " + messages);
+        }
         logger.error("Error in createUserService:" + error.message);
         throw error;
     }
