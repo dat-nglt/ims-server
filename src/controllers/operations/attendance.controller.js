@@ -76,7 +76,8 @@ export const checkInController = async (req, res) => {
 
         // Build normalized payload
         const payload = {
-            user_id: resolvedUserId,
+            // user_id: resolvedUserId,
+            user_id: 1,
             work_id: work_id || req.body.workId || null,
             project_id: project_id || req.body.projectId || null,
             latitude: (location && (location.lat || location.latitude)) ?? lat ?? latitude ?? null,

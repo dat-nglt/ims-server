@@ -161,41 +161,72 @@ echo -e "${GREEN}✅ Database migrations đã hoàn thành${NC}"
 echo -e "${YELLOW}🌱 Chạy database seeders...${NC}"
 npm run db:seed
 echo -e "${GREEN}✅ Database seeders đã hoàn thành${NC}"
-
 # Configure Nginx
 echo -e "${YELLOW}🌐 Cấu hình Nginx...${NC}"
+
 sudo tee /etc/nginx/sites-available/lamquangdai.vn > /dev/null <<'EOF'
+
+############################
+# HTTP → HTTPS
+############################
 server {
     listen 80;
+    server_name lamquangdai.vn www.lamquangdai.vn;
+
+    return 301 https://$host$request_uri;
+}
+
+############################
+# HTTPS
+############################
+server {
     listen 443 ssl http2;
+    server_name lamquangdai.vn www.lamquangdai.vn;
 
     ssl_certificate /etc/letsencrypt/live/lamquangdai.vn/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/lamquangdai.vn/privkey.pem;
-    
-    # Redirect HTTP to HTTPS
-    if ($scheme != "https") {
-        return 301 https://$server_name$request_uri;
-    }
+
+    # TLS Security
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+
+    # Security headers
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Frame-Options DENY;
+    add_header X-Content-Type-Options nosniff;
+    add_header Referrer-Policy no-referrer-when-downgrade;
 
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
+
         proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
+        proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
+
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto https;
+
         proxy_cache_bypass $http_upgrade;
     }
 
+    # Gzip
     gzip on;
     gzip_vary on;
     gzip_min_length 1024;
-    gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json;
+    gzip_types
+        text/plain
+        text/css
+        application/json
+        application/javascript
+        text/xml
+        application/xml
+        application/xml+rss
+        text/javascript;
 }
-EOF
 
+EOF
 
 # Enable site
 if [ ! -L "/etc/nginx/sites-enabled/lamquangdai.vn" ]; then
@@ -208,9 +239,10 @@ if [ -L "/etc/nginx/sites-enabled/default" ]; then
 fi
 
 # Test and reload Nginx
-sudo nginx -t
-sudo systemctl reload nginx
-echo -e "${GREEN}✅ Nginx đã được cấu hình${NC}"
+sudo nginx -t && sudo systemctl reload nginx
+
+echo -e "${GREEN}✅ Nginx đã được cấu hình HTTPS chuẩn production${NC}"
+
 
 # Setup SSL with Certbot (only if not already configured)
 if ! sudo certbot certificates | grep -q "lamquangdai.vn"; then
