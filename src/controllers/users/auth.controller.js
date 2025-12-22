@@ -61,7 +61,9 @@ export const loginController = async (req, res) => {
                 status: "error",
                 success: false,
                 message:
-                    user.approved === "rejected" ? "Tài khoản đã bị từ chối phê duyệt" : "Tài khoản đang chờ phê duyệt",
+                    user.approved === "rejected"
+                        ? "Tài khoản đã bị từ chối phê duyệt"
+                        : "Tài khoản đang chờ phê duyệt",
             });
         }
 
@@ -160,7 +162,10 @@ export const zaloLoginController = async (req, res) => {
             });
         }
 
-        const appSecretProof = calculateAppSecretProof(access_token, ZALO_APP_SECRET_KEY);
+        const appSecretProof = calculateAppSecretProof(
+            access_token,
+            ZALO_APP_SECRET_KEY
+        );
 
         const zaloResponse = await axios.get("https://graph.zalo.me/v2.0/me", {
             headers: {
@@ -173,7 +178,9 @@ export const zaloLoginController = async (req, res) => {
             timeout: 10000, // 10 seconds timeout
         });
 
-        logger.info(`[${req.id}] Zalo API response from https://graph.zalo.me/v2.0/me: ${zaloResponse.status}`);
+        logger.info(
+            `[${req.id}] Zalo API response from https://graph.zalo.me/v2.0/me: ${zaloResponse.status}`
+        );
 
         const zaloProfile = zaloResponse.data;
 
@@ -185,7 +192,9 @@ export const zaloLoginController = async (req, res) => {
         }
 
         // Tìm user theo zalo_id
-        let userResult = await userService.getUserByZaloIdService(zaloProfile.id);
+        let userResult = await userService.getUserByZaloIdService(
+            zaloProfile.id
+        );
 
         let user;
         if (!userResult.success) {
@@ -202,6 +211,9 @@ export const zaloLoginController = async (req, res) => {
                 is_active: true,
                 approved: "pending",
             };
+
+            console.log(userData);
+            
 
             const createResult = await userService.createUserService(userData);
             if (!createResult.success) {
@@ -238,7 +250,9 @@ export const zaloLoginController = async (req, res) => {
                     refresh_token: null,
                 },
                 message:
-                    user.approved === "rejected" ? "Tài khoản đã bị từ chối phê duyệt" : "Tài khoản đang chờ phê duyệt",
+                    user.approved === "rejected"
+                        ? "Tài khoản đã bị từ chối phê duyệt"
+                        : "Tài khoản đang chờ phê duyệt",
             });
         }
 
@@ -273,10 +287,14 @@ export const zaloLoginController = async (req, res) => {
                 access_token: token,
                 refresh_token: null,
             },
-            message: userResult.success ? "Đăng nhập qua Zalo thành công" : "Tạo tài khoản và đăng nhập thành công",
+            message: userResult.success
+                ? "Đăng nhập qua Zalo thành công"
+                : "Tạo tài khoản và đăng nhập thành công",
         });
     } catch (error) {
-        logger.error(`[${req.id}] Error in zaloLoginController:` + error.message);
+        logger.error(
+            `[${req.id}] Error in zaloLoginController:` + error.message
+        );
 
         // Handle Zalo API errors
         if (error.response) {
@@ -286,7 +304,8 @@ export const zaloLoginController = async (req, res) => {
             if (status === 401) {
                 return res.status(401).json({
                     status: "error",
-                    message: "Access token từ Zalo không hợp lệ hoặc đã hết hạn",
+                    message:
+                        "Access token từ Zalo không hợp lệ hoặc đã hết hạn",
                 });
             }
 
@@ -352,8 +371,13 @@ export const registerController = async (req, res) => {
             message: "Đăng ký thành công",
         });
     } catch (error) {
-        logger.error(`[${req.id}] Error in registerController:` + error.message);
-        if (error.message.includes("duplicate") || error.message.includes("unique")) {
+        logger.error(
+            `[${req.id}] Error in registerController:` + error.message
+        );
+        if (
+            error.message.includes("duplicate") ||
+            error.message.includes("unique")
+        ) {
             return res.status(409).json({
                 status: "error",
                 message: "Số điện thoại hoặc email đã tồn tại",
@@ -398,7 +422,10 @@ export const linkZaloIdController = async (req, res) => {
             message: "Liên kết Zalo ID thành công",
         });
     } catch (error) {
-        logger.error(`[${req.id}] Error in linkZaloIdController:`, error.message);
+        logger.error(
+            `[${req.id}] Error in linkZaloIdController:`,
+            error.message
+        );
         res.status(500).json({
             status: "error",
             message: "Lỗi server",
@@ -413,7 +440,9 @@ export const refreshTokenController = async (req, res) => {
     try {
         const { refresh_token } = req.body;
         if (!refresh_token) {
-            return res.status(400).json({ message: "Refresh token is required" });
+            return res
+                .status(400)
+                .json({ message: "Refresh token is required" });
         }
         const newAccessToken = await refreshTokenService(refresh_token);
         res.status(200).json({ access_token: newAccessToken });
