@@ -4,5 +4,5 @@ export { default as AttendanceSessionHistory } from "./attendanceSessionHistory.
 export { default as CheckInType } from "./attendance-type.model.js";
 export { default as OfficeLocation } from "./office-location.model.js";
 export { default as LocationHistory } from "./location-history.model.js";
-export { default as Notification } from "./notification.model.js";
 export { default as Attachment } from "./attachment.model.js";
+export { default as Notification } from "./notification.model.js";
