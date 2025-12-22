@@ -587,7 +587,7 @@ export const getAttendanceSummaryService = async (params) => {
         summaryMap[userId] = {
           id: userId,
           name: user.name,
-          department: user.department || "N/A",
+          department: (user.profile && user.profile.department) ? user.profile.department : (user.department || "N/A"),
           dates: {},
         };
       }

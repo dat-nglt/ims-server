@@ -22,11 +22,11 @@ export default (sequelize, DataTypes) => {
                 primaryKey: true,
                 autoIncrement: true,
             },
-            // Mã nhân viên: không được null (validation trong service)
+            // Mã nhân viên: nullable for Zalo users (will be set when approved)
             employee_id: {
                 type: DataTypes.STRING(50),
-                allowNull: false,
-                comment: "Mã nhân viên (vd: EMP001)",
+                allowNull: true,
+                comment: "Mã nhân viên (vd: EMP001) - nullable for Zalo users until approved",
             },
             // Tên đầy đủ
             name: {
@@ -81,11 +81,7 @@ export default (sequelize, DataTypes) => {
                 defaultValue: "active",
                 comment: "Trạng thái: active, inactive, suspended",
             },
-            // Phòng ban
-            department: {
-                type: DataTypes.STRING(100),
-                comment: "Phòng ban (vd: IT, Sales, Operations)",
-            },
+
             // ID của người quản lý (tự tham chiếu)
             manager_id: {
                 type: DataTypes.INTEGER,
@@ -99,8 +95,8 @@ export default (sequelize, DataTypes) => {
             },
             // Trạng thái phê duyệt
             approved: {
-                type: DataTypes.ENUM('pending', 'approved', 'rejected'),
-                defaultValue: 'pending',
+                type: DataTypes.ENUM("pending", "approved", "rejected"),
+                defaultValue: "pending",
             },
             // Thời gian đăng nhập lần cuối
             last_login: {
@@ -126,7 +122,6 @@ export default (sequelize, DataTypes) => {
             indexes: [
                 { fields: ["employee_id"] },
                 { fields: ["email"] },
-                { fields: ["department"] },
                 { fields: ["is_active"] },
                 { fields: ["manager_id"] }, // Thêm index cho manager_id
             ],
@@ -199,8 +194,10 @@ export default (sequelize, DataTypes) => {
         });
 
         User.hasOne(models.EmployeeProfile, {
-            foreignKey: "user_id",
+            foreignKey: { name: "user_id", allowNull: false },
             as: "profile",
+            onDelete: "SET NULL",
+            onUpdate: "CASCADE",
         });
 
         User.hasMany(models.SalesReportDaily, {

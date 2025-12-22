@@ -8,19 +8,18 @@
 
 export async function up(queryInterface, Sequelize) {
   await queryInterface.createTable('employee_profiles', {
-    id: {
-      type: Sequelize.STRING(255),
-      primaryKey: true,
-    },
+    // Use user_id as primary key to enforce strict 1:1 with users
     user_id: {
       type: Sequelize.INTEGER,
-      unique: true,
+      primaryKey: true,
       allowNull: false,
       references: {
         model: 'users',
         key: 'id',
       },
-      comment: 'Người dùng',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
+      comment: 'Người dùng (FK -> users.id); primary key to enforce 1:1',
     },
     department: {
       type: Sequelize.STRING(100),
@@ -79,11 +78,12 @@ export async function up(queryInterface, Sequelize) {
       type: Sequelize.DECIMAL(3, 2),
       comment: 'Đánh giá hiệu suất (1-5)',
     },
-    dailySalary: {
+    daily_salary: {
       type: Sequelize.DECIMAL(10, 2),
       defaultValue: 500000.00,
       comment: 'Lương theo ngày (VND)',
     },
+
     is_active: {
       type: Sequelize.BOOLEAN,
       defaultValue: true,

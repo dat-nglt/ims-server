@@ -19,7 +19,6 @@ export async function up(queryInterface, Sequelize) {
             password: "0397364664",
             zalo_id: null,
             status: "active",
-            department: "Nhân Sự",
             manager_id: 1,
             is_active: true,
             approved: "approved",
@@ -29,9 +28,35 @@ export async function up(queryInterface, Sequelize) {
         },
     ];
 
+    const profiles = [
+        {
+            user_id: 1,
+            department: 'Nhân Sự',
+            specialization: JSON.stringify([]),
+            certification: JSON.stringify([]),
+            phone_secondary: null,
+            address: null,
+            date_of_birth: null,
+            gender: null,
+            id_number: null,
+            hire_date: null,
+            contract_date: null,
+            bank_account_number: null,
+            bank_name: 'ACB',
+            total_experience_years: null,
+            performance_rating: null,
+            daily_salary: 500000.00,
+            is_active: true,
+            created_at: new Date("2025-12-06T07:56:29.400Z"),
+            updated_at: new Date("2025-12-06T07:56:29.400Z"),
+        },
+    ];
+
     await queryInterface.bulkInsert("users", usersData, {});
+    await queryInterface.bulkInsert("employee_profiles", profiles, {});
 }
 
 export async function down(queryInterface, Sequelize) {
+    await queryInterface.bulkDelete("employee_profiles", { user_id: 1 }, {});
     await queryInterface.bulkDelete("users", null, {});
 }

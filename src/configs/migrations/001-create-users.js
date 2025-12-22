@@ -14,7 +14,7 @@ export async function up(queryInterface, Sequelize) {
         },
         employee_id: {
             type: Sequelize.STRING(50),
-            allowNull: false,
+            allowNull: true, // nullable for Zalo users until approval
         },
         name: {
             type: Sequelize.STRING(255),
@@ -49,9 +49,9 @@ export async function up(queryInterface, Sequelize) {
             type: Sequelize.STRING(50),
             defaultValue: "active",
         },
-        department: {
-            type: Sequelize.STRING(100),
-        },
+        // department moved to employee_profiles; keep users table lean for Zalo workflow
+
+
         manager_id: {
             type: Sequelize.INTEGER,
         },
@@ -80,7 +80,6 @@ export async function up(queryInterface, Sequelize) {
     // Đã xóa unique constraints vì hệ thống sử dụng soft delete
     await queryInterface.addIndex("users", ["employee_id"]);
     await queryInterface.addIndex("users", ["email"]);
-    await queryInterface.addIndex("users", ["department"]);
     await queryInterface.addIndex("users", ["is_active"]);
     await queryInterface.addIndex("users", ["manager_id"]);
 }

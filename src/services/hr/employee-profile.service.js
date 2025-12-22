@@ -20,25 +20,58 @@ export const getAllEmployeeProfilesService = async () => {
 };
 
 /**
- * Lấy hồ sơ theo user ID
- * SQL: SELECT ep.*, u.* FROM employee_profiles ep LEFT JOIN users u ON ep.user_id = u.id WHERE ep.user_id = ? AND ep.is_active = true;
+ * Lấy hồ sơ theo user ID (sử dụng employee_id từ User)
+ * SQL: SELECT u.*, ep.* FROM users u LEFT JOIN employee_profiles ep ON u.id = ep.user_id WHERE u.employee_id = ? AND u.is_active = true AND ep.is_active = true;
  */
-export const getEmployeeProfileByUserIdService = async (userId) => {
+export const getEmployeeProfileByUserIdService = async (employeeId) => {
     try {
-        const profile = await db.EmployeeProfile.findOne({
-            where: { user_id: userId, is_active: true }, // Filter active profiles
-            include: [{ model: db.User, as: "user" }],
+        // Find active user by employee_id and include the linked profile with attendances and assigned works
+        const user = await db.User.findOne({
+            where: { employee_id: employeeId, is_active: true }, // Filter active users by employee_id
+            include: [
+                {
+                    model: db.EmployeeProfile,
+                    as: "profile",
+                    where: { is_active: true }, // Ensure profile is active
+                    required: true, // Inner join to ensure profile exists
+                },
+                { model: db.Attendance, as: "attendances" },
+                { model: db.Work, as: "assignedWorks" },
+            ],
         });
 
-        if (!profile) {
+        console.log(user.profile);
+
+        if (!user) {
             throw new Error("Hồ sơ nhân viên không tồn tại");
         }
 
-        return { success: true, data: profile };
+        // Calculate additional fields based on EmployeeDetail.jsx requirements
+        const totalWorkDays = user.attendances ? user.attendances.length : 0;
+        const totalWorks = user.assignedWorks ? user.assignedWorks.length : 0;
+        const totalSalary = totalWorkDays * (user.profile.dailySalary || 0);
+
+        // Normalize approval status
+        const normalizeApproval = (val) => {
+            if (val === true) return "approved";
+            if (val === false) return "rejected";
+            if (typeof val === "string") {
+                const s = val.toLowerCase();
+                if (["approved", "pending", "rejected"].includes(s)) return s;
+            }
+            return "pending";
+        };
+
+        // Add calculated fields to the profile instance
+        user.setDataValue("totalWorkDays", totalWorkDays);
+        user.setDataValue("totalWorks", totalWorks);
+        user.setDataValue("totalSalary", totalSalary);
+
+        console.log(user);
+
+        return { success: true, data: user };
     } catch (error) {
-        logger.error(
-            "Error in getEmployeeProfileByUserIdService:" + error.message
-        );
+        logger.error("Error in getEmployeeProfileByUserIdService:" + error.message);
         throw error;
     }
 };
@@ -49,20 +82,10 @@ export const getEmployeeProfileByUserIdService = async (userId) => {
  */
 export const createEmployeeProfileService = async (profileData) => {
     try {
-        const { user_id, id } = profileData;
+        const { user_id } = profileData;
 
         if (!user_id) {
             throw new Error("user_id là bắt buộc");
-        }
-
-        if (!id) {
-            throw new Error("id là bắt buộc");
-        }
-
-        // Validate ID format: IMS-LQD-{numbers}
-        const idRegex = /^IMS-LQD-\d+$/;
-        if (!idRegex.test(id)) {
-            throw new Error("ID phải có định dạng IMS-LQD-{số}");
         }
 
         // Kiểm tra người dùng tồn tại và active
@@ -77,14 +100,6 @@ export const createEmployeeProfileService = async (profileData) => {
         });
         if (existingProfile) {
             throw new Error("Hồ sơ nhân viên đã tồn tại cho người dùng này");
-        }
-
-        // Kiểm tra ID đã tồn tại
-        const existingId = await db.EmployeeProfile.findOne({
-            where: { id },
-        });
-        if (existingId) {
-            throw new Error("ID nhân viên đã tồn tại");
         }
 
         const profile = await db.EmployeeProfile.create({

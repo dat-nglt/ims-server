@@ -27,9 +27,9 @@ router.put("/:id", updateUserController);
 router.delete("/:id", deleteUserController);
 
 // APPROVE user
-router.put("/:zalo_id/approve", approveUserController);
+router.put("/:employee_id/approve", approveUserController);
 
 // REJECT user
-router.put("/:zalo_id/reject", rejectUserController);
+router.put("/:employee_id/reject", rejectUserController);
 
 export default router;

@@ -94,8 +94,9 @@ export const deleteUserController = async (req, res) => {
  */
 export const approveUserController = async (req, res) => {
     try {
-        const { zalo_id } = req.params;
-        const result = await userService.approveUserService(zalo_id);
+        const { employee_id } = req.params;
+        const result = await userService.approveUserService(employee_id);
+        // result.data contains { user, profile, created }
         res.json({
             status: "success",
             data: result.data,

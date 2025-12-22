@@ -2,7 +2,6 @@ import express from "express";
 import {
     getAllEmployeeProfilesController,
     getEmployeeProfileByUserIdController,
-    createEmployeeProfileController,
     updateEmployeeProfileController,
 } from "../../controllers/hr/employee-profile.controller.js";
 
@@ -12,10 +11,9 @@ const router = express.Router();
 router.get("/", getAllEmployeeProfilesController);
 
 // GET employee profile by user ID
-router.get("/user/:userId", getEmployeeProfileByUserIdController);
+router.get("/user/:employee_id", getEmployeeProfileByUserIdController);
 
 // CREATE employee profile
-router.post("/", createEmployeeProfileController);
 
 // UPDATE employee profile
 router.put("/user/:userId", updateEmployeeProfileController);

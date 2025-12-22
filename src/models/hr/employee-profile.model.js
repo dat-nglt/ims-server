@@ -9,14 +9,10 @@ export default (sequelize, DataTypes) => {
   const EmployeeProfile = sequelize.define(
     'EmployeeProfile',
     {
-      id: {
-        type: DataTypes.STRING(255),
-        primaryKey: true,
-      },
-      // ID người dùng (FK)
+      // Use user_id as primary key to enforce strict 1:1 with users
       user_id: {
         type: DataTypes.INTEGER,
-        unique: true,
+        primaryKey: true,
         allowNull: false,
         references: {
           model: 'users',
@@ -95,11 +91,12 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DECIMAL(3, 2),
         comment: 'Đánh giá hiệu suất (1-5)',
       },
-      // Lương theo ngày
+      // Lương theo ngày (camelCase accessor for API stability)
       dailySalary: {
         type: DataTypes.DECIMAL(10, 2),
         defaultValue: 500000.00,
         comment: 'Lương theo ngày (VND)',
+        field: 'daily_salary',
       },
       // Trạng thái hoạt động (for soft delete)
       is_active: {
@@ -125,8 +122,10 @@ export default (sequelize, DataTypes) => {
 
   EmployeeProfile.associate = (models) => {
     EmployeeProfile.belongsTo(models.User, {
-      foreignKey: 'user_id',
+      foreignKey: { name: 'user_id', allowNull: false },
       as: 'user',
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
     });
   };
 

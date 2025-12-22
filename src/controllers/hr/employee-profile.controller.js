@@ -6,18 +6,14 @@ import * as employeeProfileService from "../../services/hr/index.js";
  */
 export const getAllEmployeeProfilesController = async (req, res) => {
     try {
-        const result =
-            await employeeProfileService.getAllEmployeeProfilesService();
+        const result = await employeeProfileService.getAllEmployeeProfilesService();
         res.json({
             status: "success",
             data: result.data,
             message: "Lấy danh sách hồ sơ nhân viên thành công",
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in getAllEmployeeProfilesController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in getAllEmployeeProfilesController:`, error.message);
         res.status(500).json({ error: error.message });
     }
 };
@@ -27,43 +23,16 @@ export const getAllEmployeeProfilesController = async (req, res) => {
  */
 export const getEmployeeProfileByUserIdController = async (req, res) => {
     try {
-        const { userId } = req.params;
-        const result =
-            await employeeProfileService.getEmployeeProfileByUserIdService(
-                userId
-            );
+        const { employee_id } = req.params; // employee_id here represents the user id in route
+        const result = await employeeProfileService.getEmployeeProfileByUserIdService(employee_id);
         res.json({
             status: "success",
             data: result.data,
             message: "Lấy thông tin hồ sơ nhân viên thành công",
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in getEmployeeProfileByUserIdController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in getEmployeeProfileByUserIdController:` + error.message);
         res.status(404).json({ error: error.message });
-    }
-};
-
-/**
- * Tạo hồ sơ
- */
-export const createEmployeeProfileController = async (req, res) => {
-    try {
-        const result =
-            await employeeProfileService.createEmployeeProfileService(req.body);
-        res.status(201).json({
-            status: "success",
-            data: result.data,
-            message: "Tạo hồ sơ nhân viên thành công",
-        });
-    } catch (error) {
-        logger.error(
-            `[${req.id}] Error in createEmployeeProfileController:`,
-            error.message
-        );
-        res.status(400).json({ error: error.message });
     }
 };
 
@@ -73,21 +42,14 @@ export const createEmployeeProfileController = async (req, res) => {
 export const updateEmployeeProfileController = async (req, res) => {
     try {
         const { userId } = req.params;
-        const result =
-            await employeeProfileService.updateEmployeeProfileService(
-                userId,
-                req.body
-            );
+        const result = await employeeProfileService.updateEmployeeProfileService(userId, req.body);
         res.json({
             status: "success",
             data: result.data,
             message: "Cập nhật hồ sơ nhân viên thành công",
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in updateEmployeeProfileController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in updateEmployeeProfileController:`, error.message);
         res.status(400).json({ error: error.message });
     }
 };

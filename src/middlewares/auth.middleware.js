@@ -69,7 +69,7 @@ export const checkAuth = async (req, res, next) => {
       roles: rolesResult.success ? rolesResult.data : [],
       permissions: permissionsResult.success ? permissionsResult.data : [],
       avatarUrl: user.avatar_url,
-      department: user.department,
+      department: (user.profile && user.profile.department) ? user.profile.department : user.department,
       position: user.position
     };
 

@@ -337,7 +337,7 @@ export const zaloLoginController = async (req, res) => {
  */
 export const registerController = async (req, res) => {
     try {
-        const { phone, password, email, name, department } = req.body;
+        const { phone, password, email, name } = req.body;
 
         if (!phone || !password || !email || !name) {
             return res.status(400).json({
@@ -354,7 +354,6 @@ export const registerController = async (req, res) => {
             email,
             name,
             password: hashedPassword,
-            department: department || "General",
             employee_id: `EMP${Date.now()}`, // Tạo employee_id tự động
             position: "Staff",
             status: "active",

@@ -1,6 +1,7 @@
 import { Op } from "sequelize";
 import db from "../../models/index.js";
 import logger from "../../utils/logger.js";
+import * as employeeProfileService from "../hr/employee-profile.service.js";
 /**
  * Lấy danh sách tất cả người dùng
  * SQL: SELECT u.*, ur.*, r.*, m.*, ep.*, ts.* FROM users u
@@ -99,7 +100,6 @@ export const createUserService = async (userData) => {
             zalo_id,
             employee_id,
             position,
-            department,
             manager_id,
             status = "active", // Default status
             is_active = true, // Default is_active
@@ -107,9 +107,7 @@ export const createUserService = async (userData) => {
 
         // Validation cơ bản
         if (!employee_id || !name || !position) {
-            throw new Error(
-                "Thiếu thông tin bắt buộc: employee_id, name, position"
-            );
+            throw new Error("Thiếu thông tin bắt buộc: employee_id, name, position");
         }
 
         // Validation conflict với user active - sử dụng 1 query duy nhất
@@ -149,13 +147,13 @@ export const createUserService = async (userData) => {
             }
         }
 
+        // Note: department moved to EmployeeProfile. Do not include department in Users table inserts to avoid DB errors.
         const user = await db.User.create({
             employee_id,
             name,
             position,
             email,
             phone,
-            department,
             manager_id,
             avatar_url,
             zalo_id,
@@ -251,7 +249,6 @@ export const updateUserService = async (id, updateData) => {
             zalo_id,
             employee_id,
             role_id,
-            department,
             manager_id,
             status,
             is_active,
@@ -259,6 +256,21 @@ export const updateUserService = async (id, updateData) => {
             password,
             updated_at: new Date(),
         });
+
+        // If department provided in update payload, sync it to EmployeeProfile
+        if (typeof department !== "undefined") {
+            try {
+                const existingProfile = await db.EmployeeProfile.findOne({ where: { user_id: user.id } });
+                if (existingProfile) {
+                    await employeeProfileService.updateEmployeeProfileService(user.id, { department });
+                } else {
+                    await employeeProfileService.createEmployeeProfileService({ user_id: user.id, department });
+                }
+            } catch (err) {
+                logger.error(`Failed to sync department to EmployeeProfile for user ${user.id}: ` + err.message);
+                // proceed without failing the user update
+            }
+        }
 
         return { success: true, data: user };
     } catch (error) {
@@ -296,10 +308,11 @@ export const deleteUserService = async (id) => {
 /**
  * Duyệt tài khoản người dùng
  * SQL: UPDATE users SET approved = 'approved', updated_at = NOW() WHERE id = ?;
- */
-export const approveUserService = async (zalo_id) => {
+*/
+export const approveUserService = async (employee_id) => {
     try {
-        const user = await db.User.findOne({ where: { zalo_id } });
+        console.log("Đã đến đây" + employee_id);
+        const user = await db.User.findOne({ where: { employee_id } });
         if (!user) {
             throw new Error("Người dùng không tồn tại");
         }
@@ -309,12 +322,48 @@ export const approveUserService = async (zalo_id) => {
             throw new Error("Tài khoản đã được duyệt");
         }
 
-        await user.update({
-            approved: "approved",
-            updated_at: new Date(),
+
+        // Approve and create profile atomically
+        const result = await db.sequelize.transaction(async (t) => {
+            await user.update(
+                {
+                    approved: "approved",
+                    updated_at: new Date(),
+                },
+                { transaction: t }
+            );
+
+            // Create a default employee profile if not exists
+            const [profile, created] = await db.EmployeeProfile.findOrCreate({
+                where: { user_id: user.id },
+                defaults: {
+                    user_id: user.id,
+                    department: null,
+                    specialization: [],
+                    certification: [],
+                    phone_secondary: null,
+                    address: null,
+                    date_of_birth: null,
+                    gender: null,
+                    id_number: null,
+                    hire_date: null,
+                    contract_date: null,
+                    bank_account_number: null,
+                    bank_name: "ACB",
+                    total_experience_years: null,
+                    performance_rating: null,
+                    dailySalary: 500000.0,
+                    is_active: true,
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                },
+                transaction: t,
+            });
+
+            return { user, profile, created };
         });
 
-        return { success: true, data: user };
+        return { success: true, data: result };
     } catch (error) {
         logger.error("Error in approveUserService:" + error.message);
         throw error;
@@ -436,9 +485,7 @@ export const getUserPermissionsService = async (userId) => {
                         {
                             model: db.RolePermissions,
                             as: "rolePermissions",
-                            include: [
-                                { model: db.Permission, as: "permission" },
-                            ],
+                            include: [{ model: db.Permission, as: "permission" }],
                         },
                     ],
                 },
@@ -458,8 +505,7 @@ export const getUserPermissionsService = async (userId) => {
 
         // Remove duplicates
         const uniquePermissions = permissions.filter(
-            (perm, index, self) =>
-                index === self.findIndex((p) => p.id === perm.id)
+            (perm, index, self) => index === self.findIndex((p) => p.id === perm.id)
         );
 
         return { success: true, data: uniquePermissions };
