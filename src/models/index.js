@@ -4,7 +4,7 @@ import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
 
 // Import models from subfolders
-import { EmployeeProfile, TechnicianSkill } from "./hr/index.js";
+import { EmployeeProfile, TechnicianSkill, Department, DepartmentRoles } from "./hr/index.js";
 // Removed DashboardMetric and PerformanceMetric - data calculated from other models
 import {
     Attachment,
@@ -66,6 +66,8 @@ const db = {};
 const models = [
     EmployeeProfile,
     TechnicianSkill,
+    Department,
+    DepartmentRoles,
     Attachment,
     Attendance,
     AttendanceSession,

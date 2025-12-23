@@ -24,6 +24,7 @@ import {
 import {
     routeForEmployeeProfiles,
     routeForTechnicianSkills,
+    routeForDepartments,
 } from "./hr/index.js";
 import { routeForSalesReports } from "./reports/index.js";
 import {
@@ -65,6 +66,7 @@ const mainRouter = (server) => {
     // HR & Management
     server.use("/api/v1/ims/employee-profiles", routeForEmployeeProfiles);
     server.use("/api/v1/ims/technician-skills", routeForTechnicianSkills);
+    server.use("/api/v1/ims/departments", routeForDepartments);
 
     // Workflow & Reports
     server.use("/api/v1/ims/sales-reports", routeForSalesReports);

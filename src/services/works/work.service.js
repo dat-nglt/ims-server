@@ -26,74 +26,392 @@ export const getAllWorksService = async () => {
     }
 };
 
+export const getTechnicianListToAssignService = async () => {
+    try {
+        const technicians = await db.User.findAll({
+            where: { role: "technician" },
+            attributes: ["id", "name", "email", "phone", "avatar_url", "position"],
+        });
+        return { success: true, data: technicians };
+    } catch (error) {
+        logger.error("Error in getTechnicianListToAssignService: " + error.message);
+        throw error;
+    }   
+};
+
 /**
- * Lấy công việc theo mã công việc (work_code) - bao gồm báo cáo liên quan
- * Lấy đầy đủ các trường cần thiết cho WorkReportsTab component
+ * Lấy công việc theo mã công việc (work_code) - bao gồm báo cáo và phân công liên quan
+ * Lấy đầy đủ các dữ liệu cần thiết cho WorkDetail page, bao gồm:
+ * - Thông tin cơ bản công việc
+ * - Các báo cáo tiến độ (work reports)
+ * - Thông tin phân công cho kỹ thuật viên (work assignments)
+ * - Chi tiết các user liên quan
  */
 export const getWorkByCodeService = async (workCode) => {
     try {
         const work = await db.Work.findOne({
             where: { work_code: workCode },
             include: [
-                { model: db.WorkCategory, as: "category" },
-                { model: db.User, as: "assignedUser" },
-                { model: db.User, as: "technician" },
-                { model: db.User, as: "salesPerson" },
+                // Danh mục công việc
+                {
+                    model: db.WorkCategory,
+                    as: "category",
+                    attributes: ["id", "name"],
+                },
+
+                // Người được giao công việc
+                {
+                    model: db.User,
+                    as: "assignedUser",
+                    attributes: ["id", "name", "email", "phone", "avatar_url", "position"],
+                },
+
+                // Kỹ thuật viên (nếu được giao trực tiếp)
+                {
+                    model: db.User,
+                    as: "technician",
+                    attributes: ["id", "name", "email", "phone", "avatar_url", "position"],
+                },
+
+                // Nhân viên kinh doanh
+                {
+                    model: db.User,
+                    as: "salesPerson",
+                    attributes: ["id", "name", "email", "phone", "avatar_url"],
+                },
+
+                // Dự án liên quan
+                {
+                    model: db.Project,
+                    as: "project",
+                },
+
+                // Báo cáo tiến độ công việc
                 {
                     model: db.WorkReport,
                     as: "reports",
-                    attributes: [
-                        'id',
-                        'work_id',
-                        'progress_percentage',
-                        'status',
-                        'description',
-                        'notes',
-                        'location',
-                        'before_images',
-                        'during_images',
-                        'after_images',
-                        'materials_used',
-                        'issues_encountered',
-                        'solution_applied',
-                        'time_spent_hours',
-                        'next_steps',
-                        'approval_status',
-                        'quality_rating',
-                        'rejection_reason',
-                        'reported_at',
-                        'approved_at',
-                        'reported_by',
-                        'approved_by',
-                        'assigned_approver',
-                    ],
                     include: [
-                        { 
-                            model: db.User, 
-                            as: "reporter", 
-                            attributes: ["id", "name", "email", "avatar_url"] 
+                        {
+                            model: db.User,
+                            as: "reporter",
+                            attributes: ["id", "name", "email", "phone", "avatar_url", "position"],
                         },
-                        { 
-                            model: db.User, 
-                            as: "approver", 
-                            attributes: ["id", "name", "email", "avatar_url"] 
+                        {
+                            model: db.User,
+                            as: "approver",
+                            attributes: ["id", "name", "email", "phone", "avatar_url", "position"],
                         },
-                        { 
-                            model: db.User, 
-                            as: "assignedApprover", 
-                            attributes: ["id", "name", "email", "avatar_url"] 
+                        {
+                            model: db.User,
+                            as: "assignedApprover",
+                            attributes: ["id", "name", "email", "phone", "avatar_url", "position"],
                         },
                     ],
                     order: [["reported_at", "DESC"]],
                 },
+
+                // Thông tin phân công công việc cho kỹ thuật viên
+                {
+                    model: db.WorkAssignment,
+                    as: "assignments",
+                    attributes: [
+                        "id",
+                        "work_id",
+                        "technician_id",
+                        "assigned_by",
+                        "assignment_date",
+                        "assigned_status",
+                        "accepted_at",
+                        "rejected_reason",
+                        "estimated_start_time",
+                        "estimated_end_time",
+                        "actual_start_time",
+                        "actual_end_time",
+                        "notes",
+                        "created_at",
+                        "updated_at",
+                    ],
+                    include: [
+                        {
+                            model: db.User,
+                            as: "technician",
+                        },
+                        {
+                            model: db.User,
+                            as: "assignedByUser",
+                            attributes: ["id", "name", "email", "position"],
+                        },
+                    ],
+                    order: [["assignment_date", "DESC"]],
+                },
             ],
         });
+
         if (!work) {
             throw new Error("Công việc không tồn tại");
         }
+
         return { success: true, data: work };
     } catch (error) {
         logger.error("Error in getWorkByCodeService: " + error.message);
+        throw error;
+    }
+};
+
+/**
+ * Lấy công việc theo ID - bao gồm báo cáo và phân công liên quan
+ * Lấy đầy đủ các dữ liệu cần thiết cho WorkDetail page
+ */
+export const getWorkByIdService = async (workId) => {
+    try {
+        const work = await db.Work.findByPk(workId, {
+            include: [
+                // Danh mục công việc
+                {
+                    model: db.WorkCategory,
+                    as: "category",
+                    attributes: ["id", "name"],
+                },
+
+                // Người được giao công việc
+                {
+                    model: db.User,
+                    as: "assignedUser",
+                    attributes: ["id", "name", "email", "phone", "avatar_url", "position"],
+                },
+
+                // Kỹ thuật viên (nếu được giao trực tiếp)
+                {
+                    model: db.User,
+                    as: "technician",
+                    attributes: ["id", "name", "email", "phone", "avatar_url", "position"],
+                },
+
+                // Nhân viên kinh doanh
+                {
+                    model: db.User,
+                    as: "salesPerson",
+                    attributes: ["id", "name", "email", "phone", "avatar_url"],
+                },
+
+                // Dự án liên quan
+                {
+                    model: db.Project,
+                    as: "project",
+                    attributes: ["id", "project_code", "project_name", "description", "status"],
+                },
+
+                // Báo cáo tiến độ công việc
+                {
+                    model: db.WorkReport,
+                    as: "reports",
+                    attributes: [
+                        "id",
+                        "work_id",
+                        "progress_percentage",
+                        "status",
+                        "description",
+                        "notes",
+                        "title",
+                        "location",
+                        "before_images",
+                        "during_images",
+                        "after_images",
+                        "materials_used",
+                        "issues_encountered",
+                        "solution_applied",
+                        "time_spent_hours",
+                        "next_steps",
+                        "approval_status",
+                        "quality_rating",
+                        "rejection_reason",
+                        "reported_at",
+                        "approved_at",
+                        "created_at",
+                        "reported_by",
+                        "approved_by",
+                        "assigned_approver",
+                    ],
+                    include: [
+                        {
+                            model: db.User,
+                            as: "reporter",
+                            attributes: ["id", "name", "email", "phone", "avatar_url", "position"],
+                        },
+                        {
+                            model: db.User,
+                            as: "approver",
+                            attributes: ["id", "name", "email", "phone", "avatar_url", "position"],
+                        },
+                        {
+                            model: db.User,
+                            as: "assignedApprover",
+                            attributes: ["id", "name", "email", "phone", "avatar_url", "position"],
+                        },
+                    ],
+                    order: [["reported_at", "DESC"]],
+                },
+
+                // Thông tin phân công công việc cho kỹ thuật viên
+                {
+                    model: db.WorkAssignment,
+                    as: "assignments",
+                    attributes: [
+                        "id",
+                        "work_id",
+                        "technician_id",
+                        "assigned_by",
+                        "assignment_date",
+                        "assigned_status",
+                        "accepted_at",
+                        "rejected_reason",
+                        "estimated_start_time",
+                        "estimated_end_time",
+                        "actual_start_time",
+                        "actual_end_time",
+                        "notes",
+                        "created_at",
+                        "updated_at",
+                    ],
+                    include: [
+                        {
+                            model: db.User,
+                            as: "technician",
+                            attributes: [
+                                "id",
+                                "name",
+                                "email",
+                                "phone",
+                                "avatar_url",
+                                "position",
+                                "dailySalary",
+                                "hourly_rate",
+                            ],
+                        },
+                        {
+                            model: db.User,
+                            as: "assignedByUser",
+                            attributes: ["id", "name", "email", "position"],
+                        },
+                    ],
+                    order: [["assignment_date", "DESC"]],
+                },
+            ],
+        });
+
+        if (!work) {
+            throw new Error("Công việc không tồn tại");
+        }
+
+        return { success: true, data: work };
+    } catch (error) {
+        logger.error("Error in getWorkByIdService: " + error.message);
+        throw error;
+    }
+};
+
+/**
+ * Lấy danh sách phân công công việc (work assignments) cho một công việc
+ * Bao gồm thông tin kỹ thuật viên được phân công
+ */
+export const getWorkAssignmentsService = async (workId) => {
+    try {
+        const assignments = await db.WorkAssignment.findAll({
+            where: { work_id: workId },
+            include: [
+                {
+                    model: db.User,
+                    as: "technician",
+                    attributes: [
+                        "id",
+                        "name",
+                        "email",
+                        "phone",
+                        "avatar_url",
+                        "position",
+                        "dailySalary",
+                        "hourly_rate",
+                    ],
+                },
+                {
+                    model: db.User,
+                    as: "assignedByUser",
+                    attributes: ["id", "name", "email", "position"],
+                },
+                {
+                    model: db.Work,
+                    as: "work",
+                    attributes: ["id", "work_code", "title", "status"],
+                },
+            ],
+            order: [["assignment_date", "DESC"]],
+        });
+
+        return { success: true, data: assignments };
+    } catch (error) {
+        logger.error("Error in getWorkAssignmentsService: " + error.message);
+        throw error;
+    }
+};
+
+/**
+ * Lấy danh sách báo cáo công việc (work reports) cho một công việc
+ * Bao gồm thông tin người báo cáo, phê duyệt
+ */
+export const getWorkReportsService = async (workId) => {
+    try {
+        const reports = await db.WorkReport.findAll({
+            where: { work_id: workId },
+            attributes: [
+                "id",
+                "work_id",
+                "progress_percentage",
+                "status",
+                "description",
+                "notes",
+                "title",
+                "location",
+                "before_images",
+                "during_images",
+                "after_images",
+                "materials_used",
+                "issues_encountered",
+                "solution_applied",
+                "time_spent_hours",
+                "next_steps",
+                "approval_status",
+                "quality_rating",
+                "rejection_reason",
+                "reported_at",
+                "approved_at",
+                "created_at",
+                "reported_by",
+                "approved_by",
+                "assigned_approver",
+            ],
+            include: [
+                {
+                    model: db.User,
+                    as: "reporter",
+                    attributes: ["id", "name", "email", "phone", "avatar_url", "position"],
+                },
+                {
+                    model: db.User,
+                    as: "approver",
+                    attributes: ["id", "name", "email", "phone", "avatar_url", "position"],
+                },
+                {
+                    model: db.User,
+                    as: "assignedApprover",
+                    attributes: ["id", "name", "email", "phone", "avatar_url", "position"],
+                },
+            ],
+            order: [["reported_at", "DESC"]],
+        });
+
+        return { success: true, data: reports };
+    } catch (error) {
+        logger.error("Error in getWorkReportsService: " + error.message);
         throw error;
     }
 };
@@ -127,9 +445,7 @@ export const createWorkService = async (workData) => {
         } = workData;
 
         if (!title || !assigned_user_id) {
-            throw new Error(
-                "Thiếu thông tin bắt buộc: title, assigned_user_id"
-            );
+            throw new Error("Thiếu thông tin bắt buộc: title, assigned_user_id");
         }
 
         // Validate foreign key references
@@ -162,11 +478,12 @@ export const createWorkService = async (workData) => {
         // Ensure work_code exists and uses system string format when not provided
         const generatedWorkCode = work_code || `lqd_work_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
-        const timeSlotValue = workData.timeSlot !== undefined && workData.timeSlot !== null
-            ? workData.timeSlot
-            : workData.required_time_hour
-            ? parseInt(String(workData.required_time_hour), 10)
-            : null;
+        const timeSlotValue =
+            workData.timeSlot !== undefined && workData.timeSlot !== null
+                ? workData.timeSlot
+                : workData.required_time_hour
+                ? parseInt(String(workData.required_time_hour), 10)
+                : null;
 
         const work = await db.Work.create({
             work_code: generatedWorkCode,
@@ -204,10 +521,7 @@ export const createWorkService = async (workData) => {
                 notes: "Công việc được tạo",
             });
         } catch (historyError) {
-            logger.error(
-                "Failed to log work history for creation: " +
-                    historyError.message
-            );
+            logger.error("Failed to log work history for creation: " + historyError.message);
         }
 
         // Create notification for assigned user
@@ -221,10 +535,7 @@ export const createWorkService = async (workData) => {
                 action_url: `/works/${work.id}`,
             });
         } catch (notificationError) {
-            logger.error(
-                "Failed to create notification for work creation: " +
-                    notificationError.message
-            );
+            logger.error("Failed to create notification for work creation: " + notificationError.message);
         }
 
         return { success: true, data: work };
@@ -246,9 +557,7 @@ export const updateWorkService = async (id, updateData) => {
 
         // Kiểm tra assigned_user_id nếu được cung cấp
         if (updateData.assigned_user_id) {
-            const assignedUser = await db.User.findByPk(
-                updateData.assigned_user_id
-            );
+            const assignedUser = await db.User.findByPk(updateData.assigned_user_id);
             if (!assignedUser) {
                 throw new Error("Người dùng được giao không tồn tại");
             }
@@ -256,9 +565,7 @@ export const updateWorkService = async (id, updateData) => {
 
         // Kiểm tra category_id nếu được cung cấp
         if (updateData.category_id) {
-            const category = await db.WorkCategory.findByPk(
-                updateData.category_id
-            );
+            const category = await db.WorkCategory.findByPk(updateData.category_id);
             if (!category) {
                 throw new Error("Danh mục công việc không tồn tại");
             }
@@ -274,9 +581,7 @@ export const updateWorkService = async (id, updateData) => {
 
         // Kiểm tra created_by_sales_id nếu được cung cấp
         if (updateData.created_by_sales_id) {
-            const salesPerson = await db.User.findByPk(
-                updateData.created_by_sales_id
-            );
+            const salesPerson = await db.User.findByPk(updateData.created_by_sales_id);
             if (!salesPerson) {
                 throw new Error("Nhân viên kinh doanh không tồn tại");
             }
@@ -297,9 +602,7 @@ export const updateWorkService = async (id, updateData) => {
                 notes: "Công việc được cập nhật",
             });
         } catch (historyError) {
-            logger.error(
-                "Failed to log work history for update: " + historyError.message
-            );
+            logger.error("Failed to log work history for update: " + historyError.message);
         }
 
         // Create notification for assigned user
@@ -313,10 +616,7 @@ export const updateWorkService = async (id, updateData) => {
                 action_url: `/works/${id}`,
             });
         } catch (notificationError) {
-            logger.error(
-                "Failed to create notification for work update: " +
-                    notificationError.message
-            );
+            logger.error("Failed to create notification for work update: " + notificationError.message);
         }
 
         return { success: true, data: work };
@@ -374,10 +674,7 @@ export const approveWorkService = async (id, approvalData) => {
                 notes: "Công việc được phê duyệt",
             });
         } catch (historyError) {
-            logger.error(
-                "Failed to log work history for approval: " +
-                    historyError.message
-            );
+            logger.error("Failed to log work history for approval: " + historyError.message);
         }
 
         // Create notification for assigned user
@@ -391,10 +688,7 @@ export const approveWorkService = async (id, approvalData) => {
                 action_url: `/works/${id}`,
             });
         } catch (notificationError) {
-            logger.error(
-                "Failed to create notification for work approval: " +
-                    notificationError.message
-            );
+            logger.error("Failed to create notification for work approval: " + notificationError.message);
         }
 
         return { success: true, data: work };
@@ -423,10 +717,7 @@ export const deleteWorkService = async (id) => {
                 notes: "Công việc bị xóa",
             });
         } catch (historyError) {
-            logger.error(
-                "Failed to log work history for deletion: " +
-                    historyError.message
-            );
+            logger.error("Failed to log work history for deletion: " + historyError.message);
         }
 
         // Create notification for assigned user before deletion
@@ -440,10 +731,7 @@ export const deleteWorkService = async (id) => {
                 action_url: `/works`, // Redirect to works list since the specific work is deleted
             });
         } catch (notificationError) {
-            logger.error(
-                "Failed to create notification for work deletion: " +
-                    notificationError.message
-            );
+            logger.error("Failed to create notification for work deletion: " + notificationError.message);
         }
 
         await work.destroy();
@@ -506,26 +794,14 @@ export const exportWorksService = async (queryParams) => {
         let startDate, endDate;
         switch (dateRange) {
             case "today":
-                startDate = new Date(
-                    now.getFullYear(),
-                    now.getMonth(),
-                    now.getDate()
-                );
-                endDate = new Date(
-                    now.getFullYear(),
-                    now.getMonth(),
-                    now.getDate() + 1
-                );
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
                 break;
             case "thisWeek":
                 const dayOfWeek = now.getDay();
-                startDate = new Date(
-                    now.getTime() - dayOfWeek * 24 * 60 * 60 * 1000
-                );
+                startDate = new Date(now.getTime() - dayOfWeek * 24 * 60 * 60 * 1000);
                 startDate.setHours(0, 0, 0, 0);
-                endDate = new Date(
-                    startDate.getTime() + 7 * 24 * 60 * 60 * 1000
-                );
+                endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
                 break;
             case "thisMonth":
                 startDate = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -612,8 +888,7 @@ export const exportWorksService = async (queryParams) => {
             return {
                 success: true,
                 data: buffer,
-                contentType:
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             };
         }
 
@@ -690,26 +965,14 @@ export const getWorksService = async (queryParams) => {
         let startDate, endDate;
         switch (dateRange) {
             case "today":
-                startDate = new Date(
-                    now.getFullYear(),
-                    now.getMonth(),
-                    now.getDate()
-                );
-                endDate = new Date(
-                    now.getFullYear(),
-                    now.getMonth(),
-                    now.getDate() + 1
-                );
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
                 break;
             case "thisWeek":
                 const dayOfWeek = now.getDay();
-                startDate = new Date(
-                    now.getTime() - dayOfWeek * 24 * 60 * 60 * 1000
-                );
+                startDate = new Date(now.getTime() - dayOfWeek * 24 * 60 * 60 * 1000);
                 startDate.setHours(0, 0, 0, 0);
-                endDate = new Date(
-                    startDate.getTime() + 7 * 24 * 60 * 60 * 1000
-                );
+                endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
                 break;
             case "thisMonth":
                 startDate = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -776,26 +1039,14 @@ export const getWorksStatisticsService = async (dateRange = "all") => {
         let startDate, endDate;
         switch (dateRange) {
             case "today":
-                startDate = new Date(
-                    now.getFullYear(),
-                    now.getMonth(),
-                    now.getDate()
-                );
-                endDate = new Date(
-                    now.getFullYear(),
-                    now.getMonth(),
-                    now.getDate() + 1
-                );
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
                 break;
             case "thisWeek":
                 const dayOfWeek = now.getDay();
-                startDate = new Date(
-                    now.getTime() - dayOfWeek * 24 * 60 * 60 * 1000
-                );
+                startDate = new Date(now.getTime() - dayOfWeek * 24 * 60 * 60 * 1000);
                 startDate.setHours(0, 0, 0, 0);
-                endDate = new Date(
-                    startDate.getTime() + 7 * 24 * 60 * 60 * 1000
-                );
+                endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
                 break;
             case "thisMonth":
                 startDate = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -829,22 +1080,10 @@ export const getWorksStatisticsService = async (dateRange = "all") => {
         const sums = await db.Work.findAll({
             where,
             attributes: [
-                [
-                    db.sequelize.fn("SUM", db.sequelize.col("estimated_hours")),
-                    "totalEstimatedHours",
-                ],
-                [
-                    db.sequelize.fn("SUM", db.sequelize.col("actual_hours")),
-                    "totalActualHours",
-                ],
-                [
-                    db.sequelize.fn("SUM", db.sequelize.col("estimated_cost")),
-                    "totalEstimatedCost",
-                ],
-                [
-                    db.sequelize.fn("SUM", db.sequelize.col("actual_cost")),
-                    "totalActualCost",
-                ],
+                [db.sequelize.fn("SUM", db.sequelize.col("estimated_hours")), "totalEstimatedHours"],
+                [db.sequelize.fn("SUM", db.sequelize.col("actual_hours")), "totalActualHours"],
+                [db.sequelize.fn("SUM", db.sequelize.col("estimated_cost")), "totalEstimatedCost"],
+                [db.sequelize.fn("SUM", db.sequelize.col("actual_cost")), "totalActualCost"],
             ],
             raw: true,
         });
@@ -883,26 +1122,14 @@ export const getWorksDistributionService = async (dateRange = "all") => {
         let startDate, endDate;
         switch (dateRange) {
             case "today":
-                startDate = new Date(
-                    now.getFullYear(),
-                    now.getMonth(),
-                    now.getDate()
-                );
-                endDate = new Date(
-                    now.getFullYear(),
-                    now.getMonth(),
-                    now.getDate() + 1
-                );
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
                 break;
             case "thisWeek":
                 const dayOfWeek = now.getDay();
-                startDate = new Date(
-                    now.getTime() - dayOfWeek * 24 * 60 * 60 * 1000
-                );
+                startDate = new Date(now.getTime() - dayOfWeek * 24 * 60 * 60 * 1000);
                 startDate.setHours(0, 0, 0, 0);
-                endDate = new Date(
-                    startDate.getTime() + 7 * 24 * 60 * 60 * 1000
-                );
+                endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
                 break;
             case "thisMonth":
                 startDate = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -920,10 +1147,7 @@ export const getWorksDistributionService = async (dateRange = "all") => {
         // Status distribution
         const statusGroups = await db.Work.findAll({
             where,
-            attributes: [
-                "status",
-                [db.sequelize.fn("COUNT", db.sequelize.col("status")), "count"],
-            ],
+            attributes: ["status", [db.sequelize.fn("COUNT", db.sequelize.col("status")), "count"]],
             group: ["status"],
             raw: true,
         });
@@ -931,22 +1155,13 @@ export const getWorksDistributionService = async (dateRange = "all") => {
         const statusDistribution = statusGroups.map((group) => ({
             status: group.status,
             count: parseInt(group.count),
-            percentage:
-                total > 0
-                    ? ((parseInt(group.count) / total) * 100).toFixed(2)
-                    : 0,
+            percentage: total > 0 ? ((parseInt(group.count) / total) * 100).toFixed(2) : 0,
         }));
 
         // Priority distribution
         const priorityGroups = await db.Work.findAll({
             where,
-            attributes: [
-                "priority",
-                [
-                    db.sequelize.fn("COUNT", db.sequelize.col("priority")),
-                    "count",
-                ],
-            ],
+            attributes: ["priority", [db.sequelize.fn("COUNT", db.sequelize.col("priority")), "count"]],
             group: ["priority"],
             raw: true,
         });
@@ -954,10 +1169,7 @@ export const getWorksDistributionService = async (dateRange = "all") => {
         const priorityDistribution = priorityGroups.map((group) => ({
             priority: group.priority,
             count: parseInt(group.count),
-            percentage:
-                total > 0
-                    ? ((parseInt(group.count) / total) * 100).toFixed(2)
-                    : 0,
+            percentage: total > 0 ? ((parseInt(group.count) / total) * 100).toFixed(2) : 0,
         }));
 
         return {

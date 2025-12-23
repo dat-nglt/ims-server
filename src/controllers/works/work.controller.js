@@ -13,14 +13,24 @@ export const getAllWorksController = async (req, res) => {
             message: "Lấy danh sách công việc thành công",
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in getAllWorksController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in getAllWorksController:`, error.message);
         res.status(500).json({ error: error.message });
     }
 };
 
+export const getTechnicianListToAssignController = async (req, res) => {
+    try {
+        const result = await workService.getTechnicianListToAssignService();
+        res.json({
+            status: "success",
+            data: result.data,
+            message: "Lấy danh sách kỹ thuật viên để phân công thành công",
+        });
+    } catch (error) {
+        logger.error(`[${req.id}] Error in getTechnicianListToAssignController:`, error.message);
+        res.status(500).json({ error: error.message });
+    }
+};
 /**
  * Lấy danh sách công việc với filters
  */
@@ -51,10 +61,7 @@ export const getWorksStatisticsController = async (req, res) => {
             message: "Lấy thống kê công việc thành công",
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in getWorksStatisticsController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in getWorksStatisticsController:`, error.message);
         res.status(500).json({ error: error.message });
     }
 };
@@ -72,10 +79,7 @@ export const getWorksDistributionController = async (req, res) => {
             message: "Lấy phân bố công việc thành công",
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in getWorksDistributionController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in getWorksDistributionController:`, error.message);
         res.status(500).json({ error: error.message });
     }
 };
@@ -85,7 +89,7 @@ export const getWorksDistributionController = async (req, res) => {
  */
 export const getWorkByCodeController = async (req, res) => {
     try {
-        const { "workCode": workCode } = req.params;
+        const { workCode: workCode } = req.params;
         const result = await workService.getWorkByCodeService(workCode);
         res.json({
             status: "success",
@@ -93,10 +97,7 @@ export const getWorkByCodeController = async (req, res) => {
             message: "Lấy thông tin công việc thành công",
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in getWorkByIdController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in getWorkByIdController:`, error.message);
         res.status(404).json({ error: error.message });
     }
 };
@@ -113,10 +114,7 @@ export const createWorkController = async (req, res) => {
             message: "Tạo công việc thành công",
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in createWorkController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in createWorkController:`, error.message);
         res.status(400).json({ error: error.message });
     }
 };
@@ -134,10 +132,7 @@ export const updateWorkController = async (req, res) => {
             message: "Cập nhật công việc thành công",
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in updateWorkController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in updateWorkController:`, error.message);
         res.status(400).json({ error: error.message });
     }
 };
@@ -155,10 +150,7 @@ export const approveWorkController = async (req, res) => {
             message: "Phê duyệt công việc thành công",
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in approveWorkController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in approveWorkController:`, error.message);
         res.status(400).json({ error: error.message });
     }
 };
@@ -175,10 +167,7 @@ export const deleteWorkController = async (req, res) => {
             message: result.message,
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in deleteWorkController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in deleteWorkController:`, error.message);
         res.status(404).json({ error: error.message });
     }
 };
@@ -195,10 +184,7 @@ export const getWorkCategoriesController = async (req, res) => {
             message: "Lấy danh sách danh mục công việc thành công",
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in getWorkCategoriesController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in getWorkCategoriesController:`, error.message);
         res.status(500).json({ error: error.message });
     }
 };
@@ -215,10 +201,7 @@ export const getServiceTypesController = async (req, res) => {
             message: "Lấy danh sách loại dịch vụ thành công",
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in getServiceTypesController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in getServiceTypesController:`, error.message);
         res.status(500).json({ error: error.message });
     }
 };
@@ -233,27 +216,15 @@ export const exportWorksController = async (req, res) => {
 
         if (format === "csv") {
             res.setHeader("Content-Type", "text/csv");
-            res.setHeader(
-                "Content-Disposition",
-                'attachment; filename="works.csv"'
-            );
+            res.setHeader("Content-Disposition", 'attachment; filename="works.csv"');
         } else if (format === "xlsx") {
-            res.setHeader(
-                "Content-Type",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            );
-            res.setHeader(
-                "Content-Disposition",
-                'attachment; filename="works.xlsx"'
-            );
+            res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            res.setHeader("Content-Disposition", 'attachment; filename="works.xlsx"');
         }
 
         res.send(result.data);
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in exportWorksController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in exportWorksController:`, error.message);
         res.status(500).json({ error: error.message });
     }
 };
@@ -271,10 +242,7 @@ export const getWorksByStatusController = async (req, res) => {
             message: `Lấy danh sách công việc trạng thái ${status} thành công`,
         });
     } catch (error) {
-        logger.error(
-            `[${req.id}] Error in getWorksByStatusController:`,
-            error.message
-        );
+        logger.error(`[${req.id}] Error in getWorksByStatusController:`, error.message);
         res.status(500).json({ error: error.message });
     }
 };

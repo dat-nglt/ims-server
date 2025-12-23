@@ -13,6 +13,7 @@ import {
     getServiceTypesController,
     exportWorksController,
     getWorkByCodeController,
+    getTechnicianListToAssignController
 } from "../../controllers/works/work.controller.js";
 
 const router = express.Router();
@@ -21,6 +22,8 @@ const router = express.Router();
 router.get("/", getWorksController);
 
 router.get("/:workCode", getWorkByCodeController);
+
+router.get("/technicians-list-to-assign", getTechnicianListToAssignController);
 
 // GET all works (legacy, có thể giữ hoặc loại bỏ)
 router.get("/all", getAllWorksController);
