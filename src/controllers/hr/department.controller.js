@@ -23,11 +23,11 @@ export const getAllDepartmentsController = async (req, res) => {
             includeInactive: includeInactive === "true",
         });
 
-        res.json({
-            status: "success",
-            data: result.data,
-            message: "Lấy danh sách phòng ban thành công",
-        });
+        if (!result.success) {
+            return res.status(400).json({ status: "error", message: result.message });
+        }
+
+        res.json({ status: "success", data: result.data, message: result.message });
     } catch (error) {
         logger.error(`[${req.id}] Error in getAllDepartmentsController:`, error.message);
         res.status(500).json({ error: error.message });
@@ -44,11 +44,11 @@ export const getDepartmentByIdController = async (req, res) => {
 
         const result = await getDepartmentWithRolesService(id);
 
-        res.json({
-            status: "success",
-            data: result.data,
-            message: "Lấy chi tiết phòng ban thành công",
-        });
+        if (!result.success) {
+            return res.status(404).json({ status: "error", message: result.message });
+        }
+
+        res.json({ status: "success", data: result.data, message: result.message });
     } catch (error) {
         logger.error(`[${req.id}] Error in getDepartmentByIdController:`, error.message);
         res.status(404).json({ error: error.message });
@@ -63,21 +63,22 @@ export const getDepartmentByIdController = async (req, res) => {
 export const createDepartmentController = async (req, res) => {
     try {
         const departmentData = req.body;
-        const createdBy = req.user?.id;
+        const createdBy = 1;
+        // const createdBy = req.user?.id;
 
         if (!createdBy) {
-            return res.status(401).json({ error: "Unauthorized" });
+            return res.status(401).json({ error: "Không có quyền" });
         }
 
         const result = await createDepartmentService(departmentData, createdBy);
 
-        res.status(201).json({
-            status: "success",
-            data: result.data,
-            message: "Tạo phòng ban thành công",
-        });
+        if (!result.success) {
+            return res.status(400).json(result);
+        }
+
+        res.status(201).json(result);
     } catch (error) {
-        logger.error(`[${req.id}] Error in createDepartmentController:`, error.message);
+        logger.error(`[${req.id}] Error in createDepartmentController:` + error.message);
         res.status(400).json({ error: error.message });
     }
 };
@@ -95,16 +96,20 @@ export const updateDepartmentController = async (req, res) => {
         const updatedBy = 1;
 
         if (!updatedBy) {
-            return res.status(401).json({ error: "Unauthorized" });
+            return res.status(401).json({ error: "Không có quyền" });
         }
 
         const result = await updateDepartmentService(id, updateData, updatedBy);
 
-        res.json({
-            status: "success",
-            data: result.data,
-            message: "Cập nhật phòng ban thành công",
-        });
+        if (!result.success) {
+            // if not found, return 404
+            if (result.message && result.message.includes("Không tìm thấy")) {
+                return res.status(404).json({ status: "error", message: result.message });
+            }
+            return res.status(400).json({ status: "error", message: result.message });
+        }
+
+        res.json({ status: "success", data: result.data, message: result.message });
     } catch (error) {
         logger.error(`[${req.id}] Error in updateDepartmentController:`, error.message);
         res.status(400).json({ error: error.message });
@@ -121,10 +126,15 @@ export const deleteDepartmentController = async (req, res) => {
 
         const result = await deleteDepartmentService(id);
 
-        res.json({
-            status: "success",
-            message: result.message,
-        });
+        if (!result.success) {
+            // not found -> 404
+            if (result.message && result.message.includes("Không tìm thấy")) {
+                return res.status(404).json({ status: "error", message: result.message });
+            }
+            return res.status(400).json({ status: "error", message: result.message });
+        }
+
+        res.json({ status: "success", message: result.message });
     } catch (error) {
         logger.error(`[${req.id}] Error in deleteDepartmentController:`, error.message);
         res.status(404).json({ error: error.message });
@@ -143,10 +153,14 @@ export const removeRoleFromDepartmentController = async (req, res) => {
 
         const result = await removeRoleFromDepartmentService(departmentId, roleId);
 
-        res.json({
-            status: "success",
-            message: result.message,
-        });
+        if (!result.success) {
+            if (result.message && result.message.includes("không tồn tại")) {
+                return res.status(404).json({ status: "error", message: result.message });
+            }
+            return res.status(400).json({ status: "error", message: result.message });
+        }
+
+        res.json({ status: "success", message: result.message });
     } catch (error) {
         logger.error(`[${req.id}] Error in removeRoleFromDepartmentController:`, error.message);
         res.status(400).json({ error: error.message });
@@ -173,21 +187,24 @@ export const updateEmployeeDepartmentController = async (req, res) => {
 
         // Validation
         if (!department_id) {
-            return res.status(400).json({ error: "department_id is required" });
+            return res.status(400).json({ error: "department_id là bắt buộc" });
         }
 
         if (!updatedBy) {
-            return res.status(401).json({ error: "Unauthorized" });
+            return res.status(401).json({ error: "Không có quyền" });
         }
 
         // Call service with auto-assign logic
         const result = await updateEmployeeWithDepartmentService(employeeId, department_id, updatedBy);
 
-        res.json({
-            status: "success",
-            data: result,
-            message: "Cập nhật phòng ban và vai trò cho nhân viên thành công",
-        });
+        if (!result.success) {
+            if (result.message && result.message.includes("Không tìm thấy")) {
+                return res.status(404).json({ status: "error", message: result.message });
+            }
+            return res.status(400).json({ status: "error", message: result.message });
+        }
+
+        res.json({ status: "success", data: result, message: result.message });
     } catch (error) {
         logger.error(`[${req.id}] Error in updateEmployeeDepartmentController:`, error.message);
         res.status(400).json({ error: error.message });
@@ -210,7 +227,7 @@ export const updateEmployeeController = async (req, res) => {
         const updatedBy = req.user?.id;
 
         if (!updatedBy) {
-            return res.status(401).json({ error: "Unauthorized" });
+            return res.status(401).json({ error: "Không có quyền" });
         }
 
         let result;
@@ -232,20 +249,16 @@ export const updateEmployeeController = async (req, res) => {
             const employee = await db.EmployeeProfile.findByPk(employeeId);
 
             if (!employee) {
-                return res.status(404).json({ error: "Employee not found" });
+                return res.status(404).json({ error: "Không tìm thấy nhân viên" });
             }
 
             await employee.update(otherData);
 
-            return res.json({
-                status: "success",
-                data: employee,
-                message: "Cập nhật thông tin nhân viên thành công",
-            });
+            return res.json({ status: "success", data: employee, message: "Cập nhật thông tin nhân viên thành công" });
         }
 
         // Nếu không có dữ liệu cập nhật
-        res.status(400).json({ error: "No data provided for update" });
+        res.status(400).json({ error: "Không có dữ liệu để cập nhật" });
     } catch (error) {
         logger.error(`[${req.id}] Error in updateEmployeeController:`, error.message);
         res.status(400).json({ error: error.message });

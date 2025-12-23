@@ -2,17 +2,31 @@ import db from "../../models/index.js";
 import logger from "../../utils/logger.js";
 
 /**
- * Gán role cho user
+ * Gán role(s) cho user
+ * @param {string} userId - ID của user
+ * @param {string|string[]} roleIds - ID role hoặc mảng IDs
+ * @param {string} assignedById - ID của người gán role
  */
-export const assignRoleService = async (userId, roleId, assignedById) => {
+export const assignRoleService = async (userId, roleIds, assignedById) => {
   try {
+    // Kiểm tra user tồn tại
     const user = await db.User.findOne({ where: { id: userId } });
-    const role = await db.Role.findOne({ where: { id: roleId } });
     if (!user) {
       throw new Error("User không tồn tại");
     }
-    if (!role) {
-      throw new Error("Role không tồn tại");
+
+    // Chuyển đổi roleIds thành mảng nếu là string
+    const roleIdArray = Array.isArray(roleIds) ? roleIds : [roleIds];
+    if (roleIdArray.length === 0) {
+      throw new Error("Phải cung cấp ít nhất một role");
+    }
+
+    // Kiểm tra tất cả roles tồn tại
+    const roles = await db.Role.findAll({
+      where: { id: roleIdArray },
+    });
+    if (roles.length !== roleIdArray.length) {
+      throw new Error("Một hoặc nhiều role không tồn tại");
     }
 
     // Kiểm tra assignedById tồn tại
@@ -39,16 +53,23 @@ export const assignRoleService = async (userId, roleId, assignedById) => {
     //     throw new Error("Không có quyền gán role");
     // }
 
-    // Gán role bằng cách tạo bản ghi trong UserRoles
-    const assignment = await db.UserRoles.create({
-      user_id: userId,
-      role_id: roleId,
-      assigned_by: assignedById,
-    });
-    logger.info(
-      `Role ${roleId} assigned to user ${userId} by ${assignedById}`
+    // Gán roles bằng cách bulk create bản ghi trong UserRoles
+    const assignments = await db.UserRoles.bulkCreate(
+      roleIdArray.map((roleId) => ({
+        user_id: userId,
+        role_id: roleId,
+        assigned_by: assignedById,
+      })),
+      { ignoreDuplicates: true } // Tránh lỗi duplicate key nếu role đã được gán
     );
-    return { data: assignment, message: "Role đã được gán thành công" };
+
+    logger.info(
+      `Roles ${roleIdArray.join(", ")} assigned to user ${userId} by ${assignedById}`
+    );
+    return {
+      data: assignments,
+      message: `${assignments.length} role(s) đã được gán thành công`,
+    };
   } catch (error) {
     logger.error(`Error in assignRoleService: ${error.message}`);
     throw error;

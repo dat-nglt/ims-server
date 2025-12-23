@@ -2,17 +2,18 @@ import logger from "../../utils/logger.js";
 import * as userRoleService from "../../services/users/user-role.service.js";
 
 /**
- * Gán role cho user
+ * Gán role(s) cho user
+ * Body: { userId, roleIds: string | string[] }
  */
 export const assignRoleController = async (req, res) => {
     try {
-        const { userId, roleId } = req.body;
+        const { userId, roleIds } = req.body;
         // const assignedById = req.user.id; // Giả sử từ middleware auth
         const assignedById = 1; // Giả sử từ middleware auth
 
         const result = await userRoleService.assignRoleService(
             userId,
-            roleId,
+            roleIds,
             assignedById
         );
         res.status(201).json({

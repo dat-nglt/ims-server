@@ -46,14 +46,17 @@ export default (sequelize, DataTypes) => {
             // Số điện thoại phòng
             phone: {
                 type: DataTypes.STRING(20),
+                allowNull: true,
             },
             // Email phòng ban
             email: {
                 type: DataTypes.STRING(255),
+                allowNull: true,
             },
             // Vị trí/Địa điểm làm việc
             location: {
                 type: DataTypes.STRING(255),
+                allowNull: true,
             },
             // Phòng ban cha (nếu có cấu trúc phân cấp)
             parent_department_id: {

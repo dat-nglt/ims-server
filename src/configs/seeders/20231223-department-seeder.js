@@ -7,158 +7,155 @@
  */
 
 export const up = async (queryInterface, Sequelize) => {
-  try {
-    // 1. Insert departments
-    const departments = await queryInterface.bulkInsert(
-      "departments",
-      [
-        {
-          id: 1,
-          name: "Phòng Kỹ Thuật",
-          code: "TECH",
-          description: "Bộ phận phát triển và hỗ trợ kỹ thuật",
-          manager_id: null, // Will be set after users are created
-          phone: "0901-000-001",
-          email: "tech@company.com",
-          location: "Tầng 2, Toà A",
-          parent_department_id: null,
-          status: "active",
-          is_deleted: false,
-          created_by: 1,
-          updated_by: 1,
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-        {
-          id: 2,
-          name: "Phòng Bán Hàng",
-          code: "SALES",
-          description: "Bộ phận kinh doanh và bán hàng",
-          manager_id: null,
-          phone: "0901-000-002",
-          email: "sales@company.com",
-          location: "Tầng 1, Toà A",
-          parent_department_id: null,
-          status: "active",
-          is_deleted: false,
-          created_by: 1,
-          updated_by: 1,
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-        {
-          id: 3,
-          name: "Phòng Nhân Sự",
-          code: "HR",
-          description: "Bộ phận quản lý nhân sự và phát triển",
-          manager_id: null,
-          phone: "0901-000-003",
-          email: "hr@company.com",
-          location: "Tầng 3, Toà A",
-          parent_department_id: null,
-          status: "active",
-          is_deleted: false,
-          created_by: 1,
-          updated_by: 1,
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-      ],
-      {}
-    );
+    try {
+        // 1. Insert departments
+        const departments = await queryInterface.bulkInsert(
+            "departments",
+            [
+                {
+                    name: "Phòng Kỹ Thuật",
+                    code: "TECH",
+                    description: "Bộ phận phát triển và hỗ trợ kỹ thuật",
+                    manager_id: null, // Will be set after users are created
+                    phone: "0901-000-001",
+                    email: "tech@company.com",
+                    location: "Tầng 2, Toà A",
+                    parent_department_id: null,
+                    status: "active",
+                    is_deleted: false,
+                    created_by: 1,
+                    updated_by: 1,
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                },
+                {
+                    name: "Phòng Bán Hàng",
+                    code: "SALES",
+                    description: "Bộ phận kinh doanh và bán hàng",
+                    manager_id: null,
+                    phone: "0901-000-002",
+                    email: "sales@company.com",
+                    location: "Tầng 1, Toà A",
+                    parent_department_id: null,
+                    status: "active",
+                    is_deleted: false,
+                    created_by: 1,
+                    updated_by: 1,
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                },
+                {
+                    name: "Phòng Nhân Sự",
+                    code: "HR",
+                    description: "Bộ phận quản lý nhân sự và phát triển",
+                    manager_id: null,
+                    phone: "0901-000-003",
+                    email: "hr@company.com",
+                    location: "Tầng 3, Toà A",
+                    parent_department_id: null,
+                    status: "active",
+                    is_deleted: false,
+                    created_by: 1,
+                    updated_by: 1,
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                },
+            ],
+            {}
+        );
 
-    // 2. Insert department_roles
-    // NOTE: Adjust role_id values based on actual roles in your database
-    // These are example mappings - UPDATE THESE IDs based on your actual Role IDs
-    // await queryInterface.bulkInsert(
-    //   "department_roles",
-    //   [
-    //     // Phòng Kỹ Thuật -> Role Technician (ID: 10)
-    //     {
-    //       department_id: 1,
-    //       role_id: 10,
-    //       is_primary: true,
-    //       is_default: true,
-    //       priority: 0,
-    //       created_at: new Date(),
-    //       updated_at: new Date(),
-    //     },
-    //     // Phòng Kỹ Thuật -> Role Senior Technician (ID: 11) - Optional
-    //     {
-    //       department_id: 1,
-    //       role_id: 11,
-    //       is_primary: false,
-    //       is_default: false,
-    //       priority: 1,
-    //       created_at: new Date(),
-    //       updated_at: new Date(),
-    //     },
+        // 2. Insert department_roles
+        // NOTE: Adjust role_id values based on actual roles in your database
+        // These are example mappings - UPDATE THESE IDs based on your actual Role IDs
+        // await queryInterface.bulkInsert(
+        //   "department_roles",
+        //   [
+        //     // Phòng Kỹ Thuật -> Role Technician (ID: 10)
+        //     {
+        //       department_id: 1,
+        //       role_id: 10,
+        //       is_primary: true,
+        //       is_default: true,
+        //       priority: 0,
+        //       created_at: new Date(),
+        //       updated_at: new Date(),
+        //     },
+        //     // Phòng Kỹ Thuật -> Role Senior Technician (ID: 11) - Optional
+        //     {
+        //       department_id: 1,
+        //       role_id: 11,
+        //       is_primary: false,
+        //       is_default: false,
+        //       priority: 1,
+        //       created_at: new Date(),
+        //       updated_at: new Date(),
+        //     },
 
-    //     // Phòng Bán Hàng -> Role Sales (ID: 20)
-    //     {
-    //       department_id: 2,
-    //       role_id: 20,
-    //       is_primary: true,
-    //       is_default: true,
-    //       priority: 0,
-    //       created_at: new Date(),
-    //       updated_at: new Date(),
-    //     },
-    //     // Phòng Bán Hàng -> Role Sales Manager (ID: 21) - Optional
-    //     {
-    //       department_id: 2,
-    //       role_id: 21,
-    //       is_primary: false,
-    //       is_default: false,
-    //       priority: 1,
-    //       created_at: new Date(),
-    //       updated_at: new Date(),
-    //     },
+        //     // Phòng Bán Hàng -> Role Sales (ID: 20)
+        //     {
+        //       department_id: 2,
+        //       role_id: 20,
+        //       is_primary: true,
+        //       is_default: true,
+        //       priority: 0,
+        //       created_at: new Date(),
+        //       updated_at: new Date(),
+        //     },
+        //     // Phòng Bán Hàng -> Role Sales Manager (ID: 21) - Optional
+        //     {
+        //       department_id: 2,
+        //       role_id: 21,
+        //       is_primary: false,
+        //       is_default: false,
+        //       priority: 1,
+        //       created_at: new Date(),
+        //       updated_at: new Date(),
+        //     },
 
-    //     // Phòng Nhân Sự -> Role HR Manager (ID: 30)
-    //     {
-    //       department_id: 3,
-    //       role_id: 30,
-    //       is_primary: true,
-    //       is_default: true,
-    //       priority: 0,
-    //       created_at: new Date(),
-    //       updated_at: new Date(),
-    //     },
-    //     // Phòng Nhân Sự -> Role HR Staff (ID: 31) - Optional
-    //     {
-    //       department_id: 3,
-    //       role_id: 31,
-    //       is_primary: false,
-    //       is_default: false,
-    //       priority: 1,
-    //       created_at: new Date(),
-    //       updated_at: new Date(),
-    //     },
-    //   ],
-    //   {}
-    // );
+        //     // Phòng Nhân Sự -> Role HR Manager (ID: 30)
+        //     {
+        //       department_id: 3,
+        //       role_id: 30,
+        //       is_primary: true,
+        //       is_default: true,
+        //       priority: 0,
+        //       created_at: new Date(),
+        //       updated_at: new Date(),
+        //     },
+        //     // Phòng Nhân Sự -> Role HR Staff (ID: 31) - Optional
+        //     {
+        //       department_id: 3,
+        //       role_id: 31,
+        //       is_primary: false,
+        //       is_default: false,
+        //       priority: 1,
+        //       created_at: new Date(),
+        //       updated_at: new Date(),
+        //     },
+        //   ],
+        //   {}
+        // );
 
-    console.log("✅ Seeding completed: Departments and Department Roles");
-  } catch (error) {
-    console.error("❌ Seeding error:", error);
-    throw error;
-  }
+        console.log("✅ Seeding completed: Departments and Department Roles");
+    } catch (error) {
+        console.error("❌ Seeding error:", error);
+        throw error;
+    }
 };
 
 export const down = async (queryInterface, Sequelize) => {
-  try {
-    // Remove department_roles
-    await queryInterface.bulkDelete("department_roles", null, {});
+    try {
+        // Remove department_roles
+        await queryInterface.bulkDelete("department_roles", null, {});
 
-    // Remove departments
-    await queryInterface.bulkDelete("departments", null, {});
+        // Remove departments
+        await queryInterface.bulkDelete("departments", null, {});
 
-    console.log("✅ Seeding rollback completed");
-  } catch (error) {
-    console.error("❌ Seeding rollback error:", error);
-    throw error;
-  }
+        console.log("✅ Seeding rollback completed");
+    } catch (error) {
+        console.error("❌ Seeding rollback error:", error);
+        throw error;
+    }
 };
 
 /**
