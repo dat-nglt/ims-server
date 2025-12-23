@@ -184,7 +184,7 @@ export const updateUserService = async (id, updateData) => {
     try {
         const user = await db.User.findByPk(id);
         if (!user) {
-            throw new Error("Người dùng không tồn tại");
+            return { success: false, message: "Người dùng không tồn tại" };
         }
 
         const {
@@ -241,7 +241,7 @@ export const updateUserService = async (id, updateData) => {
                 } else if (phone && existingUser.phone === phone) {
                     conflictField = "Số điện thoại";
                 }
-                throw new Error(`${conflictField} đã tồn tại trong hệ thống`);
+                return { success: false, message: `${conflictField} đã tồn tại trong hệ thống` };
             }
         }
 
@@ -279,7 +279,7 @@ export const updateUserService = async (id, updateData) => {
         return { success: true, data: user };
     } catch (error) {
         logger.error("Error in updateUserService:" + error.message);
-        throw error;
+        return { success: false, message: error.message };
     }
 };
 

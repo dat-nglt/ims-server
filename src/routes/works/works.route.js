@@ -5,7 +5,6 @@ import {
     getWorksStatisticsController,
     getWorksDistributionController,
     getWorksByStatusController,
-    getWorkByIdController,
     createWorkController,
     updateWorkController,
     approveWorkController,
@@ -13,12 +12,15 @@ import {
     getWorkCategoriesController,
     getServiceTypesController,
     exportWorksController,
+    getWorkByCodeController,
 } from "../../controllers/works/work.controller.js";
 
 const router = express.Router();
 
 // GET works with filters, pagination, search, sort
 router.get("/", getWorksController);
+
+router.get("/:workCode", getWorkByCodeController);
 
 // GET all works (legacy, có thể giữ hoặc loại bỏ)
 router.get("/all", getAllWorksController);
@@ -42,7 +44,6 @@ router.get("/export", exportWorksController);
 router.get("/status/:status", getWorksByStatusController);
 
 // GET work by ID
-router.get("/:id", getWorkByIdController);
 
 // CREATE new work
 router.post("/", createWorkController);

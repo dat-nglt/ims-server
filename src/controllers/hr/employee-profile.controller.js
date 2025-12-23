@@ -57,13 +57,27 @@ export const updateEmployeeProfileController = async (req, res) => {
     try {
         const { userId } = req.params;
         const result = await employeeProfileService.updateEmployeeProfileService(userId, req.body);
-        res.json({
+
+        if (!result.success) {
+            return res.status(200).json({
+                status: "error",
+                success: false,
+                message: result.message,
+            });
+        }
+
+        res.status(200).json({
             status: "success",
+            success: true,
             data: result.data,
             message: "Cập nhật hồ sơ nhân viên thành công",
         });
     } catch (error) {
         logger.error(`[${req.id}] Error in updateEmployeeProfileController:`, error.message);
-        res.status(400).json({ error: error.message });
+        res.status(500).json({
+            status: "error",
+            success: false,
+            message: error.message,
+        });
     }
 };

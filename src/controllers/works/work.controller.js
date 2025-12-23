@@ -83,10 +83,10 @@ export const getWorksDistributionController = async (req, res) => {
 /**
  * Lấy công việc theo ID
  */
-export const getWorkByIdController = async (req, res) => {
+export const getWorkByCodeController = async (req, res) => {
     try {
-        const { id } = req.params;
-        const result = await workService.getWorkByIdService(id);
+        const { "workCode": workCode } = req.params;
+        const result = await workService.getWorkByCodeService(workCode);
         res.json({
             status: "success",
             data: result.data,

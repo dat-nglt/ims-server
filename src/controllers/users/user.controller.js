@@ -61,14 +61,28 @@ export const updateUserController = async (req, res) => {
     try {
         const { id } = req.params;
         const result = await userService.updateUserService(id, req.body);
-        res.json({
+
+        if (!result.success) {
+            return res.status(200).json({
+                status: "error",
+                success: false,
+                message: result.message,
+            });
+        }
+
+        res.status(200).json({
             status: "success",
+            success: true,
             data: result.data,
             message: "Cập nhật người dùng thành công",
         });
     } catch (error) {
         logger.error(`[${req.id}] Error in updateUserController:`, error.message);
-        res.status(400).json({ error: error.message });
+        res.status(500).json({
+            status: "error",
+            success: false,
+            message: error.message,
+        });
     }
 };
 

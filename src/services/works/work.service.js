@@ -27,16 +27,65 @@ export const getAllWorksService = async () => {
 };
 
 /**
- * Lấy công việc theo ID
+ * Lấy công việc theo mã công việc (work_code) - bao gồm báo cáo liên quan
+ * Lấy đầy đủ các trường cần thiết cho WorkReportsTab component
  */
-export const getWorkByIdService = async (id) => {
+export const getWorkByCodeService = async (workCode) => {
     try {
-        const work = await db.Work.findByPk(id, {
+        const work = await db.Work.findOne({
+            where: { work_code: workCode },
             include: [
                 { model: db.WorkCategory, as: "category" },
                 { model: db.User, as: "assignedUser" },
                 { model: db.User, as: "technician" },
                 { model: db.User, as: "salesPerson" },
+                {
+                    model: db.WorkReport,
+                    as: "reports",
+                    attributes: [
+                        'id',
+                        'work_id',
+                        'progress_percentage',
+                        'status',
+                        'description',
+                        'notes',
+                        'location',
+                        'before_images',
+                        'during_images',
+                        'after_images',
+                        'materials_used',
+                        'issues_encountered',
+                        'solution_applied',
+                        'time_spent_hours',
+                        'next_steps',
+                        'approval_status',
+                        'quality_rating',
+                        'rejection_reason',
+                        'reported_at',
+                        'approved_at',
+                        'reported_by',
+                        'approved_by',
+                        'assigned_approver',
+                    ],
+                    include: [
+                        { 
+                            model: db.User, 
+                            as: "reporter", 
+                            attributes: ["id", "name", "email", "avatar_url"] 
+                        },
+                        { 
+                            model: db.User, 
+                            as: "approver", 
+                            attributes: ["id", "name", "email", "avatar_url"] 
+                        },
+                        { 
+                            model: db.User, 
+                            as: "assignedApprover", 
+                            attributes: ["id", "name", "email", "avatar_url"] 
+                        },
+                    ],
+                    order: [["reported_at", "DESC"]],
+                },
             ],
         });
         if (!work) {
@@ -44,7 +93,7 @@ export const getWorkByIdService = async (id) => {
         }
         return { success: true, data: work };
     } catch (error) {
-        logger.error("Error in getWorkByIdService: " + error.message);
+        logger.error("Error in getWorkByCodeService: " + error.message);
         throw error;
     }
 };

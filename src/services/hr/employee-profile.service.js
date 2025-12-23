@@ -159,7 +159,7 @@ export const updateEmployeeProfileService = async (userId, updateData) => {
         });
 
         if (!profile) {
-            throw new Error("Hồ sơ nhân viên không tồn tại");
+            return { success: false, message: "Hồ sơ nhân viên không tồn tại" };
         }
 
         // Allowed fields that can be updated on the profile
@@ -237,6 +237,6 @@ export const updateEmployeeProfileService = async (userId, updateData) => {
         return { success: true, data: profile };
     } catch (error) {
         logger.error("Error in updateEmployeeProfileService:" + error.message);
-        throw error;
+        return { success: false, message: error.message };
     }
 };
