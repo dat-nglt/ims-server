@@ -2,6 +2,93 @@ import db from "../../models/index.js";
 import logger from "../../utils/logger.js";
 
 /**
+ * Gán role(s) cho user dựa trên chức vụ
+ * @param {number} userId - ID của user
+ * @param {number} positionId - ID của chức vụ
+ * @param {number} assignedById - ID của người gán role
+ */
+export const assignRoleByPositionService = async (userId, positionId, assignedById) => {
+  try {
+    // Validate parameters
+    if (!userId) {
+      throw new Error("userId là bắt buộc");
+    }
+    if (!positionId) {
+      throw new Error("positionId là bắt buộc");
+    }
+    if (!assignedById) {
+      throw new Error("assignedById là bắt buộc");
+    }
+
+    // Kiểm tra user tồn tại
+    const user = await db.User.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new Error("User không tồn tại");
+    }
+
+    // Tìm chức vụ dựa trên position ID
+    const position = await db.Position.findOne({
+      where: { id: positionId },
+    });
+    if (!position) {
+      throw new Error(`Chức vụ với ID "${positionId}" không tồn tại`);
+    }
+
+    // Lấy danh sách role của chức vụ từ PositionRoles
+    const positionRoles = await db.PositionRoles.findAll({
+      where: { position_id: position.id },
+      order: [["priority", "ASC"]],
+    });
+
+    if (positionRoles.length === 0) {
+      logger.warn(`Chức vụ ${position.name} không có role nào được gán`);
+      return {
+        success: false,
+        data: [],
+        message: `Chức vụ này chưa được cấu hình quyền và vai trò, hãy thử lại`,
+      };
+    }
+
+    // Trích xuất roleIds từ PositionRoles
+    const roleIds = positionRoles.map((pr) => pr.role_id);
+
+    // Kiểm tra assignedById tồn tại
+    const assigner = await db.User.findByPk(assignedById);
+    if (!assigner) {
+      throw new Error("Người gán không tồn tại");
+    }
+
+    // Gán roles bằng cách bulk create bản ghi trong UserRoles
+    const assignments = await db.UserRoles.bulkCreate(
+      roleIds.map((roleId) => ({
+        user_id: userId,
+        role_id: roleId,
+        assigned_by: assignedById,
+      })),
+      { ignoreDuplicates: true } // Tránh lỗi duplicate key nếu role đã được gán
+    );
+
+    logger.info(
+      `Roles [${roleIds.join(", ")}] assigned to user ${userId} from position ${
+        position.name
+      } by ${assignedById}`
+    );
+    return {
+      success: true,
+      data: assignments,
+      message: `Đã gán thành công các vai trò từ chức vụ "${position.name}" cho nhân viên này`,
+    };
+  } catch (error) {
+    logger.error(`Error in assignRoleByPositionService: ${error.message}`);
+    return {
+      success: false,
+      data: [],
+      message: error.message || "Lỗi khi gán quyền & vai trò từ chức vụ cho người dùng",
+    };
+  }
+};
+
+/**
  * Gán role(s) cho user
  * @param {string} userId - ID của user
  * @param {string|string[]} roleIds - ID role hoặc mảng IDs
@@ -63,9 +150,7 @@ export const assignRoleService = async (userId, roleIds, assignedById) => {
       { ignoreDuplicates: true } // Tránh lỗi duplicate key nếu role đã được gán
     );
 
-    logger.info(
-      `Roles ${roleIdArray.join(", ")} assigned to user ${userId} by ${assignedById}`
-    );
+    logger.info(`Roles ${roleIdArray.join(", ")} assigned to user ${userId} by ${assignedById}`);
     return {
       data: assignments,
       message: `${assignments.length} role(s) đã được gán thành công`,
@@ -151,10 +236,7 @@ export const revokeRoleService = async (userId, roleId, revokedById) => {
         },
       ],
     });
-    if (
-      !revokerWithRoles ||
-      !revokerWithRoles.userRoles.some((r) => r.role.name === "admin")
-    ) {
+    if (!revokerWithRoles || !revokerWithRoles.userRoles.some((r) => r.role.name === "admin")) {
       throw new Error("Không có quyền thu hồi role");
     }
 
@@ -165,9 +247,7 @@ export const revokeRoleService = async (userId, roleId, revokedById) => {
     if (deletedRows === 0) {
       throw new Error("Role không tồn tại cho user này");
     }
-    logger.info(
-      `Role ${roleId} revoked from user ${userId} by ${revokedById}`
-    );
+    logger.info(`Role ${roleId} revoked from user ${userId} by ${revokedById}`);
     return { data: null, message: "Role đã được thu hồi thành công" };
   } catch (error) {
     logger.error(`Error in revokeRoleService: ${error.message}`);
@@ -209,9 +289,7 @@ export const getUserPermissionsService = async (userId) => {
     // Thu thập quyền từ roles
     const rolePermissions = new Set();
     user.userRoles.forEach((userRole) => {
-      userRole.role.permissions.forEach((perm) =>
-        rolePermissions.add(perm)
-      );
+      userRole.role.permissions.forEach((perm) => rolePermissions.add(perm));
     });
 
     const allPermissions = Array.from(rolePermissions).map((perm) => ({

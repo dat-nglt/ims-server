@@ -149,19 +149,14 @@ export default (sequelize, DataTypes) => {
             as: "employees",
         });
 
-        // Many-to-Many với Role qua DepartmentRoles
-        Department.belongsToMany(models.Role, {
-            through: models.DepartmentRoles,
+        // === CHỨC VỤ TRONG PHÒNG BAN ===
+        // 1 Department có nhiều Position
+        Department.hasMany(models.Position, {
             foreignKey: "department_id",
-            otherKey: "role_id",
-            as: "roles",
+            as: "positions",
         });
 
-        // One-to-Many với DepartmentRoles
-        Department.hasMany(models.DepartmentRoles, {
-            foreignKey: "department_id",
-            as: "departmentRoles",
-        });
+
 
         // Audit trail
         Department.belongsTo(models.User, {

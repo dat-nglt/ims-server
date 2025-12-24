@@ -12,7 +12,7 @@ export async function up(queryInterface, Sequelize) {
             id: 1,
             employee_id: "EMP001",
             name: "Nhân viên 1",
-            position: "Quản lý",
+            position_id: null,
             avatar_url: null,
             phone: "0397364664",
             email: "dat.nglt@gmail.com",

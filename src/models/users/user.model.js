@@ -34,11 +34,15 @@ export default (sequelize, DataTypes) => {
                 allowNull: false,
                 comment: "Tên đầy đủ của nhân viên",
             },
-            // Vị trí công việc
-            position: {
-                type: DataTypes.STRING(100),
-                allowNull: false,
-                comment: "Vị trí công việc (vd: Kỹ Sư, Quản Lý)",
+            // Chức vụ (liên kết với bảng positions)
+            position_id: {
+                type: DataTypes.INTEGER,
+                allowNull: true,
+                references: {
+                    model: "positions",
+                    key: "id",
+                },
+                comment: "ID của chức vụ trong công ty",
             },
             // URL ảnh đại diện
             avatar_url: {
@@ -130,6 +134,13 @@ export default (sequelize, DataTypes) => {
 
     // Định nghĩa các mối quan hệ
     User.associate = (models) => {
+        // === QUẢN LÝ CHỨC VỤ ===
+        // 1 User thuộc 1 Position
+        User.belongsTo(models.Position, {
+            foreignKey: "position_id",
+            as: "position",
+        });
+
         // === QUẢN LÝ QUYỀN HẠN (Mới thêm) ===
         // 1 User có nhiều Role thông qua bảng UserRoles
         User.hasMany(models.UserRoles, {

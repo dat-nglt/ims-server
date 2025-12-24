@@ -20,9 +20,10 @@ export async function up(queryInterface, Sequelize) {
             type: Sequelize.STRING(255),
             allowNull: false,
         },
-        position: {
-            type: Sequelize.STRING(100),
-            allowNull: false,
+        position_id: {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+            comment: "ID của chức vụ trong công ty (FK sẽ được thêm sau khi tạo positions table)",
         },
         avatar_url: {
             type: Sequelize.TEXT,
@@ -82,6 +83,7 @@ export async function up(queryInterface, Sequelize) {
     await queryInterface.addIndex("users", ["email"]);
     await queryInterface.addIndex("users", ["is_active"]);
     await queryInterface.addIndex("users", ["manager_id"]);
+    await queryInterface.addIndex("users", ["position_id"]);
 }
 
 export async function down(queryInterface, Sequelize) {

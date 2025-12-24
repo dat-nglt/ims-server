@@ -1,18 +1,33 @@
 import logger from "../../utils/logger.js";
 import {
-    updateEmployeeWithDepartmentService,
-    getDepartmentWithRolesService,
+    getDepartmentWithRolesByIdService,
     getAllDepartmentsService,
     createDepartmentService,
     updateDepartmentService,
     deleteDepartmentService,
-    removeRoleFromDepartmentService,
 } from "../../services/hr/index.js";
 
 /**
  * GET /api/departments
- * Lấy danh sách tất cả phòng ban
+ * Lấy danh sách tất cả phòng ban kèm danh sách chức vụ
  * Query params: includeRoles=true|false, includeInactive=true|false
+ * 
+ * Response: {
+ *   status: "success",
+ *   data: [
+ *     {
+ *       id: 1,
+ *       name: "Phòng Kỹ Thuật",
+ *       code: "TECH",
+ *       status: "active",
+ *       positions: [
+ *         { id: 1, name: "Giám đốc", code: "DIR", level: "director", status: "active" },
+ *         ...
+ *       ]
+ *     },
+ *     ...
+ *   ]
+ * }
  */
 export const getAllDepartmentsController = async (req, res) => {
     try {
@@ -42,7 +57,7 @@ export const getDepartmentByIdController = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const result = await getDepartmentWithRolesService(id);
+        const result = await getDepartmentWithRolesByIdService(id);
 
         if (!result.success) {
             return res.status(404).json({ status: "error", message: result.message });
@@ -141,126 +156,4 @@ export const deleteDepartmentController = async (req, res) => {
     }
 };
 
-// assignRoleToDepartmentController removed — assignments are handled by updateDepartmentController when `roles` is present in the request body.
 
-/**
- * DELETE /api/departments/:id/roles/:roleId
- * Gỡ vai trò khỏi phòng ban
- */
-export const removeRoleFromDepartmentController = async (req, res) => {
-    try {
-        const { id: departmentId, roleId } = req.params;
-
-        const result = await removeRoleFromDepartmentService(departmentId, roleId);
-
-        if (!result.success) {
-            if (result.message && result.message.includes("không tồn tại")) {
-                return res.status(404).json({ status: "error", message: result.message });
-            }
-            return res.status(400).json({ status: "error", message: result.message });
-        }
-
-        res.json({ status: "success", message: result.message });
-    } catch (error) {
-        logger.error(`[${req.id}] Error in removeRoleFromDepartmentController:`, error.message);
-        res.status(400).json({ error: error.message });
-    }
-};
-
-/**
- * PUT /api/employees/:employeeId/department
- * Cập nhật phòng ban cho nhân viên + auto-assign roles
- * Body: { department_id }
- *
- * Logic:
- * 1. Get department với default roles
- * 2. Lấy current roles của user
- * 3. Remove old roles, add new roles
- * 4. Update employee profile
- * 5. Trả về kết quả (roles assigned/removed)
- */
-export const updateEmployeeDepartmentController = async (req, res) => {
-    try {
-        const { employeeId } = req.params;
-        const { department_id } = req.body;
-        const updatedBy = req.user?.id;
-
-        // Validation
-        if (!department_id) {
-            return res.status(400).json({ error: "department_id là bắt buộc" });
-        }
-
-        if (!updatedBy) {
-            return res.status(401).json({ error: "Không có quyền" });
-        }
-
-        // Call service with auto-assign logic
-        const result = await updateEmployeeWithDepartmentService(employeeId, department_id, updatedBy);
-
-        if (!result.success) {
-            if (result.message && result.message.includes("Không tìm thấy")) {
-                return res.status(404).json({ status: "error", message: result.message });
-            }
-            return res.status(400).json({ status: "error", message: result.message });
-        }
-
-        res.json({ status: "success", data: result, message: result.message });
-    } catch (error) {
-        logger.error(`[${req.id}] Error in updateEmployeeDepartmentController:`, error.message);
-        res.status(400).json({ error: error.message });
-    }
-};
-
-/**
- * PUT /api/employees/:employeeId
- * Cập nhật thông tin nhân viên (có thể bao gồm department)
- * Body: { name, position, department_id, email, phone, ... }
- *
- * Logic:
- * - Nếu có department_id: gọi updateEmployeeWithDepartmentService (auto-assign roles)
- * - Nếu không: cập nhật thông tin khác như bình thường
- */
-export const updateEmployeeController = async (req, res) => {
-    try {
-        const { employeeId } = req.params;
-        const { department_id, ...otherData } = req.body;
-        const updatedBy = req.user?.id;
-
-        if (!updatedBy) {
-            return res.status(401).json({ error: "Không có quyền" });
-        }
-
-        let result;
-
-        // Nếu có thay đổi department, gọi service auto-assign
-        if (department_id) {
-            result = await updateEmployeeWithDepartmentService(employeeId, department_id, updatedBy);
-
-            return res.json({
-                status: "success",
-                data: result,
-                message: "Cập nhật phòng ban và vai trò thành công",
-            });
-        }
-
-        // Nếu không thay đổi department, cập nhật các field khác
-        if (Object.keys(otherData).length > 0) {
-            const db = await import("../../models/index.js").then((m) => m.default);
-            const employee = await db.EmployeeProfile.findByPk(employeeId);
-
-            if (!employee) {
-                return res.status(404).json({ error: "Không tìm thấy nhân viên" });
-            }
-
-            await employee.update(otherData);
-
-            return res.json({ status: "success", data: employee, message: "Cập nhật thông tin nhân viên thành công" });
-        }
-
-        // Nếu không có dữ liệu cập nhật
-        res.status(400).json({ error: "Không có dữ liệu để cập nhật" });
-    } catch (error) {
-        logger.error(`[${req.id}] Error in updateEmployeeController:`, error.message);
-        res.status(400).json({ error: error.message });
-    }
-};

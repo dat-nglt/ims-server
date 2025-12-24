@@ -90,6 +90,21 @@ export default (sequelize, DataTypes) => {
             as: "permissions",
         });
 
+        // === ROLES TRONG CHỨC VỤ ===
+        // Many-to-Many với Position qua PositionRoles
+        Role.belongsToMany(models.Position, {
+            through: models.PositionRoles,
+            foreignKey: "role_id",
+            otherKey: "position_id",
+            as: "positions",
+        });
+
+        // One-to-Many với PositionRoles
+        Role.hasMany(models.PositionRoles, {
+            foreignKey: "role_id",
+            as: "positionRoles",
+        });
+
         // Người tạo/sửa role
         Role.belongsTo(models.User, {
             foreignKey: "created_by",

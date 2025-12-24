@@ -2,6 +2,7 @@
 import express from "express";
 import {
     assignRoleController,
+    assignRoleByPositionController,
     getUserRolesController,
     revokeRoleController,
     getUserPermissionsController,
@@ -11,6 +12,9 @@ const router = express.Router();
 
 // Gán role cho user (to grant permissions via roles)
 router.post("/assign-role", assignRoleController);
+
+// Gán role cho user dựa trên mã phòng ban
+router.post("/assign-by-position", assignRoleByPositionController);
 
 // Lấy danh sách roles của user
 router.get("/:userId/roles", getUserRolesController);

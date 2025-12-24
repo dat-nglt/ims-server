@@ -1,0 +1,185 @@
+{
+  "info": {
+    "_postman_id": "position-api-collection",
+    "name": "Position Management API",
+    "description": "API endpoints for managing positions",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get All Positions",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/ims/positions?departmentId=1&level=senior&status=active&includeRoles=true",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "ims", "positions"],
+          "query": [
+            {
+              "key": "departmentId",
+              "value": "1"
+            },
+            {
+              "key": "level",
+              "value": "senior"
+            },
+            {
+              "key": "status",
+              "value": "active"
+            },
+            {
+              "key": "includeRoles",
+              "value": "true"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Position By ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/ims/positions/1",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "ims", "positions", "1"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Position",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Senior Software Engineer\",\n  \"code\": \"SE001\",\n  \"description\": \"Responsible for complex software projects\",\n  \"department_id\": 1,\n  \"level\": \"senior\",\n  \"parent_position_id\": null,\n  \"salary_range_min\": 1500,\n  \"salary_range_max\": 2500,\n  \"expected_headcount\": 3\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/ims/positions",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "ims", "positions"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update Position",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Senior Software Engineer - Updated\",\n  \"description\": \"Updated description\",\n  \"level\": \"manager\",\n  \"salary_range_max\": 3000,\n  \"status\": \"active\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/ims/positions/1",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "ims", "positions", "1"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Position",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/ims/positions/1",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "ims", "positions", "1"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Positions By Department",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/ims/positions/department/1?level=senior&status=active&includeRoles=true",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "ims", "positions", "department", "1"],
+          "query": [
+            {
+              "key": "level",
+              "value": "senior"
+            },
+            {
+              "key": "status",
+              "value": "active"
+            },
+            {
+              "key": "includeRoles",
+              "value": "true"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Assign Role to Position",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"is_default\": true\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/ims/positions/1/roles/1",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "ims", "positions", "1", "roles", "1"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Remove Role from Position",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/ims/positions/1/roles/1",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "ims", "positions", "1", "roles", "1"]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}

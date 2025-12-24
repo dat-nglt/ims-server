@@ -3,9 +3,8 @@
  *
  * This migration:
  * 1. Creates the 'departments' table
- * 2. Creates the 'department_roles' junction table
- * 3. Alters 'employee_profiles' to add department_id FK
- * 4. Creates necessary indexes
+ * 2. Alters 'employee_profiles' to add department_id FK
+ * 3. Creates necessary indexes
  */
 
 export const up = async (queryInterface, Sequelize) => {
@@ -152,97 +151,7 @@ export const up = async (queryInterface, Sequelize) => {
       { name: "idx_department_deleted" }
     );
 
-    // 2. Create department_roles junction table
-    await queryInterface.createTable(
-      "department_roles",
-      {
-        id: {
-          type: Sequelize.INTEGER,
-          primaryKey: true,
-          autoIncrement: true,
-        },
-        department_id: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: "departments",
-            key: "id",
-          },
-          comment: "Phòng ban",
-        },
-        role_id: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: "roles",
-            key: "id",
-          },
-          comment: "Vai trò",
-        },
-        is_primary: {
-          type: Sequelize.BOOLEAN,
-          defaultValue: true,
-          comment: "Là role chính",
-        },
-        is_default: {
-          type: Sequelize.BOOLEAN,
-          defaultValue: true,
-          comment: "Có tự động gán",
-        },
-        priority: {
-          type: Sequelize.INTEGER,
-          defaultValue: 0,
-          comment: "Thứ tự gán",
-        },
-        created_at: {
-          type: Sequelize.DATE,
-          defaultValue: Sequelize.NOW,
-        },
-        updated_at: {
-          type: Sequelize.DATE,
-          defaultValue: Sequelize.NOW,
-        },
-      },
-      {
-        comment: "Quan hệ nhiều-nhiều giữa phòng ban và vai trò",
-      }
-    );
-
-    // Create indexes for department_roles
-    await queryInterface.addIndex(
-      "department_roles",
-      ["department_id", "role_id"],
-      {
-        unique: true,
-        name: "unique_department_role",
-      }
-    );
-
-    await queryInterface.addIndex(
-      "department_roles",
-      ["department_id"],
-      { name: "idx_dept_roles_dept" }
-    );
-
-    await queryInterface.addIndex(
-      "department_roles",
-      ["role_id"],
-      { name: "idx_dept_roles_role" }
-    );
-
-    await queryInterface.addIndex(
-      "department_roles",
-      ["is_default"],
-      { name: "idx_dept_roles_default" }
-    );
-
-    await queryInterface.addIndex(
-      "department_roles",
-      ["priority"],
-      { name: "idx_dept_roles_priority" }
-    );
-
-    // 3. Add department_id column to employee_profiles
+    // 2. Add department_id column to employee_profiles
     // First check if column already exists to avoid errors
     const hasColumn = await queryInterface.describeTable("employee_profiles");
 
@@ -283,9 +192,6 @@ export const down = async (queryInterface, Sequelize) => {
     if (hasColumn.department_id) {
       await queryInterface.removeColumn("employee_profiles", "department_id");
     }
-
-    // Drop department_roles table
-    await queryInterface.dropTable("department_roles");
 
     // Drop departments table
     await queryInterface.dropTable("departments");

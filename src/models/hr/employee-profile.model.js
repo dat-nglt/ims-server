@@ -21,9 +21,19 @@ export default (sequelize, DataTypes) => {
         comment: 'Người dùng',
       },
       // Phòng ban
+      department_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'departments',
+          key: 'id',
+        },
+        comment: 'ID phòng ban',
+      },
+      // Phòng ban (legacy string field - for backward compatibility)
       department: {
         type: DataTypes.STRING(100),
-        comment: 'Phòng ban',
+        comment: 'Phòng ban (legacy)',
       },
       // Chuyên môn - lưu dưới dạng JSON thay vì ARRAY
       specialization: {
@@ -126,6 +136,12 @@ export default (sequelize, DataTypes) => {
       as: 'user',
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
+    });
+
+    // Department association (renamed to departmentInfo to avoid collision with department field)
+    EmployeeProfile.belongsTo(models.Department, {
+      foreignKey: 'department_id',
+      as: 'departmentInfo',
     });
   };
 
