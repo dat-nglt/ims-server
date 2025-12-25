@@ -15,11 +15,12 @@ export const getAllEmployeeProfilesService = async () => {
         {
           model: db.Department,
           as: "departmentInfo",
-          attributes: ["id", "name", "code", "status"],
         },
       ],
     });
 
+      console.log(profiles);
+      
     // Manually add position info by fetching positions for each user
     const profilesWithPositions = await Promise.all(
       profiles.map(async (profile) => {
@@ -226,7 +227,7 @@ export const updateEmployeeProfileService = async (userId, updateData) => {
 
     // Allowed fields that can be updated on the profile
     const allowedFields = [
-      "department",
+      "department_id",
       "specialization",
       "certification",
       "phone_secondary",
@@ -281,7 +282,7 @@ export const updateEmployeeProfileService = async (userId, updateData) => {
       }
 
       // Numeric fields
-      if (["dailySalary", "performance_rating", "total_experience_years"].includes(key)) {
+      if (["dailySalary", "performance_rating", "total_experience_years", "department_id"].includes(key)) {
         const num = Number(val);
         payload[key] = isNaN(num) ? null : num;
         continue;
@@ -296,7 +297,46 @@ export const updateEmployeeProfileService = async (userId, updateData) => {
       updated_at: new Date(),
     });
 
-    return { success: true, data: profile };
+    // Fetch updated user with complete relations (department, position, attendances, etc.)
+    const updatedUser = await db.User.findByPk(userId, {
+      include: [
+        {
+          model: db.EmployeeProfile,
+          as: "profile",
+          include: [
+            {
+              model: db.Department,
+              as: "departmentInfo",
+              attributes: ["id", "name", "code", "status"],
+            },
+          ],
+        },
+        {
+          model: db.Position,
+          as: "position",
+          attributes: ["id", "name", "code", "level", "status"],
+        },
+        { model: db.Attendance, as: "attendances" },
+        { model: db.Work, as: "assignedWorks" },
+      ],
+    });
+
+    if (!updatedUser) {
+      return { success: false, message: "Không thể lấy lại thông tin người dùng sau cập nhật" };
+    }
+
+    // Calculate derived fields
+    const updatedProfile = updatedUser.profile || {};
+    const totalWorkDays = updatedUser.attendances ? updatedUser.attendances.length : 0;
+    const totalWorks = updatedUser.assignedWorks ? updatedUser.assignedWorks.length : 0;
+    const totalSalary = totalWorkDays * (updatedProfile.dailySalary || 0);
+
+    // Add calculated fields to response
+    updatedUser.setDataValue("totalWorkDays", totalWorkDays);
+    updatedUser.setDataValue("totalWorks", totalWorks);
+    updatedUser.setDataValue("totalSalary", totalSalary);
+
+    return { success: true, data: updatedUser };
   } catch (error) {
     logger.error("Error in updateEmployeeProfileService:" + error.message);
     return { success: false, message: error.message };

@@ -99,15 +99,15 @@ export const createUserService = async (userData) => {
             email,
             zalo_id,
             employee_id,
-            position,
+            position_id,
             manager_id,
             status = "active", // Default status
             is_active = true, // Default is_active
         } = userData;
 
         // Validation cơ bản
-        if (!employee_id || !name || !position) {
-            throw new Error("Thiếu thông tin bắt buộc: employee_id, name, position");
+        if (!employee_id || !name || !position_id) {
+            throw new Error("Thiếu thông tin bắt buộc: employee_id, name, position_id");
         }
 
         // Validation conflict với user active - sử dụng 1 query duy nhất
@@ -151,7 +151,7 @@ export const createUserService = async (userData) => {
         const user = await db.User.create({
             employee_id,
             name,
-            position,
+            position_id,
             email,
             phone,
             manager_id,
@@ -189,7 +189,7 @@ export const updateUserService = async (id, updateData) => {
 
         const {
             name,
-            position,
+            position_id,
             email,
             phone,
             zalo_id,
@@ -247,7 +247,7 @@ export const updateUserService = async (id, updateData) => {
 
         await user.update({
             name,
-            position,
+            position_id,
             email,
             phone,
             zalo_id,
@@ -261,20 +261,9 @@ export const updateUserService = async (id, updateData) => {
             updated_at: new Date(),
         });
 
-        // If department provided in update payload, sync it to EmployeeProfile
-        if (typeof department !== "undefined") {
-            try {
-                const existingProfile = await db.EmployeeProfile.findOne({ where: { user_id: user.id } });
-                if (existingProfile) {
-                    await employeeProfileService.updateEmployeeProfileService(user.id, { department });
-                } else {
-                    await employeeProfileService.createEmployeeProfileService({ user_id: user.id, department });
-                }
-            } catch (err) {
-                logger.error(`Failed to sync department to EmployeeProfile for user ${user.id}: ` + err.message);
-                // proceed without failing the user update
-            }
-        }
+        // Note: department field has beoved from EmployeeProfile (legacy field)
+        // Use updateEmployeeProfileAPI/updateEmployeeProfileService with department_id
+        // Department association now handled via departmentInfo relationship
 
         return { success: true, data: user };
     } catch (error) {
@@ -341,7 +330,7 @@ export const approveUserService = async (employee_id) => {
                 where: { user_id: user.id },
                 defaults: {
                     user_id: user.id,
-                    department: null,
+                    department_id: null,
                     specialization: [],
                     certification: [],
                     phone_secondary: null,

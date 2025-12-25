@@ -30,11 +30,6 @@ export default (sequelize, DataTypes) => {
         },
         comment: 'ID phòng ban',
       },
-      // Phòng ban (legacy string field - for backward compatibility)
-      department: {
-        type: DataTypes.STRING(100),
-        comment: 'Phòng ban (legacy)',
-      },
       // Chuyên môn - lưu dưới dạng JSON thay vì ARRAY
       specialization: {
         type: DataTypes.JSONB,
