@@ -165,8 +165,9 @@ export default (sequelize, DataTypes) => {
         comment: "Địa chỉ đầy đủ khách hàng",
       },
       // Nếu công việc gắn với bản ghi khách hàng (nullable)
-      customer_id: {
+      customer_id: {        
         type: DataTypes.INTEGER,
+        allowNull: true,
         references: {
           model: "customers",
           key: "id",

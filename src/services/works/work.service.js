@@ -407,15 +407,21 @@ export const createWorkService = async (workData) => {
       title,
       description,
       category_id,
-      assigned_to_technician_id,
-      assigned_user_id, // Manager or sales person assigning the work
+      assigned_to_technician_id, // NOTE: For assignments array in client, not used in Work table
+      assigned_user_id,
+      created_by,
       created_by_sales_id,
       priority,
       status,
       notes,
       service_type,
       due_date,
+      required_date,
+      required_time_hour,
+      required_time_minute,
+      timeSlot,
       location,
+      customer_id,
       customer_name,
       customer_phone,
       customer_address,
@@ -423,19 +429,34 @@ export const createWorkService = async (workData) => {
       location_lng,
       estimated_hours,
       estimated_cost,
+      payment_status,
+      is_active,
+      expires_at,
       project_id,
     } = workData;
 
+    console.log(workData);
+
+    // Validate required fields
     if (!title || !assigned_user_id) {
       throw new Error("Thiếu thông tin bắt buộc: title, assigned_user_id");
     }
 
-    // Validate foreign key references
+    // Validate FK: assigned_user_id (required)
     const assignedUser = await db.User.findByPk(assigned_user_id);
     if (!assignedUser) {
       throw new Error("Người dùng được giao không tồn tại");
     }
 
+    // Validate FK: created_by (người tạo công việc)
+    if (created_by) {
+      const creator = await db.User.findByPk(created_by);
+      if (!creator) {
+        throw new Error("Người tạo công việc không tồn tại");
+      }
+    }
+
+    // Validate FK: category_id (optional)
     if (category_id) {
       const category = await db.WorkCategory.findByPk(category_id);
       if (!category) {
@@ -443,6 +464,7 @@ export const createWorkService = async (workData) => {
       }
     }
 
+    // Validate FK: project_id (optional)
     if (project_id) {
       const project = await db.Project.findByPk(project_id);
       if (!project) {
@@ -450,6 +472,7 @@ export const createWorkService = async (workData) => {
       }
     }
 
+    // Validate FK: created_by_sales_id (optional)
     if (created_by_sales_id) {
       const salesPerson = await db.User.findByPk(created_by_sales_id);
       if (!salesPerson) {
@@ -457,41 +480,91 @@ export const createWorkService = async (workData) => {
       }
     }
 
-    // Ensure work_code exists and uses system string format when not provided
+    // Validate FK: customer_id (optional link to customers table)
+    if (customer_id) {
+      const customer = await db.Customer.findByPk(customer_id);
+      if (!customer) {
+        throw new Error("Khách hàng không tồn tại");
+      }
+    }
+
+    // Validate GPS coordinates if provided
+    if (location_lat !== undefined && location_lat !== null) {
+      const lat = parseFloat(location_lat);
+      if (isNaN(lat) || lat < -90 || lat > 90) {
+        throw new Error("Vĩ độ (latitude) phải nằm trong khoảng [-90, 90]");
+      }
+    }
+
+    if (location_lng !== undefined && location_lng !== null) {
+      const lng = parseFloat(location_lng);
+      if (isNaN(lng) || lng < -180 || lng > 180) {
+        throw new Error("Kinh độ (longitude) phải nằm trong khoảng [-180, 180]");
+      }
+    }
+
+    // Validate numeric fields
+    if (estimated_hours !== undefined && estimated_hours !== null) {
+      const hours = parseFloat(estimated_hours);
+      if (isNaN(hours) || hours < 0 || hours > 999.99) {
+        throw new Error("Giờ ước tính phải từ 0 đến 999.99");
+      }
+    }
+
+    if (estimated_cost !== undefined && estimated_cost !== null) {
+      const cost = parseFloat(estimated_cost);
+      if (isNaN(cost) || cost < 0 || cost > 9999999.99) {
+        throw new Error("Chi phí ước tính phải từ 0 đến 9999999.99");
+      }
+    }
+
+    // Validate payment_status if provided
+    const validPaymentStatuses = ["unpaid", "paid", "partial"];
+    if (payment_status && !validPaymentStatuses.includes(payment_status)) {
+      throw new Error(`Trạng thái thanh toán phải là: ${validPaymentStatuses.join(", ")}`);
+    }
+
+    // Generate work_code if not provided
     const generatedWorkCode = work_code || `lqd_work_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
-    const timeSlotValue =
-      workData.timeSlot !== undefined && workData.timeSlot !== null
-        ? workData.timeSlot
-        : workData.required_time_hour
-        ? parseInt(String(workData.required_time_hour), 10)
+    // Calculate timeSlot from priority: explicit > required_time_hour > null
+    const timeSlotValue = 
+      timeSlot !== undefined && timeSlot !== null && timeSlot > 0
+        ? timeSlot
+        : required_time_hour
+        ? Math.max(0, parseInt(String(required_time_hour), 10))
         : null;
 
     const work = await db.Work.create({
       work_code: generatedWorkCode,
       title,
-      description,
-      category_id,
+      description: description || null,
+      notes: notes || null,
+      category_id: category_id || null,
+      project_id: project_id || null,
       assigned_user_id,
-      assigned_to_technician_id,
-      created_by_sales_id,
+      created_by: created_by || null,
+      created_by_sales_id: created_by_sales_id || null,
       priority: priority || "medium",
       status: status || "pending",
-      service_type,
-      due_date,
-      required_date: workData.required_date || null,
-      required_time_hour: workData.required_time_hour || null,
-      required_time_minute: workData.required_time_minute || null,
+      service_type: service_type || null,
+      due_date: due_date || null,
+      required_date: required_date || null,
+      required_time_hour: required_time_hour || null,
+      required_time_minute: required_time_minute || null,
       timeSlot: timeSlotValue,
-      location,
-      customer_name,
-      customer_phone,
-      customer_address,
-      location_lat,
-      location_lng,
-      estimated_hours,
-      estimated_cost,
-      project_id,
+      location: location || null,
+      customer_id: customer_id || null,
+      customer_name: customer_name || null,
+      customer_phone: customer_phone || null,
+      customer_address: customer_address || null,
+      location_lat: location_lat || null,
+      location_lng: location_lng || null,
+      estimated_hours: estimated_hours || null,
+      estimated_cost: estimated_cost || null,
+      payment_status: payment_status || "unpaid",
+      is_active: is_active !== undefined ? is_active : true,
+      expires_at: expires_at || null,
     });
 
     // Log work history
@@ -499,7 +572,7 @@ export const createWorkService = async (workData) => {
       await createWorkHistoryService({
         work_id: work.id,
         action: "created",
-        changed_by: assigned_user_id,
+        changed_by: created_by || assigned_user_id,
         notes: "Công việc được tạo",
       });
     } catch (historyError) {
@@ -528,7 +601,7 @@ export const createWorkService = async (workData) => {
 };
 
 /**
- * Cập nhật công việc (including optional technician assignment if needed)
+ * Cập nhật công việc với validation tương tự createWorkService
  */
 export const updateWorkService = async (id, updateData) => {
   try {
@@ -537,7 +610,7 @@ export const updateWorkService = async (id, updateData) => {
       throw new Error("Công việc không tồn tại");
     }
 
-    // Kiểm tra assigned_user_id nếu được cung cấp
+    // Validate FK: assigned_user_id nếu được cung cấp
     if (updateData.assigned_user_id) {
       const assignedUser = await db.User.findByPk(updateData.assigned_user_id);
       if (!assignedUser) {
@@ -545,7 +618,15 @@ export const updateWorkService = async (id, updateData) => {
       }
     }
 
-    // Kiểm tra category_id nếu được cung cấp
+    // Validate FK: created_by nếu được cung cấp
+    if (updateData.created_by) {
+      const creator = await db.User.findByPk(updateData.created_by);
+      if (!creator) {
+        throw new Error("Người tạo công việc không tồn tại");
+      }
+    }
+
+    // Validate FK: category_id nếu được cung cấp
     if (updateData.category_id) {
       const category = await db.WorkCategory.findByPk(updateData.category_id);
       if (!category) {
@@ -553,7 +634,7 @@ export const updateWorkService = async (id, updateData) => {
       }
     }
 
-    // Kiểm tra project_id nếu được cung cấp
+    // Validate FK: project_id nếu được cung cấp
     if (updateData.project_id) {
       const project = await db.Project.findByPk(updateData.project_id);
       if (!project) {
@@ -561,7 +642,7 @@ export const updateWorkService = async (id, updateData) => {
       }
     }
 
-    // Kiểm tra created_by_sales_id nếu được cung cấp
+    // Validate FK: created_by_sales_id nếu được cung cấp
     if (updateData.created_by_sales_id) {
       const salesPerson = await db.User.findByPk(updateData.created_by_sales_id);
       if (!salesPerson) {
@@ -569,7 +650,77 @@ export const updateWorkService = async (id, updateData) => {
       }
     }
 
-    // Removed technician assignment logic to separate phases
+    // Validate FK: customer_id nếu được cung cấp
+    if (updateData.customer_id) {
+      const customer = await db.Customer.findByPk(updateData.customer_id);
+      if (!customer) {
+        throw new Error("Khách hàng không tồn tại");
+      }
+    }
+
+    // Validate GPS coordinates if provided
+    if (updateData.location_lat !== undefined && updateData.location_lat !== null) {
+      const lat = parseFloat(updateData.location_lat);
+      if (isNaN(lat) || lat < -90 || lat > 90) {
+        throw new Error("Vĩ độ (latitude) phải nằm trong khoảng [-90, 90]");
+      }
+    }
+
+    if (updateData.location_lng !== undefined && updateData.location_lng !== null) {
+      const lng = parseFloat(updateData.location_lng);
+      if (isNaN(lng) || lng < -180 || lng > 180) {
+        throw new Error("Kinh độ (longitude) phải nằm trong khoảng [-180, 180]");
+      }
+    }
+
+    // Validate numeric fields
+    if (updateData.estimated_hours !== undefined && updateData.estimated_hours !== null) {
+      const hours = parseFloat(updateData.estimated_hours);
+      if (isNaN(hours) || hours < 0 || hours > 999.99) {
+        throw new Error("Giờ ước tính phải từ 0 đến 999.99");
+      }
+    }
+
+    if (updateData.estimated_cost !== undefined && updateData.estimated_cost !== null) {
+      const cost = parseFloat(updateData.estimated_cost);
+      if (isNaN(cost) || cost < 0 || cost > 9999999.99) {
+        throw new Error("Chi phí ước tính phải từ 0 đến 9999999.99");
+      }
+    }
+
+    if (updateData.actual_hours !== undefined && updateData.actual_hours !== null) {
+      const hours = parseFloat(updateData.actual_hours);
+      if (isNaN(hours) || hours < 0 || hours > 999.99) {
+        throw new Error("Giờ thực tế phải từ 0 đến 999.99");
+      }
+    }
+
+    if (updateData.actual_cost !== undefined && updateData.actual_cost !== null) {
+      const cost = parseFloat(updateData.actual_cost);
+      if (isNaN(cost) || cost < 0 || cost > 9999999.99) {
+        throw new Error("Chi phí thực tế phải từ 0 đến 9999999.99");
+      }
+    }
+
+    // Validate payment_status if provided
+    const validPaymentStatuses = ["unpaid", "paid", "partial"];
+    if (updateData.payment_status && !validPaymentStatuses.includes(updateData.payment_status)) {
+      throw new Error(`Trạng thái thanh toán phải là: ${validPaymentStatuses.join(", ")}`);
+    }
+
+    // Validate status if provided
+    const validStatuses = ["pending", "assigned", "in_progress", "completed", "on_hold", "cancelled"];
+    if (updateData.status && !validStatuses.includes(updateData.status)) {
+      throw new Error(`Trạng thái phải là: ${validStatuses.join(", ")}`);
+    }
+
+    // Validate priority if provided
+    const validPriorities = ["low", "medium", "high", "urgent"];
+    if (updateData.priority && !validPriorities.includes(updateData.priority)) {
+      throw new Error(`Ưu tiên phải là: ${validPriorities.join(", ")}`);
+    }
+
+    // Update work with validated data
     await work.update({
       ...updateData,
       updated_at: new Date(),
@@ -580,7 +731,7 @@ export const updateWorkService = async (id, updateData) => {
       await createWorkHistoryService({
         work_id: id,
         action: "updated",
-        changed_by: updateData.changed_by || work.assigned_user_id, // Use provided or existing
+        changed_by: updateData.changed_by || work.assigned_user_id,
         notes: "Công việc được cập nhật",
       });
     } catch (historyError) {
