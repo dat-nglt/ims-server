@@ -188,24 +188,16 @@ export const updateUserService = async (id, updateData) => {
         }
 
         const {
-            name,
-            position_id,
             email,
             phone,
             zalo_id,
             employee_id,
-            role_id,
-            department,
-            manager_id,
-            status,
-            is_active,
-            approved,
-            password,
         } = updateData;
 
         // Validation conflict với user active khác - sử dụng 1 query duy nhất
         const whereConditions = {
             id: { [Op.ne]: id }, // Exclude current user, check all users
+            is_active: true, // Only check conflicts with active users
         };
         const orConditions = [];
 
@@ -245,21 +237,30 @@ export const updateUserService = async (id, updateData) => {
             }
         }
 
-        await user.update({
-            name,
-            position_id,
-            email,
-            phone,
-            zalo_id,
-            employee_id,
-            role_id,
-            manager_id,
-            status,
-            is_active,
-            approved,
-            password,
-            updated_at: new Date(),
-        });
+        const updatableFields = [
+            "name",
+            "position_id",
+            "email",
+            "phone",
+            "zalo_id",
+            "employee_id",
+            "role_id",
+            "manager_id",
+            "status",
+            "is_active",
+            "approved",
+            "password",
+        ];
+
+        const updates = {};
+        for (const f of updatableFields) {
+            if (typeof updateData[f] !== "undefined") {
+                updates[f] = updateData[f];
+            }
+        }
+        updates.updated_at = new Date();
+
+        await user.update(updates);
 
         // Note: department field has beoved from EmployeeProfile (legacy field)
         // Use updateEmployeeProfileAPI/updateEmployeeProfileService with department_id

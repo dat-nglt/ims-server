@@ -1,18 +1,19 @@
 import express from "express";
 import {
-    getAllUsersController,
-    getUserByIdController,
-    createUserController,
-    updateUserController,
-    deleteUserController,
-    approveUserController,
-    rejectUserController,
+  getAllUsersController,
+  getUserByIdController,
+  createUserController,
+  updateUserController,
+  deleteUserController,
+  approveUserController,
+  rejectUserController,
 } from "../../controllers/users/user.controller.js";
+import { checkAuth } from "../../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
 // GET all users
-router.get("/", getAllUsersController);
+router.get("/", checkAuth, getAllUsersController);
 
 // GET user by ID
 router.get("/:id", getUserByIdController);

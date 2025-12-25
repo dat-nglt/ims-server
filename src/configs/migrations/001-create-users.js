@@ -50,11 +50,9 @@ export async function up(queryInterface, Sequelize) {
             type: Sequelize.STRING(50),
             defaultValue: "active",
         },
-        // department moved to employee_profiles; keep users table lean for Zalo workflow
-
-
         manager_id: {
             type: Sequelize.INTEGER,
+            comment: "ID của người quản lý trực tiếp",
         },
         is_active: {
             type: Sequelize.BOOLEAN,

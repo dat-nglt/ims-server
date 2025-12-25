@@ -19,8 +19,8 @@ export const getAllEmployeeProfilesService = async () => {
       ],
     });
 
-      console.log(profiles);
-      
+    console.log(profiles);
+
     // Manually add position info by fetching positions for each user
     const profilesWithPositions = await Promise.all(
       profiles.map(async (profile) => {
@@ -217,13 +217,9 @@ export const createEmployeeProfileService = async (profileData) => {
  */
 export const updateEmployeeProfileService = async (userId, updateData) => {
   try {
-    const profile = await db.EmployeeProfile.findOne({
+    let profile = await db.EmployeeProfile.findOne({
       where: { user_id: userId, is_active: true }, // Filter active profiles
     });
-
-    if (!profile) {
-      return { success: false, message: "Hồ sơ nhân viên không tồn tại" };
-    }
 
     // Allowed fields that can be updated on the profile
     const allowedFields = [
@@ -292,10 +288,45 @@ export const updateEmployeeProfileService = async (userId, updateData) => {
       payload[key] = val;
     }
 
-    await profile.update({
-      ...payload,
-      updated_at: new Date(),
-    });
+    if (!profile) {
+      // No profile found — create one for the user
+      const user = await db.User.findByPk(userId);
+      if (!user || !user.is_active) {
+        return { success: false, message: "Người dùng không tồn tại hoặc không hoạt động" };
+      }
+
+      try {
+        await db.sequelize.transaction(async (t) => {
+          profile = await db.EmployeeProfile.create(
+            {
+              user_id: userId,
+              ...payload,
+              is_active: true,
+            },
+            { transaction: t }
+          );
+        });
+        logger.info(`Created employee profile for user ${userId}`);
+      } catch (err) {
+        logger.error(`Failed to create employee profile for user ${userId}: ${err.message}`);
+        return { success: false, message: "Không thể tạo hồ sơ nhân viên" };
+      }
+    } else {
+      try {
+        await db.sequelize.transaction(async (t) => {
+          await profile.update(
+            {
+              ...payload,
+              updated_at: new Date(),
+            },
+            { transaction: t }
+          );
+        });
+      } catch (err) {
+        logger.error(`Failed to update employee profile for user ${userId}: ${err.message}`);
+        return { success: false, message: "Không thể cập nhật hồ sơ nhân viên" };
+      }
+    }
 
     // Fetch updated user with complete relations (department, position, attendances, etc.)
     const updatedUser = await db.User.findByPk(userId, {

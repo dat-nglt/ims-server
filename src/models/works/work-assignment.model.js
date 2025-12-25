@@ -108,6 +108,7 @@ export default (sequelize, DataTypes) => {
             indexes: [
                 { fields: ["technician_id"] },
                 { fields: ["work_id"] },
+                { fields: ["work_id", "technician_id"], unique: true, name: "unique_work_technician" },
                 { fields: ["assigned_status"] },
                 { fields: ["assignment_date"] },
             ],

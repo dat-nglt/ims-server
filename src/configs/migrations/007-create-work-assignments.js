@@ -86,6 +86,7 @@ export async function up(queryInterface, Sequelize) {
 
   await queryInterface.addIndex('work_assignments', ['technician_id']);
   await queryInterface.addIndex('work_assignments', ['work_id']);
+  await queryInterface.addIndex('work_assignments', ['work_id', 'technician_id'], { unique: true, name: 'unique_work_technician' });
   await queryInterface.addIndex('work_assignments', ['assigned_status']);
   await queryInterface.addIndex('work_assignments', ['assignment_date']);
 }
