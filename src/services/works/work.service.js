@@ -65,13 +65,6 @@ export const getWorkByCodeService = async (workCode) => {
           attributes: ["id", "name", "email", "phone", "avatar_url", "position_id"],
         },
 
-        // Kỹ thuật viên (nếu được giao trực tiếp)
-        {
-          model: db.User,
-          as: "technician",
-          attributes: ["id", "name", "email", "phone", "avatar_url", "position_id"],
-        },
-
         // Nhân viên kinh doanh
         {
           model: db.User,
@@ -401,20 +394,20 @@ export const getWorkReportsService = async (workId) => {
  * Tạo công việc mới (Phase 1: Basic work creation without technician assignment)
  */
 export const createWorkService = async (workData) => {
+  let transaction;
   try {
     const {
       work_code,
       title,
       description,
       category_id,
-      assigned_to_technician_id, // NOTE: For assignments array in client, not used in Work table
+      assigned_to_technician_id,
       assigned_user_id,
       created_by,
       created_by_sales_id,
       priority,
       status,
       notes,
-      service_type,
       due_date,
       required_date,
       required_time_hour,
@@ -435,90 +428,97 @@ export const createWorkService = async (workData) => {
       project_id,
     } = workData;
 
-    console.log(workData);
+    // Required fields according to Work.model.js (allowNull: false)
+    const requiredChecks = {
+      title,
+      description,
+      category_id,
+      assigned_user_id,
+      created_by_sales_id,
+      created_by,
+      required_date,
+      location,
+      customer_name,
+      customer_phone,
+      customer_address,
+      location_lat,
+      location_lng,
+      estimated_hours,
+      estimated_cost,
+    };
 
-    // Validate required fields
-    if (!title || !assigned_user_id) {
-      throw new Error("Thiếu thông tin bắt buộc: title, assigned_user_id");
+    const missing = Object.entries(requiredChecks)
+      .filter(([, v]) => v === undefined || v === null || (typeof v === "string" && v.trim() === ""))
+      .map(([k]) => k);
+
+    if (missing.length) {
+      throw new Error(`Thiếu thông tin bắt buộc: ${missing.join(", ")}`);
     }
 
-    // Validate FK: assigned_user_id (required)
+    // Validate FK existence
     const assignedUser = await db.User.findByPk(assigned_user_id);
-    if (!assignedUser) {
-      throw new Error("Người dùng được giao không tồn tại");
-    }
+    if (!assignedUser) throw new Error("Người dùng được giao không tồn tại trong hệ thống");
 
-    // Validate FK: created_by (người tạo công việc)
-    if (created_by) {
-      const creator = await db.User.findByPk(created_by);
-      if (!creator) {
-        throw new Error("Người tạo công việc không tồn tại");
-      }
-    }
+    const creator = await db.User.findByPk(created_by);
+    if (!creator) throw new Error("Người tạo công việc không tồn tại trong hệ thống");
 
-    // Validate FK: category_id (optional)
-    if (category_id) {
-      const category = await db.WorkCategory.findByPk(category_id);
-      if (!category) {
-        throw new Error("Danh mục công việc không tồn tại");
-      }
-    }
+    const salesPerson = await db.User.findByPk(created_by_sales_id);
+    if (!salesPerson) throw new Error("Nhân viên kinh doanh không tồn tại trong hệ thống");
 
-    // Validate FK: project_id (optional)
+    const category = await db.WorkCategory.findByPk(category_id);
+    if (!category) throw new Error("Danh mục công việc không tồn tại trong hệ thống");
+
     if (project_id) {
       const project = await db.Project.findByPk(project_id);
-      if (!project) {
-        throw new Error("Dự án không tồn tại");
-      }
+      if (!project) throw new Error("Dự án không tồn tại");
     }
 
-    // Validate FK: created_by_sales_id (optional)
-    if (created_by_sales_id) {
-      const salesPerson = await db.User.findByPk(created_by_sales_id);
-      if (!salesPerson) {
-        throw new Error("Nhân viên kinh doanh không tồn tại");
-      }
-    }
-
-    // Validate FK: customer_id (optional link to customers table)
     if (customer_id) {
       const customer = await db.Customer.findByPk(customer_id);
-      if (!customer) {
-        throw new Error("Khách hàng không tồn tại");
-      }
+      if (!customer) throw new Error("Khách hàng không tồn tại");
     }
 
-    // Validate GPS coordinates if provided
-    if (location_lat !== undefined && location_lat !== null) {
-      const lat = parseFloat(location_lat);
-      if (isNaN(lat) || lat < -90 || lat > 90) {
-        throw new Error("Vĩ độ (latitude) phải nằm trong khoảng [-90, 90]");
-      }
+    // Validate required_date is a valid date
+    const reqDate = new Date(required_date);
+    if (isNaN(reqDate.getTime())) throw new Error("Ngày yêu cầu thực hiện không hợp lệ");
+
+    // Validate and normalize required_time_hour/minute
+    let normHour = null;
+    let normMinute = null;
+    if (required_time_hour !== undefined && required_time_hour !== null && required_time_hour !== "") {
+      const s = String(required_time_hour);
+      if (!/^\d{1,2}$/.test(s)) throw new Error("Giờ yêu cầu phải có định dạng HH");
+      const num = parseInt(s, 10);
+      if (num < 0 || num > 23) throw new Error("Giờ yêu cầu phải từ 0 đến 23");
+      normHour = String(num).padStart(2, "0");
+    }
+    if (required_time_minute !== undefined && required_time_minute !== null && required_time_minute !== "") {
+      const s = String(required_time_minute);
+      if (!/^\d{1,2}$/.test(s)) throw new Error("Phút yêu cầu phải có định dạng MM");
+      const num = parseInt(s, 10);
+      if (num < 0 || num > 59) throw new Error("Phút yêu cầu phải từ 0 đến 59");
+      normMinute = String(num).padStart(2, "0");
     }
 
-    if (location_lng !== undefined && location_lng !== null) {
-      const lng = parseFloat(location_lng);
-      if (isNaN(lng) || lng < -180 || lng > 180) {
-        throw new Error("Kinh độ (longitude) phải nằm trong khoảng [-180, 180]");
-      }
+    // Validate GPS
+    const lat = parseFloat(location_lat);
+    const lng = parseFloat(location_lng);
+    if (isNaN(lat) || lat < -90 || lat > 90) throw new Error("Vĩ độ (latitude) phải nằm trong khoảng [-90, 90]");
+    if (isNaN(lng) || lng < -180 || lng > 180) throw new Error("Kinh độ (longitude) phải nằm trong khoảng [-180, 180]");
+
+    // Validate phone length
+    if (typeof customer_phone === "string" && customer_phone.length > 20) {
+      throw new Error("Số điện thoại khách hàng tối đa 20 ký tự");
     }
 
-    // Validate numeric fields
-    if (estimated_hours !== undefined && estimated_hours !== null) {
-      const hours = parseFloat(estimated_hours);
-      if (isNaN(hours) || hours < 0 || hours > 999.99) {
-        throw new Error("Giờ ước tính phải từ 0 đến 999.99");
-      }
-    }
+    // Validate numeric fields and coerce
+    const estHours = Number(estimated_hours);
+    if (isNaN(estHours) || estHours < 0 || estHours > 999.99) throw new Error("Giờ ước tính phải từ 0 đến 999.99");
 
-    if (estimated_cost !== undefined && estimated_cost !== null) {
-      const cost = parseFloat(estimated_cost);
-      if (isNaN(cost) || cost < 0 || cost > 9999999.99) {
-        throw new Error("Chi phí ước tính phải từ 0 đến 9999999.99");
-      }
-    }
+    const estCost = Number(estimated_cost);
+    if (isNaN(estCost) || estCost < 0 || estCost > 9999999.99) throw new Error("Chi phí ước tính phải từ 0 đến 9999999.99");
 
-    // Validate payment_status if provided
+    // Payment status
     const validPaymentStatuses = ["unpaid", "paid", "partial"];
     if (payment_status && !validPaymentStatuses.includes(payment_status)) {
       throw new Error(`Trạng thái thanh toán phải là: ${validPaymentStatuses.join(", ")}`);
@@ -528,63 +528,91 @@ export const createWorkService = async (workData) => {
     const generatedWorkCode = work_code || `lqd_work_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
     // Calculate timeSlot from priority: explicit > required_time_hour > null
-    const timeSlotValue = 
+    const timeSlotValue =
       timeSlot !== undefined && timeSlot !== null && timeSlot > 0
-        ? timeSlot
-        : required_time_hour
-        ? Math.max(0, parseInt(String(required_time_hour), 10))
+        ? Number(timeSlot)
+        : normHour !== null
+        ? Math.max(0, parseInt(String(normHour), 10))
         : null;
 
-    const work = await db.Work.create({
+    // Build payload aligning with model types
+    const payload = {
       work_code: generatedWorkCode,
-      title,
-      description: description || null,
+      title: String(title).trim(),
+      description: String(description).trim(),
       notes: notes || null,
-      category_id: category_id || null,
-      project_id: project_id || null,
-      assigned_user_id,
-      created_by: created_by || null,
-      created_by_sales_id: created_by_sales_id || null,
+      category_id: Number(category_id),
+      project_id: project_id ? Number(project_id) : null,
+      assigned_user_id: Number(assigned_user_id),
+      created_by: Number(created_by),
+      created_by_sales_id: Number(created_by_sales_id),
       priority: priority || "medium",
       status: status || "pending",
-      service_type: service_type || null,
+      service_type: project_id ? "Dự án" : "Công việc dịch vụ",
       due_date: due_date || null,
-      required_date: required_date || null,
-      required_time_hour: required_time_hour || null,
-      required_time_minute: required_time_minute || null,
+      required_date: reqDate,
+      required_time_hour: normHour,
+      required_time_minute: normMinute,
       timeSlot: timeSlotValue,
-      location: location || null,
-      customer_id: customer_id || null,
-      customer_name: customer_name || null,
-      customer_phone: customer_phone || null,
-      customer_address: customer_address || null,
-      location_lat: location_lat || null,
-      location_lng: location_lng || null,
-      estimated_hours: estimated_hours || null,
-      estimated_cost: estimated_cost || null,
+      created_date: new Date(),
+      location: String(location).trim(),
+      customer_id: customer_id ? Number(customer_id) : null,
+      customer_name: String(customer_name).trim(),
+      customer_phone: String(customer_phone).trim(),
+      customer_address: String(customer_address).trim(),
+      location_lat: lat,
+      location_lng: lng,
+      estimated_hours: estHours,
+      estimated_cost: estCost,
       payment_status: payment_status || "unpaid",
-      is_active: is_active !== undefined ? is_active : true,
+      is_active: is_active !== undefined ? Boolean(is_active) : true,
       expires_at: expires_at || null,
-    });
+    };
 
-    // Log work history
+    // Use transaction to ensure safer creation
+    transaction = await db.sequelize.transaction();
+    let work;
+    try {
+      work = await db.Work.create(payload, { transaction });
+
+      // Commit transaction early so post-creation side effects don't block DB integrity
+      await transaction.commit();
+      transaction = null;
+    } catch (err) {
+      if (transaction) {
+        await transaction.rollback();
+        transaction = null;
+      }
+      if (err.name === "SequelizeValidationError") {
+        const messages = err.errors.map((e) => e.message).join("; ");
+        logger.error(`Sequelize validation error creating work: ${messages}`);
+        throw new Error(`Validation error: ${messages}`);
+      }
+      if (err.name === "SequelizeUniqueConstraintError") {
+        const messages = err.errors.map((e) => e.message).join("; ");
+        logger.error(`Sequelize unique constraint error creating work: ${messages}`);
+        throw new Error(`Duplicate value error: ${messages}`);
+      }
+      throw err;
+    }
+
+    // Try to create related side effects (non-blocking)
     try {
       await createWorkHistoryService({
         work_id: work.id,
         action: "created",
-        changed_by: created_by || assigned_user_id,
+        changed_by: payload.created_by || payload.assigned_user_id,
         notes: "Công việc được tạo",
       });
     } catch (historyError) {
       logger.error("Failed to log work history for creation: " + historyError.message);
     }
 
-    // Create notification for assigned user
     try {
       await createNotificationService({
-        user_id: assigned_user_id,
+        user_id: payload.assigned_user_id,
         title: "Công việc mới được giao",
-        message: `Công việc "${title}" đã được tạo và giao cho bạn.`,
+        message: `Công việc "${payload.title}" đã được tạo và giao cho bạn.`,
         type: "work_assigned",
         related_work_id: work.id,
         action_url: `/works/${work.id}`,
@@ -595,6 +623,7 @@ export const createWorkService = async (workData) => {
 
     return { success: true, data: work };
   } catch (error) {
+    if (transaction) await transaction.rollback();
     logger.error("Error in createWorkService: " + error.message);
     throw error;
   }

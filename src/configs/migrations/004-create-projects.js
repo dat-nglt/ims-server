@@ -7,7 +7,7 @@
  * - Thông tin cơ bản: tên, mô tả, trạng thái, ưu tiên
  * - Thời gian: bắt đầu, kết thúc
  * - Quản lý: người quản lý, người tạo
- * - Tài chính: ngân sách, chi tiêu
+ * - Tài chính: ngân sách, chi tiêu (budget/spent set to DECIMAL(13,2))
  * - Tiến độ: phần trăm hoàn thành
  */
 
@@ -65,11 +65,11 @@ export async function up(queryInterface, Sequelize) {
             comment: "ID người quản lý dự án",
         },
         budget: {
-            type: Sequelize.DECIMAL(10, 2),
+            type: Sequelize.DECIMAL(13, 2),
             comment: "Ngân sách dự án",
         },
         spent: {
-            type: Sequelize.DECIMAL(10, 2),
+            type: Sequelize.DECIMAL(13, 2),
             defaultValue: 0,
             comment: "Số tiền đã chi tiêu",
         },

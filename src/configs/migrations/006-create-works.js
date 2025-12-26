@@ -22,6 +22,7 @@ export async function up(queryInterface, Sequelize) {
     // Fields for scheduling/time slots
     required_date: {
       type: Sequelize.DATE,
+      allowNull: false,
       comment: "Ngày yêu cầu thực hiện công việc (date only)",
     },
     required_time_hour: {
@@ -43,10 +44,12 @@ export async function up(queryInterface, Sequelize) {
     },
     description: {
       type: Sequelize.TEXT,
+      allowNull: false,
       comment: "Mô tả chi tiết công việc",
     },
     category_id: {
       type: Sequelize.INTEGER,
+      allowNull: false,
       references: {
         model: 'work_categories',
         key: 'id',
@@ -72,6 +75,7 @@ export async function up(queryInterface, Sequelize) {
     },
     created_by_sales_id: {
       type: Sequelize.INTEGER,
+      allowNull: false,
       references: {
         model: 'users',
         key: 'id',
@@ -80,6 +84,7 @@ export async function up(queryInterface, Sequelize) {
     },
     created_by: {
       type: Sequelize.INTEGER,
+      allowNull: false,
       references: {
         model: 'users',
         key: 'id',
@@ -98,6 +103,8 @@ export async function up(queryInterface, Sequelize) {
     },
     service_type: {
       type: Sequelize.STRING(100),
+      allowNull: false,
+      defaultValue: 'Công việc dịch vụ',
       comment: "Loại dịch vụ cung cấp",
     },
     due_date: {
@@ -115,42 +122,52 @@ export async function up(queryInterface, Sequelize) {
     },
     location: {
       type: Sequelize.STRING(255),
+      allowNull: false,
       comment: "Tên địa điểm công việc",
     },
     customer_name: {
       type: Sequelize.STRING(255),
+      allowNull: false,
       comment: "Tên khách hàng",
     },
     customer_phone: {
       type: Sequelize.STRING(20),
+      allowNull: false,
       comment: "Số điện thoại khách hàng",
     },
     customer_address: {
       type: Sequelize.TEXT,
+      allowNull: false,
       comment: "Địa chỉ đầy đủ khách hàng",
     },
     location_lat: {
       type: Sequelize.DECIMAL(10, 8),
+      allowNull: false,
       comment: "Vĩ độ GPS địa điểm công việc",
     },
     location_lng: {
       type: Sequelize.DECIMAL(11, 8),
+      allowNull: false,
       comment: "Kinh độ GPS địa điểm công việc",
     },
     estimated_hours: {
       type: Sequelize.DECIMAL(5, 2),
+      allowNull: false,
       comment: "Giờ công ước tính",
     },
     actual_hours: {
       type: Sequelize.DECIMAL(5, 2),
+      allowNull: true,
       comment: "Giờ công thực tế đã dùng",
     },
     estimated_cost: {
-      type: Sequelize.DECIMAL(10, 2),
+      type: Sequelize.DECIMAL(13, 2),
+      allowNull: false,
       comment: "Chi phí ước tính",
     },
     actual_cost: {
-      type: Sequelize.DECIMAL(10, 2),
+      type: Sequelize.DECIMAL(13, 2),
+      allowNull: true,
       comment: "Chi phí thực tế",
     },
     payment_status: {
@@ -191,7 +208,23 @@ export async function up(queryInterface, Sequelize) {
   await queryInterface.addIndex('works', ['project_id']);
   await queryInterface.addIndex('works', ['payment_status']);
   await queryInterface.addIndex('works', ['created_date']);
+
+  // DB-level CHECK constraints to mirror model validations (lat/lng and numeric ranges)
+  // Note: may vary by dialect; these are standard CHECK constraints (Postgres/MySQL support)
+  await queryInterface.sequelize.query(
+    `ALTER TABLE works ADD CONSTRAINT chk_works_location_lat CHECK (location_lat >= -90 AND location_lat <= 90);`
+  );
+  await queryInterface.sequelize.query(
+    `ALTER TABLE works ADD CONSTRAINT chk_works_location_lng CHECK (location_lng >= -180 AND location_lng <= 180);`
+  );
+  await queryInterface.sequelize.query(
+    `ALTER TABLE works ADD CONSTRAINT chk_works_estimated_hours CHECK (estimated_hours >= 0 AND estimated_hours <= 999.99);`
+  );
+  await queryInterface.sequelize.query(
+    `ALTER TABLE works ADD CONSTRAINT chk_works_estimated_cost CHECK (estimated_cost >= 0 AND estimated_cost <= 9999999.99);`
+  );
 }
+
 
 export async function down(queryInterface, Sequelize) {
   await queryInterface.dropTable('works');

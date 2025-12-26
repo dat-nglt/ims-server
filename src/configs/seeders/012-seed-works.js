@@ -13,19 +13,17 @@ export async function up(queryInterface, Sequelize) {
   const works = [
     // Công việc 1: Lắp đặt máy lạnh - thi công trọn gói
     {
-      id: 1,
       work_code: "LQD-WORK-001",
       title: "Lắp đặt máy lạnh thi công trọn gói",
       description:
         "Lắp đặt hệ thống máy lạnh multi-split cho văn phòng 2 tầng tại ABC Company, bao gồm: 4 dàn lạnh trong nhà, 2 dàn nóng ngoài trời, đường ống đồng, dây điện cấp, và các phụ kiện kèm theo. Bảo hành 5 năm",
-      category_id: null,
+      category_id: 1,
       project_id: 1,
       assigned_user_id: 1, // Quản lý giao công việc
       created_by_sales_id: 1, // Nhân viên kinh doanh
       created_by: 1, // Người tạo công việc
       priority: "high",
-      status: "assigned",
-      service_type: "Installation",
+      status: "completed",
       due_date: new Date("2025-12-25T00:00:00.000Z"),
       required_date: new Date("2025-12-19T00:00:00.000Z"),
       required_time_hour: "08",
@@ -52,19 +50,17 @@ export async function up(queryInterface, Sequelize) {
 
     // Công việc 2: Bảo trì định kỳ máy lạnh
     {
-      id: 2,
       work_code: "LQD-WORK-002",
       title: "Bảo trì định kỳ máy lạnh",
       description:
         "Bảo trì định kỳ 4 dàn lạnh multi-split tại XYZ Ltd. Bao gồm: vệ sinh bộ lọc, kiểm tra gas, kiểm tra dòng điện, làm sạch dàn nóng, bơm nước thoát nước, kiểm tra van kỳ và các linh kiện",
-      category_id: null,
+      category_id: 2,
       project_id: 1,
       assigned_user_id: 1, // Quản lý giao công việc
       created_by_sales_id: 1, // Nhân viên kinh doanh
       created_by: 1, // Người tạo công việc
       priority: "medium",
       status: "completed",
-      service_type: "Maintenance",
       due_date: new Date("2025-12-20T00:00:00.000Z"),
       required_date: new Date("2025-12-18T00:00:00.000Z"),
       required_time_hour: "09",
@@ -91,19 +87,17 @@ export async function up(queryInterface, Sequelize) {
 
     // Công việc 3: Sửa chữa máy lạnh - hỏng dàn nóng
     {
-      id: 3,
       work_code: "LQD-WORK-003",
       title: "Sửa chữa máy lạnh - thay thế dàn nóng",
       description:
         "Sửa chữa máy lạnh multi-split bị hỏng dàn nóng. Tiến hành: tháo dàn nóng, kiểm tra hệ thống, thay thế dàn nóng mới, nạp gas R410A, kiểm tra lại toàn hệ thống, vận hành thử 30 phút",
-      category_id: null,
+      category_id: 3,
       project_id: 1,
       assigned_user_id: 1,
       created_by_sales_id: 1,
       created_by: 1,
       priority: "urgent",
       status: "in_progress",
-      service_type: "Repair",
       due_date: new Date("2025-12-23T00:00:00.000Z"),
       required_date: new Date("2025-12-20T00:00:00.000Z"),
       required_time_hour: "07",
@@ -130,19 +124,17 @@ export async function up(queryInterface, Sequelize) {
 
     // Công việc 4: Lắp đặt máy lạnh ceiling cassette
     {
-      id: 4,
       work_code: "LQD-WORK-004",
       title: "Lắp đặt máy lạnh âm trần cassette",
       description:
         "Lắp đặt máy lạnh âm trần cassette 3 chiều cho phòng họp lớn. Bao gồm: thi công, cắt trần, lắp máy, đấu điện, nạp gas, kiểm tra. Công suất 28000 BTU, tiêu chuẩn Y tế",
-      category_id: null,
+      category_id: 1,
       project_id: 1,
       assigned_user_id: 1,
       created_by_sales_id: 1,
       created_by: 1,
       priority: "high",
       status: "pending",
-      service_type: "Installation",
       due_date: new Date("2025-12-27T00:00:00.000Z"),
       required_date: new Date("2025-12-22T00:00:00.000Z"),
       required_time_hour: "08",
@@ -169,19 +161,17 @@ export async function up(queryInterface, Sequelize) {
 
     // Công việc 5: Nạp gas máy lạnh (R410A)
     {
-      id: 5,
       work_code: "LQD-WORK-005",
       title: "Nạp gas máy lạnh - R410A",
       description:
         "Nạp gas máy lạnh multi-split hết gas do rò rỉ. Kiểm tra áp suất, sửa chữa điểm rò rỉ, nạp gas R410A 6kg, kiểm tra lại áp suất, vận hành kiểm tra nhiệt độ lạnh, cấp hóa đơn bảo hành 6 tháng",
-      category_id: null,
+      category_id: 2,
       project_id: 1,
       assigned_user_id: 1,
       created_by_sales_id: 1,
       created_by: 1,
       priority: "urgent",
       status: "completed",
-      service_type: "Maintenance",
       due_date: new Date("2025-12-19T00:00:00.000Z"),
       required_date: new Date("2025-12-17T00:00:00.000Z"),
       required_time_hour: "14",
@@ -208,19 +198,17 @@ export async function up(queryInterface, Sequelize) {
 
     // Công việc 6: Vệ sinh máy lạnh định kỳ
     {
-      id: 6,
       work_code: "LQD-WORK-006",
       title: "Vệ sinh máy lạnh - bảo trì định kỳ",
       description:
         "Vệ sinh đầy đủ máy lạnh 6 bộ cho căn hộ. Bao gồm: tháo bộ lọc vệ sinh sạch, làm sạch tường dàn lạnh, làm sạch dàn nóng, kiểm tra đồng hồ gas, kiểm tra dòng điện, bơm nước thoát, kiểm tra van kỳ",
-      category_id: null,
+      category_id: 2,
       project_id: 1,
       assigned_user_id: 1,
       created_by_sales_id: 1,
       created_by: 1,
       priority: "medium",
       status: "completed",
-      service_type: "Maintenance",
       due_date: new Date("2025-12-17T00:00:00.000Z"),
       required_date: new Date("2025-12-14T00:00:00.000Z"),
       required_time_hour: "10",
@@ -247,19 +235,17 @@ export async function up(queryInterface, Sequelize) {
 
     // Công việc 7: Lắp đặt máy lạnh tủ đứng
     {
-      id: 7,
       work_code: "LQD-WORK-007",
       title: "Lắp đặt máy lạnh tủ đứng",
       description:
         "Lắp đặt máy lạnh tủ đứng 2 chiều 18000 BTU cho phòng hợp nhỏ. Bao gồm: thi công, đấu điện 3 pha, nạp gas, kiểm tra, bảo hành 3 năm máy, 1 năm dịch vụ",
-      category_id: null,
+      category_id: 1,
       project_id: 1,
       assigned_user_id: 1,
       created_by_sales_id: 1,
       created_by: 1,
       priority: "high",
-      status: "assigned",
-      service_type: "Installation",
+      status: "completed",
       due_date: new Date("2025-12-24T00:00:00.000Z"),
       required_date: new Date("2025-12-21T00:00:00.000Z"),
       required_time_hour: "09",
@@ -286,19 +272,17 @@ export async function up(queryInterface, Sequelize) {
 
     // Công việc 8: Sửa chữa máy lạnh - dàn lạnh chảy nước
     {
-      id: 8,
       work_code: "LQD-WORK-008",
       title: "Sửa chữa máy lạnh - dàn lạnh chảy nước",
       description:
         "Sửa chữa máy lạnh bị chảy nước từ dàn lạnh. Kiểm tra van kỳ, kiểm tra ống thoát nước, làm sạch ống thoát, thay thế ống thoát nước nếu bị tắc hoặc hỏng, kiểm tra lại, vận hành thử",
-      category_id: null,
+      category_id: 3,
       project_id: 1,
       assigned_user_id: 1,
       created_by_sales_id: 1,
       created_by: 1,
       priority: "high",
       status: "completed",
-      service_type: "Repair",
       due_date: new Date("2025-12-16T00:00:00.000Z"),
       required_date: new Date("2025-12-13T00:00:00.000Z"),
       required_time_hour: "13",
@@ -325,19 +309,17 @@ export async function up(queryInterface, Sequelize) {
 
     // Công việc 9: Tối ưu hóa hệ thống máy lạnh
     {
-      id: 9,
       work_code: "LQD-WORK-009",
       title: "Tối ưu hóa hệ thống máy lạnh",
       description:
         "Phân tích và tối ưu hóa hiệu suất hệ thống máy lạnh multi-split. Kiểm tra áp suất gas, kiểm tra dòng điện, đo nhiệt độ bên ngoài/trong, cải thiện lưu thông khí, kiểm tra tất cả van kỳ, tối ưu hóa công suất",
-      category_id: null,
+      category_id: 2,
       project_id: 1,
       assigned_user_id: 1,
       created_by_sales_id: 1,
       created_by: 1,
       priority: "medium",
       status: "in_progress",
-      service_type: "Maintenance",
       due_date: new Date("2025-12-28T00:00:00.000Z"),
       required_date: new Date("2025-12-23T00:00:00.000Z"),
       required_time_hour: "09",
@@ -364,19 +346,17 @@ export async function up(queryInterface, Sequelize) {
 
     // Công việc 10: Tư vấn và lắp đặt máy lạnh cho nhà mới
     {
-      id: 10,
       work_code: "LQD-WORK-010",
       title: "Tư vấn và lắp đặt máy lạnh nhà mới",
       description:
         "Tư vấn, thiết kế và lắp đặt hệ thống máy lạnh toàn bộ cho nhà mới 250m2. Bao gồm: tư vấn giải pháp, thiết kế lưu thông khí, cắt tường, lắp ống đồng, dây điện, nạp gas, kiểm tra chất lượng, cấp hóa đơn, bảo hành 5 năm",
-      category_id: null,
+      category_id: 1,
       project_id: 1,
       assigned_user_id: 1,
       created_by_sales_id: 1,
       created_by: 1,
       priority: "high",
       status: "pending",
-      service_type: "Installation",
       due_date: new Date("2026-01-10T00:00:00.000Z"),
       required_date: new Date("2026-01-05T00:00:00.000Z"),
       required_time_hour: "08",
@@ -391,7 +371,7 @@ export async function up(queryInterface, Sequelize) {
       location_lng: 106.7,
       estimated_hours: 12,
       actual_hours: null,
-      estimated_cost: 18000000,
+      estimated_cost: 9999999.99,
       actual_cost: null,
       payment_status: "unpaid",
       is_active: true,

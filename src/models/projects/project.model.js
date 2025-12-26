@@ -73,14 +73,14 @@ export default (sequelize, DataTypes) => {
       },
       // Ngân sách
       budget: {
-        type: DataTypes.DECIMAL(10, 2),
-        comment: 'Ngân sách dự án',
+        type: DataTypes.DECIMAL(13, 2),
+        comment: 'Ngân sách dự án (hỗ trợ giá trị lên đến chục tỷ)',
       },
       // Chi tiêu thực tế
       spent: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(13, 2),
         defaultValue: 0,
-        comment: 'Số tiền đã chi tiêu',
+        comment: 'Số tiền đã chi tiêu (hỗ trợ giá trị lớn)',
       },
       // Tổng số công việc (snake_case)
       total_tasks: {
