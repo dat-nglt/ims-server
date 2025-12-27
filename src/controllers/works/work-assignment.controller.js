@@ -44,10 +44,10 @@ export const getWorkAssignmentsController = async (req, res) => {
 /**
  * Lấy phân công theo ID
  */
-export const getWorkAssignmentByIdController = async (req, res) => {
+export const getWorkAssignmentForTechnicianController = async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await workAssignmentService.getWorkAssignmentByIdService(id);
+    const result = await workAssignmentService.getWorkAssignmentForTechnicianService(id);
     res.json({
       status: "success",
       data: result.data,

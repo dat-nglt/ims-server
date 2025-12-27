@@ -118,17 +118,25 @@ export const getDashboardMetricsByUserIdService = async (userId) => {
       raw: true,
     });
 
-    // Tính toán thống kê công việc được giao cho user
-    const workStats = await db.Work.findAll({
-      where: { assigned_user_id: userId },
-      attributes: [
-        [db.sequelize.fn('COUNT', db.sequelize.col('id')), 'total'],
-        [db.sequelize.fn('COUNT', db.sequelize.literal("CASE WHEN status = 'pending' THEN 1 END")), 'pending'],
-        [db.sequelize.fn('COUNT', db.sequelize.literal("CASE WHEN status IN ('assigned', 'in_progress') THEN 1 END")), 'in_progress'],
-        [db.sequelize.fn('COUNT', db.sequelize.literal("CASE WHEN status = 'completed' THEN 1 END")), 'completed'],
-      ],
-      raw: true,
+    // Tính toán thống kê công việc được giao cho user dựa trên WorkAssignment (kỹ thuật viên)
+    const assignments = await db.WorkAssignment.findAll({
+      where: { technician_id: userId },
+      include: [{ model: db.Work, as: 'work', attributes: ['id', 'status'] }],
     });
+
+    const workMap = new Map();
+    assignments.forEach((a) => {
+      if (a.work && a.work.id) workMap.set(a.work.id, a.work.status);
+    });
+
+    const stats = { total: workMap.size, pending: 0, in_progress: 0, completed: 0 };
+    for (const status of workMap.values()) {
+      if (status === 'pending') stats.pending++;
+      else if (['assigned', 'in_progress'].includes(status)) stats.in_progress++;
+      else if (status === 'completed') stats.completed++;
+    }
+
+    const workStats = [{ total: stats.total, pending: stats.pending, in_progress: stats.in_progress, completed: stats.completed }];
 
     // Báo cáo gần đây của user
     const recentReports = await db.WorkReport.findAll({

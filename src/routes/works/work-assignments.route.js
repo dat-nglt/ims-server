@@ -2,7 +2,7 @@ import express from "express";
 import {
   getAllWorkAssignmentsController,
   getWorkAssignmentsController,
-  getWorkAssignmentByIdController,
+  getWorkAssignmentForTechnicianController,
   createWorkAssignmentController,
   updateWorkAssignmentController,
   acceptWorkAssignmentController,
@@ -17,12 +17,12 @@ const router = express.Router();
 // GET work assignments with filters and pagination
 // Query params: ?page=1&limit=20&technician_id=1&work_id=1&assigned_status=pending&assigned_by=1
 router.get("/", getWorkAssignmentsController);
-  
+
 // GET all work assignments (legacy)
 router.get("/all", getAllWorkAssignmentsController);
 
-// GET work assignment by ID
-router.get("/:id", getWorkAssignmentByIdController);
+// GET work assignment for technician by ID
+router.get("/:id", getWorkAssignmentForTechnicianController);
 
 // CREATE new work assignment
 router.post("/", createWorkAssignmentController);

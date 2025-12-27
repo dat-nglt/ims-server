@@ -64,15 +64,7 @@ export async function up(queryInterface, Sequelize) {
       },
       comment: "ID dự án liên quan (nếu công việc thuộc một dự án cụ thể)",
     },
-    assigned_user_id: {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'users',
-        key: 'id',
-      },
-      comment: "ID người được giao phó",
-    },
+
     created_by_sales_id: {
       type: Sequelize.INTEGER,
       allowNull: false,
@@ -197,7 +189,7 @@ export async function up(queryInterface, Sequelize) {
   });
 
   await queryInterface.addIndex('works', ['work_code'], { unique: true, name: 'uniq_works_work_code' });
-  await queryInterface.addIndex('works', ['assigned_user_id']);
+
   await queryInterface.addIndex('works', ['created_by_sales_id']);
   await queryInterface.addIndex('works', ['status']);
   await queryInterface.addIndex('works', ['priority']);

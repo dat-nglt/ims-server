@@ -10,9 +10,9 @@ export const getAllWorkAssignmentsService = async () => {
   try {
     const assignments = await db.WorkAssignment.findAll({
       include: [
-        { model: db.Work, as: "work", attributes: ['id', 'title', 'status', 'due_date'] },
-        { model: db.User, as: "technician", attributes: ['id', 'name', 'email'] },
-        { model: db.User, as: "assignedByUser", attributes: ['id', 'name'] },
+        { model: db.Work, as: "work", attributes: ["id", "title", "status", "due_date"] },
+        { model: db.User, as: "technician", attributes: ["id", "name", "email"] },
+        { model: db.User, as: "assignedByUser", attributes: ["id", "name"] },
       ],
       order: [["assignment_date", "DESC"]],
     });
@@ -37,9 +37,9 @@ export const getWorkAssignmentsService = async (queryParams = {}) => {
     const { count, rows } = await db.WorkAssignment.findAndCountAll({
       where,
       include: [
-        { model: db.Work, as: "work", attributes: ['id', 'title', 'status', 'due_date'] },
-        { model: db.User, as: "technician", attributes: ['id', 'name', 'email'] },
-        { model: db.User, as: "assignedByUser", attributes: ['id', 'name'] },
+        { model: db.Work, as: "work", attributes: ["id", "title", "status", "due_date"] },
+        { model: db.User, as: "technician", attributes: ["id", "name", "email"] },
+        { model: db.User, as: "assignedByUser", attributes: ["id", "name"] },
       ],
       order: [["assignment_date", "DESC"]],
       limit: parseInt(limit),
@@ -56,7 +56,7 @@ export const getWorkAssignmentsService = async (queryParams = {}) => {
         page: parseInt(page),
         limit: parseInt(limit),
         totalPages,
-      }
+      },
     };
   } catch (error) {
     logger.error("Error in getWorkAssignmentsService:" + error.message);
@@ -67,24 +67,61 @@ export const getWorkAssignmentsService = async (queryParams = {}) => {
 /**
  * Lấy phân công theo ID
  */
-export const getWorkAssignmentByIdService = async (id) => {
+export const getWorkAssignmentForTechnicianService = async (technician_id) => {
   try {
-    const assignment = await db.WorkAssignment.findByPk(id, {
-      include: [
-        { model: db.Work, as: "work" },
-        { model: db.User, as: "technician" },
-        { model: db.User, as: "assignedByUser" },
-      ],
-    });
-    if (!assignment) {
-      throw new Error("Phân công không tồn tại");
+    if (!technician_id) {
+      throw new Error("Thiếu technician_id");
     }
-    return { success: true, data: assignment };
+
+    // Lấy tất cả phân công của kỹ thuật viên, loại trừ phân công bị từ chối
+    const assignments = await db.WorkAssignment.findAll({
+      where: { technician_id, assigned_status: { [Op.ne]: "rejected" } },
+      include: [{ model: db.Work, as: "work" }],
+      order: [["assignment_date", "DESC"]],
+    });
+
+    // Nếu không có phân công => trả về mảng rỗng
+    if (!assignments || assignments.length === 0) {
+      return { success: true, data: [] };
+    }
+
+    // Map unique work theo work.id và đính kèm thông tin phân công gần nhất
+    const worksMap = new Map();
+
+    for (const a of assignments) {
+      const w = a.work;
+      if (!w) continue;
+      const plainWork = typeof w.get === "function" ? w.get({ plain: true }) : w;
+
+      const assignmentMeta = {
+        assignment_id: a.id,
+        assigned_status: a.assigned_status,
+        assignment_date: a.assignment_date,
+        estimated_start_time: a.estimated_start_time,
+        estimated_end_time: a.estimated_end_time,
+      };
+
+      const existing = worksMap.get(plainWork.id);
+      if (!existing) {
+        worksMap.set(plainWork.id, { ...plainWork, latest_assignment: assignmentMeta });
+      } else {
+        // nếu phân công mới hơn thì cập nhật latest_assignment
+        const existingDate = existing.latest_assignment && existing.latest_assignment.assignment_date;
+        if (!existingDate || (a.assignment_date && new Date(a.assignment_date) > new Date(existingDate))) {
+          worksMap.set(plainWork.id, { ...plainWork, latest_assignment: assignmentMeta });
+        }
+      }
+    }
+
+    const works = Array.from(worksMap.values());
+    return { success: true, data: works };
   } catch (error) {
     logger.error("Error in getWorkAssignmentByIdService:" + error.message);
     throw error;
   }
 };
+
+// Legacy duplicate removed - use `getWorkAssignmentByIdService(technician_id)` to get array of works for a technician.
 
 /**
  * Tạo phân công công việc (Phase 2: Technician assignment after work creation)
@@ -92,14 +129,7 @@ export const getWorkAssignmentByIdService = async (id) => {
  */
 export const createWorkAssignmentService = async (assignmentData) => {
   try {
-    const {
-      work_id,
-      technician_id,
-      assigned_by,
-      estimated_start_time,
-      estimated_end_time,
-      notes,
-    } = assignmentData;
+    const { work_id, technician_id, assigned_by, estimated_start_time, estimated_end_time, notes } = assignmentData;
 
     if (!work_id || !technician_id || !assigned_by) {
       throw new Error("Thiếu thông tin bắt buộc: work_id, technician_id, assigned_by");
@@ -125,7 +155,7 @@ export const createWorkAssignmentService = async (assignmentData) => {
 
     // Check if assignment already exists for this work and technician
     const existingAssignment = await db.WorkAssignment.findOne({
-      where: { work_id, technician_id, assigned_status: { [Op.ne]: 'rejected' } }
+      where: { work_id, technician_id, assigned_status: { [Op.ne]: "rejected" } },
     });
     if (existingAssignment) {
       throw new Error("Phân công đã tồn tại cho công việc và kỹ thuật viên này");
@@ -312,7 +342,7 @@ export const startWorkAssignmentService = async (id) => {
       throw new Error("Phân công không tồn tại");
     }
 
-    if (assignment.assigned_status !== 'accepted') {
+    if (assignment.assigned_status !== "accepted") {
       throw new Error("Chỉ có thể bắt đầu công việc đã được chấp nhận");
     }
 
@@ -372,7 +402,7 @@ export const assignTechnicianToWorkService = async (workId, technicianData) => {
 
     // Check if assignment already exists for this work and technician
     const existingAssignment = await db.WorkAssignment.findOne({
-      where: { work_id: workId, technician_id, assigned_status: { [Op.ne]: 'rejected' } }
+      where: { work_id: workId, technician_id, assigned_status: { [Op.ne]: "rejected" } },
     });
     if (existingAssignment) {
       throw new Error("Phân công đã tồn tại cho công việc và kỹ thuật viên này");
@@ -390,8 +420,8 @@ export const assignTechnicianToWorkService = async (workId, technicianData) => {
     });
 
     // Optionally update work status to 'assigned' if not already
-    if (work.status === 'pending') {
-      await work.update({ status: 'assigned', updated_at: new Date() });
+    if (work.status === "pending") {
+      await work.update({ status: "assigned", updated_at: new Date() });
     }
 
     // Log work history
@@ -427,9 +457,9 @@ export const getWorkAssignmentsByWorkIdService = async (workId) => {
     const assignments = await db.WorkAssignment.findAll({
       where: { work_id: workId },
       include: [
-        { model: db.Work, as: "work", attributes: ['id', 'title', 'status', 'due_date'] },
-        { model: db.User, as: "technician", attributes: ['id', 'name', 'email'] },
-        { model: db.User, as: "assignedByUser", attributes: ['id', 'name'] },
+        { model: db.Work, as: "work", attributes: ["id", "title", "status", "due_date"] },
+        { model: db.User, as: "technician", attributes: ["id", "name", "email"] },
+        { model: db.User, as: "assignedByUser", attributes: ["id", "name"] },
       ],
       order: [["assignment_date", "DESC"]],
     });

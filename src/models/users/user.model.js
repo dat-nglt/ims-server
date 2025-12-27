@@ -154,11 +154,7 @@ export default (sequelize, DataTypes) => {
             foreignKey: "manager_id",
         });
 
-        // Một User có nhiều công việc được giao
-        User.hasMany(models.Work, {
-            foreignKey: "assigned_user_id",
-            as: "assignedWorks",
-        });
+
 
         // Một User (Sales) tạo nhiều công việc
         User.hasMany(models.Work, {

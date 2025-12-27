@@ -76,21 +76,7 @@ export default (sequelize, DataTypes) => {
         },
         comment: "ID dự án liên quan (nếu công việc thuộc một dự án cụ thể)",
       },
-      // Người được giao phó (FK)
-      assigned_user_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        validate: {
-          notEmpty: {
-            msg: "Người được giao phó không được để trống",
-          },
-        },
-        references: {
-          model: "users",
-          key: "id",
-        },
-        comment: "ID người được giao phó",
-      },
+
       // Nhân viên kinh doanh tạo (FK)
       created_by_sales_id: {
         type: DataTypes.INTEGER,
@@ -362,7 +348,7 @@ export default (sequelize, DataTypes) => {
       timestamps: false,
       indexes: [
         { fields: ["work_code"], unique: true, name: "uniq_works_work_code" },
-        { fields: ["assigned_user_id"] },
+
         { fields: ["created_by_sales_id"] },
         { fields: ["status"] },
         { fields: ["priority"] },
@@ -416,11 +402,7 @@ export default (sequelize, DataTypes) => {
       as: "project",
     });
 
-    // Người được giao
-    Work.belongsTo(models.User, {
-      foreignKey: "assigned_user_id",
-      as: "assignedUser",
-    });
+    // (assigned_user_id association removed - deprecated)
 
     // Nhân viên kinh doanh tạo
     Work.belongsTo(models.User, {

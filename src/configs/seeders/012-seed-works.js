@@ -19,7 +19,6 @@ export async function up(queryInterface, Sequelize) {
         "Lắp đặt hệ thống máy lạnh multi-split cho văn phòng 2 tầng tại ABC Company, bao gồm: 4 dàn lạnh trong nhà, 2 dàn nóng ngoài trời, đường ống đồng, dây điện cấp, và các phụ kiện kèm theo. Bảo hành 5 năm",
       category_id: 1,
       project_id: 1,
-      assigned_user_id: 1, // Quản lý giao công việc
       created_by_sales_id: 1, // Nhân viên kinh doanh
       created_by: 1, // Người tạo công việc
       priority: "high",
@@ -56,7 +55,6 @@ export async function up(queryInterface, Sequelize) {
         "Bảo trì định kỳ 4 dàn lạnh multi-split tại XYZ Ltd. Bao gồm: vệ sinh bộ lọc, kiểm tra gas, kiểm tra dòng điện, làm sạch dàn nóng, bơm nước thoát nước, kiểm tra van kỳ và các linh kiện",
       category_id: 2,
       project_id: 1,
-      assigned_user_id: 1, // Quản lý giao công việc
       created_by_sales_id: 1, // Nhân viên kinh doanh
       created_by: 1, // Người tạo công việc
       priority: "medium",
@@ -93,7 +91,6 @@ export async function up(queryInterface, Sequelize) {
         "Sửa chữa máy lạnh multi-split bị hỏng dàn nóng. Tiến hành: tháo dàn nóng, kiểm tra hệ thống, thay thế dàn nóng mới, nạp gas R410A, kiểm tra lại toàn hệ thống, vận hành thử 30 phút",
       category_id: 3,
       project_id: 1,
-      assigned_user_id: 1,
       created_by_sales_id: 1,
       created_by: 1,
       priority: "urgent",
@@ -130,7 +127,6 @@ export async function up(queryInterface, Sequelize) {
         "Lắp đặt máy lạnh âm trần cassette 3 chiều cho phòng họp lớn. Bao gồm: thi công, cắt trần, lắp máy, đấu điện, nạp gas, kiểm tra. Công suất 28000 BTU, tiêu chuẩn Y tế",
       category_id: 1,
       project_id: 1,
-      assigned_user_id: 1,
       created_by_sales_id: 1,
       created_by: 1,
       priority: "high",
@@ -167,7 +163,6 @@ export async function up(queryInterface, Sequelize) {
         "Nạp gas máy lạnh multi-split hết gas do rò rỉ. Kiểm tra áp suất, sửa chữa điểm rò rỉ, nạp gas R410A 6kg, kiểm tra lại áp suất, vận hành kiểm tra nhiệt độ lạnh, cấp hóa đơn bảo hành 6 tháng",
       category_id: 2,
       project_id: 1,
-      assigned_user_id: 1,
       created_by_sales_id: 1,
       created_by: 1,
       priority: "urgent",
@@ -204,7 +199,6 @@ export async function up(queryInterface, Sequelize) {
         "Vệ sinh đầy đủ máy lạnh 6 bộ cho căn hộ. Bao gồm: tháo bộ lọc vệ sinh sạch, làm sạch tường dàn lạnh, làm sạch dàn nóng, kiểm tra đồng hồ gas, kiểm tra dòng điện, bơm nước thoát, kiểm tra van kỳ",
       category_id: 2,
       project_id: 1,
-      assigned_user_id: 1,
       created_by_sales_id: 1,
       created_by: 1,
       priority: "medium",
@@ -241,7 +235,6 @@ export async function up(queryInterface, Sequelize) {
         "Lắp đặt máy lạnh tủ đứng 2 chiều 18000 BTU cho phòng hợp nhỏ. Bao gồm: thi công, đấu điện 3 pha, nạp gas, kiểm tra, bảo hành 3 năm máy, 1 năm dịch vụ",
       category_id: 1,
       project_id: 1,
-      assigned_user_id: 1,
       created_by_sales_id: 1,
       created_by: 1,
       priority: "high",
@@ -278,7 +271,6 @@ export async function up(queryInterface, Sequelize) {
         "Sửa chữa máy lạnh bị chảy nước từ dàn lạnh. Kiểm tra van kỳ, kiểm tra ống thoát nước, làm sạch ống thoát, thay thế ống thoát nước nếu bị tắc hoặc hỏng, kiểm tra lại, vận hành thử",
       category_id: 3,
       project_id: 1,
-      assigned_user_id: 1,
       created_by_sales_id: 1,
       created_by: 1,
       priority: "high",
@@ -315,7 +307,6 @@ export async function up(queryInterface, Sequelize) {
         "Phân tích và tối ưu hóa hiệu suất hệ thống máy lạnh multi-split. Kiểm tra áp suất gas, kiểm tra dòng điện, đo nhiệt độ bên ngoài/trong, cải thiện lưu thông khí, kiểm tra tất cả van kỳ, tối ưu hóa công suất",
       category_id: 2,
       project_id: 1,
-      assigned_user_id: 1,
       created_by_sales_id: 1,
       created_by: 1,
       priority: "medium",
@@ -352,7 +343,6 @@ export async function up(queryInterface, Sequelize) {
         "Tư vấn, thiết kế và lắp đặt hệ thống máy lạnh toàn bộ cho nhà mới 250m2. Bao gồm: tư vấn giải pháp, thiết kế lưu thông khí, cắt tường, lắp ống đồng, dây điện, nạp gas, kiểm tra chất lượng, cấp hóa đơn, bảo hành 5 năm",
       category_id: 1,
       project_id: 1,
-      assigned_user_id: 1,
       created_by_sales_id: 1,
       created_by: 1,
       priority: "high",

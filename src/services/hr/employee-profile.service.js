@@ -119,7 +119,6 @@ export const getEmployeeProfileByUserIdService = async (employeeId) => {
           attributes: ["id", "name", "code", "level", "status"],
         },
         { model: db.Attendance, as: "attendances" },
-        { model: db.Work, as: "assignedWorks" },
         {
           model: db.UserRoles,
           as: "userRoles",
