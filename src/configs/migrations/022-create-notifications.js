@@ -13,15 +13,7 @@ export async function up(queryInterface, Sequelize) {
             primaryKey: true,
             autoIncrement: true,
         },
-        user_id: {
-            type: Sequelize.INTEGER,
-            allowNull: false,
-            references: {
-                model: "users",
-                key: "id",
-            },
-            comment: 'Người dùng nhận thông báo',
-        },
+
         title: {
             type: Sequelize.STRING(255),
             allowNull: false,
@@ -51,14 +43,10 @@ export async function up(queryInterface, Sequelize) {
             },
             comment: 'ID dự án liên quan (nếu có)',
         },
-        is_read: {
+        is_system: {
             type: Sequelize.BOOLEAN,
             defaultValue: false,
-            comment: 'Đã đọc thông báo',
-        },
-        read_at: {
-            type: Sequelize.DATE,
-            comment: 'Thời điểm đọc thông báo',
+            comment: 'Thông báo dành cho hệ thống (admin/dashboard) hay user',
         },
         action_url: {
             type: Sequelize.STRING(255),
@@ -81,12 +69,10 @@ export async function up(queryInterface, Sequelize) {
         },
     });
 
-    await queryInterface.addIndex("notifications", ["user_id"]);
-    await queryInterface.addIndex("notifications", ["is_read"]);
+    await queryInterface.addIndex("notifications", ["is_system"]);
     await queryInterface.addIndex("notifications", ["type"]);
     await queryInterface.addIndex("notifications", ["priority"]);
     await queryInterface.addIndex("notifications", ["created_at"]);
-    await queryInterface.addIndex("notifications", ["user_id", "is_read"]);
     await queryInterface.addIndex("notifications", ["related_project_id"]);
 }
 

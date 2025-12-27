@@ -14,16 +14,7 @@ export default (sequelize, DataTypes) => {
                 primaryKey: true,
                 autoIncrement: true, // Sửa lỗi: thêm autoIncrement
             },
-            // ID người dùng nhận thông báo (FK)
-            user_id: {
-                type: DataTypes.INTEGER,
-                allowNull: false,
-                references: {
-                    model: "users",
-                    key: "id",
-                },
-                comment: "Người dùng nhận thông báo",
-            },
+
             // Tiêu đề thông báo
             title: {
                 type: DataTypes.STRING(255),
@@ -62,16 +53,12 @@ export default (sequelize, DataTypes) => {
                 },
                 comment: "ID dự án liên quan (nếu có)",
             },
-            // Đã đọc hay chưa
-            is_read: {
+            // Đánh dấu thông báo dành cho hệ thống (admin/dashboard)
+            // Tách biệt khỏi thông báo cho user có liên quan
+            is_system: {
                 type: DataTypes.BOOLEAN,
                 defaultValue: false,
-                comment: "Đã đọc thông báo",
-            },
-            // Thời gian đọc
-            read_at: {
-                type: DataTypes.DATE,
-                comment: "Thời điểm đọc thông báo",
+                comment: "Là thông báo hệ thống (dành cho admin/dashboard) hay thông báo user?",
             },
             // URL hành động
             action_url: {
@@ -107,22 +94,15 @@ export default (sequelize, DataTypes) => {
             tableName: "notifications",
             timestamps: false,
             indexes: [
-                { fields: ["user_id"] },
-                { fields: ["is_read"] },
+                { fields: ["is_system"] },
                 { fields: ["type"] },
                 { fields: ["priority"] },
-                { fields: ["created_at"] },
-                { fields: ["user_id", "is_read"] }, // Composite index cho thông báo chưa đọc của user
+                { fields: ["created_at"] }
             ],
         }
     );
 
     Notification.associate = (models) => {
-        Notification.belongsTo(models.User, {
-            foreignKey: "user_id",
-            as: "user",
-        });
-
         Notification.belongsTo(models.Work, {
             foreignKey: "related_work_id",
             as: "work",
@@ -132,6 +112,14 @@ export default (sequelize, DataTypes) => {
             foreignKey: "related_project_id",
             as: "project",
         });
+
+        // Notification has many recipients (per-user read state)
+        if (models.NotificationRecipient) {
+            Notification.hasMany(models.NotificationRecipient, {
+                foreignKey: "notification_id",
+                as: "recipients",
+            });
+        }
     };
 
     return Notification;

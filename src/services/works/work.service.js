@@ -638,20 +638,6 @@ export const createWorkService = async (workData) => {
           updated_at: new Date(),
         });
         createdAssignments.push(assignment);
-
-        // gửi notification (best-effort)
-        try {
-          await createNotificationService({
-            user_id: techId,
-            title: "Bạn có công việc mới",
-            message: `Công việc "${payload.title}" đã được giao cho bạn.`,
-            type: "work_assigned",
-            related_work_id: work.id,
-            action_url: `/works/${work.id}`,
-          });
-        } catch (notifErr) {
-          logger.error("Failed to notify technician " + techId + ": " + notifErr.message);
-        }
       } catch (assignmentErr) {
         logger.error("Failed to create assignment for technician " + techId + ": " + assignmentErr.message);
       }
@@ -679,12 +665,55 @@ export const createWorkService = async (workData) => {
         ],
       });
 
-      // Nếu không có lỗi, trả về bản ghi work đầy đủ
+      // Non-blocking: tạo thông báo hệ thống về tạo công việc mới
+      (async () => {
+        try {
+          // System notification about work creation
+          await createNotificationService({
+            title: `Công việc mới: ${createdWork.title}`,
+            message: `Công việc "${createdWork.title}" đã được tạo thành công.`,
+            type: "work_created",
+            related_work_id: createdWork.id,
+            priority: "medium",
+            broadcast: false,
+            systemNotification: {
+              title: `Công việc mới được tạo: ${createdWork.title}`,
+              message: `Công việc "${createdWork.title}" đã được tạo trong hệ thống.`,
+              broadcast: false,
+            },
+          });
+          logger.info(`System notification for work creation created for work id: ${createdWork.id}`);
+        } catch (err) {
+          logger.error("Failed to create system notification for work creation: " + err.message);
+        }
+
+        // Notification for assigned technicians
+        try {
+          if (createdAssignments && createdAssignments.length > 0) {
+            const newAssignedIds = createdAssignments.map((a) => a.technician_id);
+            await createNotificationService({
+              title: "Bạn có công việc mới",
+              message: `Công việc "${createdWork.title}" đã được giao cho bạn.`,
+              type: "work_assigned",
+              related_work_id: createdWork.id,
+              action_url: `/works/${createdWork.id}`,
+              priority: "high",
+              recipients: newAssignedIds,
+            });
+            logger.info(
+              `Assignment notification sent to ${newAssignedIds.length} technician(s) for work id: ${createdWork.id}`
+            );
+          }
+        } catch (err) {
+          logger.error("Failed to create assignment notification: " + err.message);
+        }
+      })();
+
       return { success: true, data: createdWork };
     } catch (reloadErr) {
       // Nếu reload thất bại, vẫn trả về thông tin work cơ bản và danh sách id đã cố gắng phân công
       logger.error("Error while reloading created work: " + reloadErr.message);
-      return { success: true, data: { work, assigned_to_technician_id: assignedTechnicianIds } };
+      return { success: true, data: work };
     }
   } catch (error) {
     // rollback nếu transaction còn mở
@@ -882,6 +911,7 @@ export const updateWorkService = async (id, updateData) => {
     })();
 
     // --- Non-blocking: handle assignments if provided ---
+    let createdAssignments = [];
     if (updateData.assigned_to_technician_id !== undefined) {
       const parseTechnicianIds = (val) => {
         if (val === undefined || val === null || val === "") return [];
@@ -922,19 +952,7 @@ export const updateWorkService = async (id, updateData) => {
             updated_at: new Date(),
           });
 
-          // send notification (best-effort)
-          try {
-            await createNotificationService({
-              user_id: techId,
-              title: "Bạn có công việc mới",
-              message: `Công việc "${work.title}" đã được giao cho bạn.`,
-              type: "work_assigned",
-              related_work_id: id,
-              action_url: `/works/${id}`,
-            });
-          } catch (notifErr) {
-            logger.error("Failed to notify technician " + techId + ": " + notifErr.message);
-          }
+          createdAssignments.push(assignment);
         } catch (assignmentErr) {
           logger.error("Failed to create assignment for technician " + techId + ": " + assignmentErr.message);
         }
@@ -962,6 +980,54 @@ export const updateWorkService = async (id, updateData) => {
           },
         ],
       });
+
+      // Non-blocking: tạo thông báo hệ thống về cập nhật công việc
+      (async () => {
+        try {
+          // System notification about the update
+          await createNotificationService({
+            title: `Cập nhật công việc: ${updatedWork.title}`,
+            message: `Công việc "${updatedWork.title}" đã được cập nhật.`,
+            type: "work_updated",
+            related_work_id: updatedWork.id,
+            priority: "medium",
+            broadcast: true,
+            meta: {
+              work_snapshot: {
+                id: updatedWork.id,
+                title: updatedWork.title,
+                status: updatedWork.status,
+                priority: updatedWork.priority,
+              },
+            },
+          });
+
+          logger.info(`System notification for work update created for work id: ${updatedWork.id}`);
+        } catch (err) {
+          logger.error("Failed to create system notification for work update: " + err.message);
+        }
+
+        // Notification for newly assigned technicians
+        try {
+          if (createdAssignments && createdAssignments.length > 0) {
+            const newAssignedIds = createdAssignments.map((a) => a.technician_id);
+            await createNotificationService({
+              title: "Bạn có công việc mới",
+              message: `Công việc "${updatedWork.title}" đã được giao cho bạn.`,
+              type: "work_assigned",
+              related_work_id: updatedWork.id,
+              action_url: `/works/${updatedWork.id}`,
+              priority: "high",
+              recipients: newAssignedIds,
+            });
+            logger.info(
+              `Assignment notification sent to ${newAssignedIds.length} technician(s) for work id: ${updatedWork.id}`
+            );
+          }
+        } catch (err) {
+          logger.error("Failed to create assignment notification: " + err.message);
+        }
+      })();
 
       return { success: true, data: updatedWork, message: "Cập nhật công việc thành công" };
     } catch (reloadErr) {

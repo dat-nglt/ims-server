@@ -253,12 +253,12 @@ export const createProjectService = async (data) => {
       if (manager_id) {
         try {
           await createNotificationService({
-            user_id: manager_id,
             title: "Dự án mới được giao quản lý",
             message: `Dự án "${name}" đã được tạo và bạn được chỉ định làm quản lý.`,
             type: "project_assigned",
             related_project_id: project.id,
             action_url: `/projects/${project.id}`,
+            recipients: [manager_id],
           });
         } catch (notificationError) {
           logger.error("Failed to create notification for project creation: " + notificationError.message);
@@ -320,12 +320,12 @@ export const updateProjectService = async (id, data) => {
         if (managerId) {
           try {
             await createNotificationService({
-              user_id: managerId,
               title: "Dự án được cập nhật",
               message: `Dự án "${project.name}" đã được cập nhật.`,
               type: "project_updated",
               related_project_id: id,
               action_url: `/projects/${id}`,
+              recipients: [managerId],
             });
           } catch (notificationError) {
             logger.error("Failed to create notification for project update: " + notificationError.message);
@@ -372,12 +372,12 @@ export const deleteProjectService = async (id) => {
       if (project.manager_id) {
         try {
           await createNotificationService({
-            user_id: project.manager_id,
             title: "Dự án bị xóa",
             message: `Dự án "${project.name}" đã bị xóa khỏi hệ thống.`,
             type: "project_deleted",
             related_project_id: id,
             action_url: `/projects`, // Redirect to projects list
+            recipients: [project.manager_id],
           });
         } catch (notificationError) {
           logger.error("Failed to create notification for project deletion: " + notificationError.message);

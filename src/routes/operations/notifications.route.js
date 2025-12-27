@@ -1,12 +1,12 @@
 import express from "express";
 import {
-    getAllNotificationsController,
-    getNotificationByIdController,
-    markNotificationAsReadController,
-    deleteNotificationController,
-    getUnreadNotificationsCountController,
-    getAllSystemNotificationsController,
-    markAllNotificationsAsReadController,
+  getAllNotificationsController,
+  getNotificationByIdController,
+  markNotificationAsReadController,
+  deleteNotificationController,
+  getUnreadNotificationsCountController,
+  getAllSystemNotificationsController,
+  markAllNotificationsAsReadController,
 } from "../../controllers/operations/notification.controller.js";
 
 const router = express.Router();
@@ -15,7 +15,7 @@ const router = express.Router();
 router.get("/", getAllNotificationsController);
 
 // GET all system notifications
-router.get("/all", getAllSystemNotificationsController);
+router.get("/all-system", getAllSystemNotificationsController);
 
 // GET notification by ID
 router.get("/:id", getNotificationByIdController);

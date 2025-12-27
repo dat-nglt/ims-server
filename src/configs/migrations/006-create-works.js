@@ -137,15 +137,6 @@ export async function up(queryInterface, Sequelize) {
       allowNull: false,
       comment: "Địa chỉ đầy đủ khách hàng",
     },
-    customer_id: {
-      type: Sequelize.INTEGER,
-      allowNull: true,
-      references: {
-        model: 'customers',
-        key: 'id',
-      },
-      comment: "ID khách hàng (nullable) liên kết với bảng customers",
-    },
     location_lat: {
       type: Sequelize.DECIMAL(10, 8),
       allowNull: false,

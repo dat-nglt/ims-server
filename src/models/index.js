@@ -13,6 +13,7 @@ import {
   AttendanceSessionHistory,
   CheckInType,
   Notification,
+  NotificationRecipient,
   OfficeLocation,
   LocationHistory,
 } from "./operations/index.js";
@@ -59,6 +60,7 @@ const models = [
   AttendanceSessionHistory,
   CheckInType,
   Notification,
+  NotificationRecipient,
   OfficeLocation,
   LocationHistory,
   SalesReportDaily,

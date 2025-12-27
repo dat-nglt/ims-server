@@ -208,9 +208,11 @@ export default (sequelize, DataTypes) => {
 
         // Removed PerformanceMetric and DashboardMetric associations - data calculated from other models
 
-        User.hasMany(models.Notification, {
+        // Notification relationship (N:N via NotificationRecipient)
+        // 1 User nhận nhiều Notifications thông qua bảng notification_recipients
+        User.hasMany(models.NotificationRecipient, {
             foreignKey: "user_id",
-            as: "notifications",
+            as: "notificationRecipients",
         });
 
         User.hasMany(models.Attachment, {
