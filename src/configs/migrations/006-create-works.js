@@ -47,6 +47,11 @@ export async function up(queryInterface, Sequelize) {
       allowNull: false,
       comment: "Mô tả chi tiết công việc",
     },
+    // Ghi chú công việc
+    notes: {
+      type: Sequelize.TEXT,
+      comment: "Ghi chú của công việc",
+    },
     category_id: {
       type: Sequelize.INTEGER,
       allowNull: false,
@@ -131,6 +136,15 @@ export async function up(queryInterface, Sequelize) {
       type: Sequelize.TEXT,
       allowNull: false,
       comment: "Địa chỉ đầy đủ khách hàng",
+    },
+    customer_id: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'customers',
+        key: 'id',
+      },
+      comment: "ID khách hàng (nullable) liên kết với bảng customers",
     },
     location_lat: {
       type: Sequelize.DECIMAL(10, 8),
