@@ -22,6 +22,7 @@ export const getAllWorkAssignmentsService = async () => {
     throw error;
   }
 };
+
 export const getWorkAssignmentsService = async (queryParams = {}) => {
   try {
     const { page = 1, limit = 20, technician_id, work_id, assigned_status, assigned_by } = queryParams;

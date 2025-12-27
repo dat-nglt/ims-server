@@ -65,7 +65,6 @@ export const getAllEmployeeWithProfileService = async () => {
           attributes: ["id", "name", "code", "level", "status"],
         },
         { model: db.Attendance, as: "attendances" },
-        { model: db.Work, as: "assignedWorks" },
       ],
     });
 
@@ -98,7 +97,7 @@ export const getEmployeeProfileByUserIdService = async (employeeId) => {
   try {
     // Find active user by employee_id and include the linked profile with attendances, assigned works, roles, department and position
     const user = await db.User.findOne({
-      where: { employee_id: employeeId, is_active: true }, // Filter active users by employee_id
+      where: { id: employeeId, is_active: true }, // Filter active users by employee_id
       include: [
         {
           model: db.EmployeeProfile,
@@ -347,7 +346,6 @@ export const updateEmployeeProfileService = async (userId, updateData) => {
           attributes: ["id", "name", "code", "level", "status"],
         },
         { model: db.Attendance, as: "attendances" },
-        { model: db.Work, as: "assignedWorks" },
       ],
     });
 

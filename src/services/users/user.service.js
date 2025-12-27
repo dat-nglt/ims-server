@@ -32,6 +32,7 @@ export const getAllUsersService = async () => {
                     required: false, // Left join
                 },
             ],
+            order: [["created_at", "ASC"]], // newest -> oldest
         });
         return { success: true, data: users };
     } catch (error) {

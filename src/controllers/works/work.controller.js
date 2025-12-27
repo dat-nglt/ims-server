@@ -123,11 +123,7 @@ export const updateWorkController = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await workService.updateWorkService(id, req.body);
-    res.json({
-      status: "success",
-      data: result.data,
-      message: "Cập nhật công việc thành công",
-    });
+    res.json(result);
   } catch (error) {
     logger.error(`[${req.id}] Error in updateWorkController:`, error.message);
     res.status(400).json({ error: error.message });
