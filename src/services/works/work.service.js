@@ -1041,9 +1041,7 @@ export const updateWorkService = async (id, updateData) => {
   }
 };
 
-/**
- * Phê duyệt công việc
- */
+// Phê duyệt công việc - xử lý sau
 export const approveWorkService = async (id, approvalData) => {
   try {
     const { approved_by, notes } = approvalData;
@@ -1102,7 +1100,85 @@ export const approveWorkService = async (id, approvalData) => {
 };
 
 /**
- * Xóa công việc
+ * Hủy công việc - cập nhật status thành 'cancelled' mà không xóa bản ghi
+ * Chỉ cho phép hủy nếu công việc đang ở trạng thái 'pending'
+ * Đồng thời cập nhật trạng thái tất cả các assignment liên quan thành 'cancelled'
+ */
+export const cancelWorkService = async (id) => {
+  try {
+    const work = await db.Work.findByPk(id);
+    if (!work) {
+      throw new Error("Công việc không tồn tại");
+    }
+
+    // Kiểm tra trạng thái - chỉ cho hủy nếu ở trạng thái pending
+    if (work.status !== "pending") {
+      throw new Error(`Chỉ có thể hủy công việc ở trạng thái chờ xử lý`);
+    }
+
+    // Update work status to cancelled
+    await work.update({
+      status: "cancelled",
+      updated_at: new Date(),
+    });
+
+    // Cập nhật trạng thái tất cả các assignment liên quan thành cancelled
+    try {
+      await db.WorkAssignment.update(
+        {
+          assigned_status: "cancelled",
+          updated_at: new Date(),
+        },
+        {
+          where: { work_id: id },
+        }
+      );
+      logger.info(`Đã cập nhật trạng thái assignments cho công việc ${id} thành cancelled`);
+    } catch (assignmentErr) {
+      logger.error("Failed to update work assignments status: " + assignmentErr.message);
+    }
+
+    try {
+      // System notification about work cancellation
+      await createNotificationService({
+        title: `Công việc "${work.title}" đã được huỷ`,
+        message: `Công việc "${work.title}" đã được huỷ.`,
+        type: "work_cancelled",
+        related_work_id: work.id,
+        priority: "high",
+        broadcast: false,
+        systemNotification: {
+          title: `Công việc "${work.title}" đã được huỷ`,
+          message: `Công việc "${work.title}" đã được huỷ trong hệ thống.`,
+          broadcast: false,
+        },
+      });
+      logger.info(`Đã tạo thông báo hệ thống huỷ công việc: ${work.id} - ${work.title}`);
+    } catch (err) {
+      logger.error("Lỗi trong quá trình tạo thông báo hệ thống huỷ công việc: " + err.message);
+    }
+
+    // Log work history
+    try {
+      await createWorkHistoryService({
+        work_id: id,
+        action: "cancelled",
+        changed_by: work.created_by,
+        notes: "Công việc bị hủy",
+      });
+    } catch (historyError) {
+      throw new Error(historyError.message);
+    }
+
+    return { success: true, message: "Hủy công việc thành công" };
+  } catch (error) {
+    logger.error("Error in cancelWorkService: " + error.message);
+    return { success: false, message: error.message };
+  }
+};
+
+/**
+ * Xóa công việc - xóa bản ghi khỏi database
  */
 export const deleteWorkService = async (id) => {
   try {
@@ -1117,14 +1193,13 @@ export const deleteWorkService = async (id) => {
         work_id: id,
         action: "deleted",
         changed_by: work.created_by,
-        notes: "Công việc bị xóa",
+        notes: "Công việc bị xóa khỏi hệ thống",
       });
     } catch (historyError) {
       logger.error("Failed to log work history for deletion: " + historyError.message);
     }
 
-    // Notification for assigned user removed (field deprecated).
-
+    // Xóa bản ghi công việc
     await work.destroy();
 
     return { success: true, message: "Xóa công việc thành công" };

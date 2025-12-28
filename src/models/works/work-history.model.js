@@ -42,7 +42,8 @@ export default (sequelize, DataTypes) => {
                     "reported",
                     "report_updated",
                     "report_approved",
-                    "report_rejected"
+                    "report_rejected",
+                    "cancelled"
                 ),
                 defaultValue: "updated",
             },

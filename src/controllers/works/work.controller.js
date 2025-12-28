@@ -149,7 +149,21 @@ export const approveWorkController = async (req, res) => {
 };
 
 /**
- * Xóa công việc
+ * Hủy công việc - cập nhật status thành 'cancelled'
+ */
+export const cancelWorkController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await workService.cancelWorkService(id);
+    res.json(result);
+  } catch (error) {
+    logger.error(`[${req.id}] Error in cancelWorkController:`, error.message);
+    res.status(404).json({ error: error.message });
+  }
+};
+
+/**
+ * Xóa công việc - xóa bản ghi khỏi database
  */
 export const deleteWorkController = async (req, res) => {
   try {

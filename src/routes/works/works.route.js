@@ -8,6 +8,7 @@ import {
   createWorkController,
   updateWorkController,
   approveWorkController,
+  cancelWorkController,
   deleteWorkController,
   getWorkCategoriesController,
   getServiceTypesController,
@@ -74,8 +75,12 @@ router.put("/:id", updateWorkController);
 // EN: Approve work
 router.patch("/:id/approve", approveWorkController);
 
-// VN: Xoá công việc
-// EN: Delete work
+// VN: Hủy công việc (cập nhật status thành 'cancelled')
+// EN: Cancel work (update status to 'cancelled')
+router.put("/cancel/:id", cancelWorkController);
+
+// VN: Xóa công việc (xóa bản ghi khỏi database)
+// EN: Delete work (remove record from database)
 router.delete("/:id", deleteWorkController);
 
 export default router;

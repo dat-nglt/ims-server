@@ -82,9 +82,21 @@ export async function up(queryInterface, Sequelize) {
     },
     last_contact_date: {
       type: Sequelize.DATE,
+      comment: 'Ngày liên hệ gần nhất',
+    },
+    location_lat: {
+      type: Sequelize.DECIMAL(10, 8),
+      allowNull: true,
+      comment: 'Vĩ độ GPS địa điểm khách hàng',
+    },
+    location_lng: {
+      type: Sequelize.DECIMAL(11, 8),
+      allowNull: true,
+      comment: 'Kinh độ GPS địa điểm khách hàng',
     },
     notes: {
       type: Sequelize.TEXT,
+      comment: 'Ghi chú CRM',
     },
     created_by: {
       type: Sequelize.INTEGER,
@@ -105,6 +117,8 @@ export async function up(queryInterface, Sequelize) {
   await queryInterface.addIndex('customers', ['customer_type']);
   await queryInterface.addIndex('customers', ['customer_code']);
   await queryInterface.addIndex('customers', ['account_manager_id']);
+  await queryInterface.addIndex('customers', ['email']);
+  await queryInterface.addIndex('customers', ['phone']);
 
   // Thêm FK customer_id vào bảng works để liên kết (nullable, giữ nguyên các trường customer_name hiện tại)
   await queryInterface.addColumn('works', 'customer_id', {

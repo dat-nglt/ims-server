@@ -33,6 +33,9 @@ export const getWorkAssignmentsService = async (queryParams = {}) => {
     if (assigned_status) where.assigned_status = assigned_status;
     if (assigned_by) where.assigned_by = assigned_by;
 
+    // Loại trừ các bản ghi bị từ chối và đã hủy
+    where.assigned_status = { [Op.notIn]: ["rejected", "cancelled"] };
+
     const offset = (page - 1) * limit;
 
     const { count, rows } = await db.WorkAssignment.findAndCountAll({
@@ -74,9 +77,9 @@ export const getWorkAssignmentForTechnicianService = async (technician_id) => {
       throw new Error("Thiếu technician_id");
     }
 
-    // Lấy tất cả phân công của kỹ thuật viên, loại trừ phân công bị từ chối
+    // Lấy tất cả phân công của kỹ thuật viên, loại trừ phân công bị từ chối và đã hủy
     const assignments = await db.WorkAssignment.findAll({
-      where: { technician_id, assigned_status: { [Op.ne]: "rejected" } },
+      where: { technician_id, assigned_status: { [Op.notIn]: ["rejected", "cancelled"] } },
       include: [{ model: db.Work, as: "work" }],
       order: [["assignment_date", "DESC"]],
     });

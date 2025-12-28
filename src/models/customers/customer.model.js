@@ -113,6 +113,26 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.DATE,
                 comment: "Ngày liên hệ gần nhất",
             },
+            // Tọa độ địa điểm khách hàng (vĩ độ)
+            location_lat: {
+                type: DataTypes.DECIMAL(10, 8),
+                allowNull: true,
+                validate: {
+                    min: -90,
+                    max: 90,
+                },
+                comment: "Vĩ độ GPS địa điểm khách hàng",
+            },
+            // Tọa độ địa điểm khách hàng (kinh độ)
+            location_lng: {
+                type: DataTypes.DECIMAL(11, 8),
+                allowNull: true,
+                validate: {
+                    min: -180,
+                    max: 180,
+                },
+                comment: "Kinh độ GPS địa điểm khách hàng",
+            },
             notes: {
                 type: DataTypes.TEXT,
                 comment: "Ghi chú CRM",
@@ -145,6 +165,8 @@ export default (sequelize, DataTypes) => {
                 { fields: ["customer_type"] },
                 { fields: ["customer_code"] },
                 { fields: ["account_manager_id"] },
+                { fields: ["email"] },
+                { fields: ["phone"] },
             ],
         }
     );
