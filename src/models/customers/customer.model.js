@@ -36,14 +36,19 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.TEXT,
                 comment: "Địa chỉ",
             },
-            status: {
+            is_active: {
+                type: DataTypes.BOOLEAN,
+                defaultValue: true,
+                comment: "Trạng thái hoạt động (true = hoạt động, false = không hoạt động)",
+            },
+            customer_status: {
                 type: DataTypes.ENUM(
-                    "active",
-                    "inactive",
+                    "normal",
                     "prospect",
                     "suspended"
                 ),
-                defaultValue: "active",
+                defaultValue: "normal",
+                comment: "Phân loại trạng thái khách hàng",
             },
             customer_type: {
                 type: DataTypes.ENUM(
