@@ -29,7 +29,7 @@ import examplesRouter from "./examples.js";
 
 const mainRouter = (server) => {
   // Mini App Routes
-  server.use("/api/v1/mini-app/profile", routeForProfileMiniApp);
+  server.use("/api/v1/ims/mini-app/profile", routeForProfileMiniApp);
 
   // --- IMS ROUTES (API v1) ---
   // User Management
