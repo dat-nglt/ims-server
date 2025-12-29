@@ -102,8 +102,8 @@ sudo chown -R $USER:$USER /var/www/ims-server
 cd /var/www/ims-server
 if [ -d ".git" ]; then
     echo -e "${YELLOW}🔄 Cập nhật repository...${NC}"
-    git fetch origin
-    git reset --hard origin/main
+    git fetch origin developer
+    git reset --hard origin/developer
 else
     echo -e "${YELLOW}📥 Clone repository...${NC}"
     git clone https://github.com/dat-nglt/ims-server.git .
@@ -129,7 +129,7 @@ else
 fi
 
 # Drop database if exists and recreate
-sudo -u postgres psql -c "DROP DATABASE IF EXISTS ims_db;" || true
+sudo -u postgres psql -c "DROP DATABASE IF EXISTS ims_db WITH (FORCE);" || true
 sudo -u postgres psql -c "CREATE DATABASE ims_db OWNER ims_root;"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ims_db TO ims_root;"
 echo -e "${GREEN}✅ Đã tạo database ims_db${NC}"
