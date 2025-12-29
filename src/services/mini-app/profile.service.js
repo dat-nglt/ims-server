@@ -16,11 +16,12 @@ export const getProfileInfoService = async (UID) => {
         {
           model: db.EmployeeProfile,
           as: "profile",
-          include: [{ model: db.Department, as: "departmentInfo" }],
+          include: [{ model: db.Department, as: "departmentInfo", attributes: ["id", "name", "code"] }],
         },
         {
           model: db.Position,
           as: "position",
+          attributes: ["id", "name", "code"],
         },
         {
           model: db.WorkAssignment,
@@ -39,9 +40,7 @@ export const getProfileInfoService = async (UID) => {
           attributes: ["id", "work_id", "status", "progress_percentage", "reported_at"],
         },
       ],
-      attributes: {
-        exclude: ["password"],
-      },
+      attributes: ["id", "name", "email", "phone", "zalo_id", "status", "approved", "avatar_url"],
     });
 
     if (!technician) {
