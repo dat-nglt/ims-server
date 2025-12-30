@@ -30,7 +30,7 @@ export const getProfileInfoService = async (UID) => {
             {
               model: db.Work,
               as: "work",
-              attributes: ["id", "work_code", "title", "status", "priority", "required_date"],
+              // attributes: ["id", "work_code", "title", "status", "priority", "required_date"],
             },
           ],
         },
