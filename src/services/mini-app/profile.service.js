@@ -62,7 +62,7 @@ export const getListOfWorkAssignmentsService = async (ZAID) => {
 
     // Tìm user theo Zalo ID
     const technician = await db.User.findOne({
-      where: { id: ZAID },
+      where: { zalo_id: ZAID },
       attributes: ["id"],
     });
 
