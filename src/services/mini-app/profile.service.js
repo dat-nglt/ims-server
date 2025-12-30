@@ -4,14 +4,14 @@ import logger from "../../utils/logger.js";
 /**
  * Lấy thông tin profile của kỹ thuật viên thông qua Zalo ID
  */
-export const getProfileInfoService = async (UID) => {
+export const getProfileInfoService = async (ZAID) => {
   try {
-    if (!UID) {
+    if (!ZAID) {
       throw new Error("Zalo ID không được để trống");
     }
 
     const technician = await db.User.findOne({
-      where: { zalo_id: UID },
+      where: { zalo_id: ZAID },
       include: [
         {
           model: db.EmployeeProfile,
@@ -49,20 +49,20 @@ export const getProfileInfoService = async (UID) => {
 
     return { success: true, data: technician };
   } catch (error) {
-    logger.error(`Error in getProfileInfoService with UID ${UID}: ${error.message}`);
+    logger.error(`Error in getProfileInfoService with ZAID ${ZAID}: ${error.message}`);
     return { success: false, error: error.message };
   }
 };
 
-export const getListOfWorkAssignmentsService = async (UID) => {
+export const getListOfWorkAssignmentsService = async (ZAID) => {
   try {
-    if (!UID) {
+    if (!ZAID) {
       throw new Error("Zalo ID không được để trống");
     }
 
     // Tìm user theo Zalo ID
     const technician = await db.User.findOne({
-      where: { id: UID },
+      where: { id: ZAID },
       attributes: ["id"],
     });
 
@@ -160,7 +160,7 @@ export const getListOfWorkAssignmentsService = async (UID) => {
 
     return { success: true, data: assignments };
   } catch (error) {
-    logger.error(`Error in getListOfWorkAssignmentsService with UID ${UID}: ${error.message}`);
+    logger.error(`Error in getListOfWorkAssignmentsService with ZAID ${ZAID}: ${error.message}`);
     return { success: false, error: error.message };
   }
 };
