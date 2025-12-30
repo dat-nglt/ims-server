@@ -21,3 +21,4 @@ export const getListOfWorkAssignmentsController = async (req, res) => {
     logger.error(`[${req.id}] Error in getListOfWorkAssignmentsController:`, error.message);
     res.status(500).json({ error: error.message });
   }
+};
