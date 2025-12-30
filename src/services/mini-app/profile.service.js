@@ -1,5 +1,6 @@
 import db from "../../models/index.js";
 import logger from "../../utils/logger.js";
+import { Op } from "sequelize";
 
 /**
  * Lấy thông tin profile của kỹ thuật viên thông qua Zalo ID
@@ -54,7 +55,7 @@ export const getProfileInfoService = async (ZAID) => {
   }
 };
 
-export const getListOfWorkAssignmentsService = async (ZAID) => {
+export const getListOfWorkAssignmentsService = async (ZAID, isToday = false) => {
   try {
     if (!ZAID) {
       throw new Error("Zalo ID không được để trống");
@@ -70,9 +71,26 @@ export const getListOfWorkAssignmentsService = async (ZAID) => {
       throw new Error("Không tìm thấy thông tin kỹ thuật viên");
     }
 
+    // Lấy ngày hôm nay (sử dụng UTC)
+
+    // Xây dựng điều kiện where dựa trên tham số isToday
+    const whereCondition = {
+      technician_id: technician.id,
+    };
+
+    if (isToday) {
+      const startOfDay = new Date();
+      startOfDay.setUTCHours(0, 0, 0, 0);
+      const endOfDay = new Date();
+      endOfDay.setUTCHours(23, 59, 59, 999);
+      whereCondition["$work.required_date$"] = {
+        [Op.between]: [startOfDay, endOfDay],
+      };
+    }
+
     // Truy vấn danh sách các assignments liên quan đến kỹ thuật viên
     const assignments = await db.WorkAssignment.findAll({
-      where: { technician_id: technician.id },
+      where: whereCondition,
       attributes: [
         "id",
         "work_id",
@@ -156,6 +174,7 @@ export const getListOfWorkAssignmentsService = async (ZAID) => {
         },
       ],
       order: [["assignment_date", "DESC"]],
+      subQuery: false,
     });
 
     return { success: true, data: assignments };

@@ -22,3 +22,14 @@ export const getListOfWorkAssignmentsController = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const getListOfWorkAssignmentsInCurrentDayController = async (req, res) => {
+  try {
+    const UID = req.params.UID;
+    const result = await getListOfWorkAssignmentsService(UID, true);
+    res.json(result);
+  } catch (error) {
+    logger.error(`[${req.id}] Error in getListOfWorkAssignmentsController:`, error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
