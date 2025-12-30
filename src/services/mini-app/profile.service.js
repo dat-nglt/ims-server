@@ -1,5 +1,6 @@
 import db from "../../models/index.js";
 import logger from "../../utils/logger.js";
+import axios from "axios";
 import { Op } from "sequelize";
 
 /**
@@ -180,6 +181,36 @@ export const getListOfWorkAssignmentsService = async (ZAID, isToday = false) => 
     return { success: true, data: assignments };
   } catch (error) {
     logger.error(`Error in getListOfWorkAssignmentsService with ZAID ${ZAID}: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+};
+
+export const decodeLocationByTokenService = async (locationToken, accessToken) => {
+  try {
+    if (!locationToken) {
+      throw new Error("Location token không được để trống");
+    }
+
+    const zaloSecretKey = process.env.ZALO_SECRET_KEY || null;
+
+    if (!accessToken || !zaloSecretKey) {
+      throw new Error("Zalo configuration không đầy đủ");
+    }
+
+    // Gọi Zalo Graph API endpoint để decode location token
+    const endpoint = "https://graph.zalo.me/v2.0/me/info";
+
+    const response = await axios.get(endpoint, {
+      headers: {
+        access_token: accessToken,
+        code: locationToken,
+        secret_key: zaloSecretKey,
+      },
+    });
+
+    return { success: true, data: response.data };
+  } catch (error) {
+    logger.error(`Error in decodeLocationByTokenService with token ${locationToken}: ${error.message}`);
     return { success: false, error: error.message };
   }
 };

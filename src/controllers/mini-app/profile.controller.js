@@ -1,4 +1,4 @@
-import { getProfileInfoService, getListOfWorkAssignmentsService } from "../../services/mini-app/profile.service.js";
+import { getProfileInfoService, getListOfWorkAssignmentsService, decodeLocationByTokenService } from "../../services/mini-app/profile.service.js";
 import logger from "../../utils/logger.js";
 
 export const getProfileInfoController = async (req, res) => {
@@ -30,6 +30,19 @@ export const getListOfWorkAssignmentsInCurrentDayController = async (req, res) =
     res.json(result);
   } catch (error) {
     logger.error(`[${req.id}] Error in getListOfWorkAssignmentsController:`, error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getLocationByUserTokenController = async (req, res) => {
+  try {
+    const { locationToken } = req.body;
+    const { accessToken } = req.body;
+    // Call service to decode location by token
+    const result = await decodeLocationByTokenService(locationToken, accessToken);
+    res.json(result);
+  } catch (error) {
+    logger.error(`[${req.id}] Error in getLocationByUserTokenController:`, error.message);
     res.status(500).json({ error: error.message });
   }
 };

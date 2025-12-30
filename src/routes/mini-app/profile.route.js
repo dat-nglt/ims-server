@@ -3,6 +3,7 @@ import {
   getProfileInfoController,
   getListOfWorkAssignmentsController,
   getListOfWorkAssignmentsInCurrentDayController,
+  getLocationByUserTokenController,
 } from "../../controllers/mini-app/profile.controller.js";
 ``;
 const router = express.Router();
@@ -11,5 +12,8 @@ const router = express.Router();
 router.get("/:UID", /* authMiddleware, */ getProfileInfoController);
 router.get("/list-of-work-assignments/:UID", getListOfWorkAssignmentsController);
 router.get("/list-of-work-assignments-current-day/:UID", getListOfWorkAssignmentsInCurrentDayController);
+
+// POST /api/projects - Create a new project
+router.post("/location/decode", getLocationByUserTokenController);
 
 export default router;
