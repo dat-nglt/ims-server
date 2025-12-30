@@ -53,3 +53,43 @@ export const getProfileInfoService = async (UID) => {
     return { success: false, error: error.message };
   }
 };
+
+export const getListOfWorkAssignmentsService = async (UID) => {
+  try {
+    if (!UID) {
+      throw new Error("Zalo ID không được để trống");
+    }
+
+    // Tìm user theo Zalo ID
+    const technician = await db.User.findOne({
+      where: { zalo_id: UID },
+    });
+
+    if (!technician) {
+      throw new Error("Không tìm thấy thông tin kỹ thuật viên");
+    }
+
+    // Truy vấn danh sách các assignments liên quan đến kỹ thuật viên
+    const assignments = await db.WorkAssignment.findAll({
+      where: { technician_id: technician.id },
+      include: [
+        {
+          model: db.Work,
+          as: "work",
+          // attributes: ["id", "work_code", "title", "status", "priority", "required_date", "description"],
+        },
+        {
+          model: db.User,
+          as: "assignedByUser",
+          attributes: ["id", "name", "email"],
+        },
+      ],
+      order: [["assignment_date", "DESC"]],
+    });
+
+    return { success: true, data: assignments };
+  } catch (error) {
+    logger.error(`Error in getListOfWorkAssignmentsService with UID ${UID}: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+};
