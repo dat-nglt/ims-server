@@ -18,7 +18,6 @@ router.get("/list-of-work-assignments-current-day/:UID", getListOfWorkAssignment
 // POST /api/projects - Create a new project
 router.post("/location/decode", getLocationByUserTokenController);
 router.get("/attendance/location", getAttendanceLocationController);
-router.get("/attendance/location", getAttendanceLocationController);
 router.get("/attendance/type", getAttendanceTypeController);
 
 export default router;
