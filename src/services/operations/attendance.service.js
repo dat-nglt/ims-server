@@ -55,16 +55,16 @@ export const getAttendanceByIdService = async (id) => {
 export const getOpenSessionSummaryByUser = async (userId) => {
   try {
     const session = await db.AttendanceSession.findOne({
-      where: { user_id: userId, status: 'open', ended_at: null },
-      include: [{ model: db.Work, as: 'work' }],
+      where: { user_id: userId, status: "open", ended_at: null },
+      include: [{ model: db.Work, as: "work" }],
     });
 
     if (!session) return null;
 
     const latestAttendance = await db.Attendance.findOne({
       where: { attendance_session_id: session.id, user_id: userId, parent_attendance_id: null },
-      order: [['check_in_time', 'DESC']],
-      attributes: ['id', 'check_in_time'],
+      order: [["check_in_time", "DESC"]],
+      attributes: ["id", "check_in_time"],
     });
 
     return {
@@ -74,7 +74,7 @@ export const getOpenSessionSummaryByUser = async (userId) => {
       check_in_id: latestAttendance ? latestAttendance.id : null,
     };
   } catch (error) {
-    logger.error('Error in getOpenSessionSummaryByUser:' + error.message);
+    logger.error("Error in getOpenSessionSummaryByUser:" + error.message);
     throw error;
   }
 };
@@ -142,7 +142,7 @@ export const checkInService = async (checkInData) => {
     let photoUrlNormalized = null;
     if (Array.isArray(photos)) {
       photoUrlNormalized = photos.length > 0 ? String(photos[0]) : null;
-    } else if (typeof photos === 'string') {
+    } else if (typeof photos === "string") {
       // Try to parse JSON array string like '["url1","url2"]'
       try {
         const parsed = JSON.parse(photos);
@@ -170,7 +170,7 @@ export const checkInService = async (checkInData) => {
     }
 
     if (resolvedTypeId) {
-      const checkInType = await db.CheckInType.findByPk(resolvedTypeId);
+      const checkInType = await db.AttendanceType.findByPk(resolvedTypeId);
       if (!checkInType) throw new Error("Loại chấm công không tồn tại");
     }
 
@@ -207,15 +207,25 @@ export const checkInService = async (checkInData) => {
 
     // Coerce numeric IDs and normalize photos
     const uid = Number.isFinite(Number(resolvedUserId)) ? parseInt(resolvedUserId, 10) : resolvedUserId;
-    const wid = resolvedWorkId ? (Number.isFinite(Number(resolvedWorkId)) ? parseInt(resolvedWorkId, 10) : resolvedWorkId) : null;
-    const pid = resolvedProjectId ? (Number.isFinite(Number(resolvedProjectId)) ? parseInt(resolvedProjectId, 10) : resolvedProjectId) : null;
-    const typeIdInt = resolvedTypeId ? (Number.isFinite(Number(resolvedTypeId)) ? parseInt(resolvedTypeId, 10) : resolvedTypeId) : null;
+    const wid = resolvedWorkId
+      ? Number.isFinite(Number(resolvedWorkId))
+        ? parseInt(resolvedWorkId, 10)
+        : resolvedWorkId
+      : null;
+    const pid = resolvedProjectId
+      ? Number.isFinite(Number(resolvedProjectId))
+        ? parseInt(resolvedProjectId, 10)
+        : resolvedProjectId
+      : null;
+    const typeIdInt = resolvedTypeId
+      ? Number.isFinite(Number(resolvedTypeId))
+        ? parseInt(resolvedTypeId, 10)
+        : resolvedTypeId
+      : null;
 
     // Create attendance record with improved validation error handling
     let attendance;
     try {
-
-      
       attendance = await db.Attendance.create({
         user_id: uid,
         work_id: wid,
@@ -240,14 +250,28 @@ export const checkInService = async (checkInData) => {
         try {
           await cloudinaryService.deleteImage(photoPublicId);
         } catch (delErr) {
-          logger.error('Failed to cleanup public image after attendance create error: ' + delErr.message);
+          logger.error("Failed to cleanup public image after attendance create error: " + delErr.message);
         }
       }
 
       // Handle Sequelize validation/database errors with more context
-      if (err && (err.name === 'SequelizeValidationError' || err.name === 'SequelizeDatabaseError')) {
-        logger.error('Sequelize error creating Attendance', { message: err.message, errors: err.errors, payload: { user_id: uid, work_id: wid, project_id: pid, latitude: lat, longitude: lng, check_in_type_id: typeIdInt, technicians: techArr, photo_url: photoUrlNormalized } });
-        const messages = err.errors && Array.isArray(err.errors) ? err.errors.map((e) => e.message).join('; ') : err.message;
+      if (err && (err.name === "SequelizeValidationError" || err.name === "SequelizeDatabaseError")) {
+        logger.error("Sequelize error creating Attendance", {
+          message: err.message,
+          errors: err.errors,
+          payload: {
+            user_id: uid,
+            work_id: wid,
+            project_id: pid,
+            latitude: lat,
+            longitude: lng,
+            check_in_type_id: typeIdInt,
+            technicians: techArr,
+            photo_url: photoUrlNormalized,
+          },
+        });
+        const messages =
+          err.errors && Array.isArray(err.errors) ? err.errors.map((e) => e.message).join("; ") : err.message;
         throw new Error(`Validation error: ${messages}`);
       }
       throw err;
@@ -275,9 +299,7 @@ export const checkOutService = async (id) => {
     }
 
     const checkOutTime = new Date();
-    const durationMinutes = Math.round(
-      (checkOutTime - attendance.check_in_time) / 60000
-    );
+    const durationMinutes = Math.round((checkOutTime - attendance.check_in_time) / 60000);
 
     await attendance.update({
       check_out_time: checkOutTime,
@@ -348,10 +370,7 @@ export const getAttendanceHistoryByUserIdService = async (userId) => {
 /**
  * Lấy danh sách vị trí kỹ thuật viên (từ LocationHistory)
  */
-export const getTechniciansLocationsService = async ({
-  includeOffline,
-  includeHistory,
-}) => {
+export const getTechniciansLocationsService = async ({ includeOffline, includeHistory }) => {
   try {
     const whereClause = includeOffline ? "" : "AND lh.status != 'offline'";
     const locations = await db.sequelize.query(
@@ -421,12 +440,7 @@ export const getOfficeLocationService = async () => {
 /**
  * Lấy lịch sử vị trí kỹ thuật viên (từ LocationHistory)
  */
-export const getTechnicianLocationHistoryService = async ({
-  technicianId,
-  startDate,
-  endDate,
-  limit,
-}) => {
+export const getTechnicianLocationHistoryService = async ({ technicianId, startDate, endDate, limit }) => {
   try {
     const where = { user_id: technicianId };
     if (startDate && endDate) {
@@ -451,10 +465,7 @@ export const getTechnicianLocationHistoryService = async ({
 
     return { success: true, data };
   } catch (error) {
-    logger.error(
-      "Error in getTechnicianLocationHistoryService:",
-      error.message
-    );
+    logger.error("Error in getTechnicianLocationHistoryService:", error.message);
     throw error;
   }
 };
@@ -462,10 +473,7 @@ export const getTechnicianLocationHistoryService = async ({
 /**
  * Lấy vị trí công việc (từ Work model)
  */
-export const getJobItemsLocationsService = async ({
-  status,
-  includeArchived,
-}) => {
+export const getJobItemsLocationsService = async ({ status, includeArchived }) => {
   try {
     const where = {};
     if (status) where.status = status;
@@ -473,14 +481,7 @@ export const getJobItemsLocationsService = async ({
 
     const works = await db.Work.findAll({
       where,
-      attributes: [
-        "id",
-        "title",
-        "location_lat",
-        "location_lng",
-        "status",
-        "priority",
-      ],
+      attributes: ["id", "title", "location_lat", "location_lng", "status", "priority"],
     });
 
     const data = works.map((work) => ({
@@ -506,19 +507,16 @@ export const getJobItemsLocationsService = async ({
  */
 export const getGeocodingReverseService = async ({ lat, lng, language }) => {
   try {
-    const response = await axios.get(
-      "https://nominatim.openstreetmap.org/reverse",
-      {
-        params: {
-          format: "json",
-          lat,
-          lon: lng,
-          "accept-language": language,
-          zoom: 18,
-          addressdetails: 1,
-        },
-      }
-    );
+    const response = await axios.get("https://nominatim.openstreetmap.org/reverse", {
+      params: {
+        format: "json",
+        lat,
+        lon: lng,
+        "accept-language": language,
+        zoom: 18,
+        addressdetails: 1,
+      },
+    });
 
     const data = response.data;
     const result = {
@@ -587,7 +585,7 @@ export const getAttendanceSummaryService = async (params) => {
         summaryMap[userId] = {
           id: userId,
           name: user.name,
-          department: (user.profile && user.profile.department) ? user.profile.department : (user.department || "N/A"),
+          department: user.profile && user.profile.department ? user.profile.department : user.department || "N/A",
           dates: {},
         };
       }
@@ -611,12 +609,8 @@ export const getAttendanceSummaryService = async (params) => {
       const location = attendance.is_within_radius ? "✓" : "⚠";
 
       // Check-in/out time
-      const checkInTime = attendance.check_in_time
-        .toTimeString()
-        .substring(0, 5);
-      const checkOutTime = attendance.check_out_time
-        ? attendance.check_out_time.toTimeString().substring(0, 5)
-        : null;
+      const checkInTime = attendance.check_in_time.toTimeString().substring(0, 5);
+      const checkOutTime = attendance.check_out_time ? attendance.check_out_time.toTimeString().substring(0, 5) : null;
 
       summaryMap[userId].dates[dateStr] = {
         status,
