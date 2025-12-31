@@ -363,9 +363,9 @@ export default (sequelize, DataTypes) => {
             as: "project",
         });
 
-        Attendance.belongsTo(models.CheckInType, {
+        Attendance.belongsTo(models.AttendanceType, {
             foreignKey: "check_in_type_id",
-            as: "checkInType",
+            as: "attendanceType",
         });
 
         // Liên kết tới attendance session
