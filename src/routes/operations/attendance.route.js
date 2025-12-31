@@ -3,7 +3,7 @@ import {
   // Check-in/out
   getAllAttendanceController,
   getAttendanceByIdController,
-  attendanceController,
+  checkInController,
   checkOutController,
   getAttendanceHistoryByUserIdController,
   // Locations
@@ -79,9 +79,9 @@ router.get("/user/:userId", getAttendanceHistoryByUserIdController);
  *  - location: { lat, lng, address } (object) - vị trí check-in
  *  - metadata (object): thông tin bổ sung (ghi chú, jobId...)
  * Response: 201 Created -> { data: attendance }
- * Controller: attendanceController
+ * Controller: checkInController
  */
-router.post("/check-in", attendanceController);
+router.post("/check-in", checkInController);
 
 /**
  * POST /check-out
@@ -93,7 +93,7 @@ router.post("/check-in", attendanceController);
  * Response: 200 OK -> { data: updatedAttendance }
  * Controller: checkOutController
  */
-router.post("/check-out/", checkOutController);
+router.post("/check-out", checkOutController);
 
 /**
  * GET /:id

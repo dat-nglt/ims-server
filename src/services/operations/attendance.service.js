@@ -3,6 +3,7 @@ import logger from "../../utils/logger.js";
 import axios from "axios";
 import { Op } from "sequelize";
 import * as cloudinaryService from "../storage/cloudinary.service.js";
+import { toVietnamTimeISO } from "../../utils/helper.js";
 
 // ==================== CHECK-IN/OUT SERVICES ====================
 
@@ -10,7 +11,7 @@ import * as cloudinaryService from "../storage/cloudinary.service.js";
  * Check-in người dùng (hỗ trợ multi-technician)
  * @param {Object} checkInData - { user_id, work_id, project_id, latitude, longitude, ..., technicians: [id1, id2, ...], check_in_type_id }
  */
-export const attendanceService = async (checkInData) => {
+export const checkInService = async (checkInData) => {
   try {
     const {
       user_id,
@@ -49,6 +50,7 @@ export const attendanceService = async (checkInData) => {
       throw new Error("Không xác định người dùng cho bản ghi chấm công");
     }
 
+    // Kiểm tra tọa độ hợp lệ
     if (lat == null || lng == null || isNaN(parseFloat(lat)) || isNaN(parseFloat(lng))) {
       throw new Error("Không xác định tọa độ hợp lệ cho bản ghi chấm công");
     }
@@ -81,6 +83,18 @@ export const attendanceService = async (checkInData) => {
     if (resolvedWorkId) {
       const work = await db.Work.findByPk(resolvedWorkId);
       if (!work) throw new Error("Công việc không tồn tại");
+
+      // Kiểm tra người dùng có được gán cho công việc này hay không
+      const workAssignment = await db.WorkAssignment.findOne({
+        where: {
+          work_id: resolvedWorkId,
+          technician_id: resolvedUserId,
+        },
+      });
+
+      if (!workAssignment) {
+        throw new Error("Người dùng không được gán cho công việc này");
+      }
     }
 
     if (resolvedProjectId) {
@@ -98,13 +112,14 @@ export const attendanceService = async (checkInData) => {
     if (openSummary && openSummary.session) {
       const wk = openSummary.work;
       const workInfo = wk ? { id: wk.id, title: wk.title } : null;
-      const checkInAt = openSummary.check_in_time ? openSummary.check_in_time.toISOString() : null;
-
+      const checkInAt = openSummary.check_in_time ? toVietnamTimeISO(openSummary.check_in_time) : null;
       // Trả về thông tin để controller hiển thị thông báo (HTTP 200)
       return {
         success: true,
         alreadyCheckedIn: true,
-        message: `Người dùng đã check-in vào phiên công việc đang mở.`,
+        message: `Người dùng đã chấm công vào công việc lúc ${checkInAt.split("T")[0]} ${checkInAt
+          .split("T")[1]
+          .substring(0, 5)}`,
         session: {
           id: openSummary.session.id,
           work: workInfo,
@@ -124,19 +139,24 @@ export const attendanceService = async (checkInData) => {
       techArr = [resolvedUserId];
     }
 
-    // Coerce numeric IDs and normalize photos
+    // Chuyển đổi ID người dùng sang số nếu có thể
     const uid = Number.isFinite(Number(resolvedUserId)) ? parseInt(resolvedUserId, 10) : resolvedUserId;
+    // Chuyển đổi ID công việc sang số nếu có thể
     const wid = resolvedWorkId
       ? Number.isFinite(Number(resolvedWorkId))
         ? parseInt(resolvedWorkId, 10)
         : resolvedWorkId
       : null;
+
+    // Chuyển đổi ID dự án sang số nếu có thể
     const pid = resolvedProjectId
       ? Number.isFinite(Number(resolvedProjectId))
         ? parseInt(resolvedProjectId, 10)
         : resolvedProjectId
       : null;
-    const typeIdInt = resolvedTypeId
+
+    // Chuyển đổi ID loại chấm công sang số nếu có thể
+    const attendanceTypeIdInt = resolvedTypeId
       ? Number.isFinite(Number(resolvedTypeId))
         ? parseInt(resolvedTypeId, 10)
         : resolvedTypeId
@@ -161,7 +181,7 @@ export const attendanceService = async (checkInData) => {
         distance_from_work: violation_distance,
         is_within_radius: violation_distance != null ? violation_distance <= 100 : null, // Example logic
         notes,
-        check_in_type_id: typeIdInt,
+        attendance_type_id: attendanceTypeIdInt,
         violation_distance: resolvedViolation,
         technicians: techArr,
       });
@@ -171,13 +191,13 @@ export const attendanceService = async (checkInData) => {
         try {
           await cloudinaryService.deleteImage(photoPublicIdResolved);
         } catch (delErr) {
-          logger.error("Failed to cleanup public image after attendance create error: " + delErr.message);
+          logger.warn("Lỗi xóa ảnh công khai: " + delErr.message);
         }
       }
 
       // Handle Sequelize validation/database errors with more context
       if (err && (err.name === "SequelizeValidationError" || err.name === "SequelizeDatabaseError")) {
-        logger.error("Sequelize error creating Attendance", {
+        logger.warn("Sequelize error creating Attendance", {
           message: err.message,
           errors: err.errors,
           payload: {
@@ -186,7 +206,7 @@ export const attendanceService = async (checkInData) => {
             project_id: pid,
             latitude: lat,
             longitude: lng,
-            check_in_type_id: typeIdInt,
+            check_in_type_id: attendanceTypeIdInt,
             technicians: techArr,
             photo_url: photoUrlNormalized,
           },
@@ -200,7 +220,79 @@ export const attendanceService = async (checkInData) => {
 
     return { success: true, data: attendance, sessionId: attendance.attendance_session_id };
   } catch (error) {
-    logger.error("Error in attendanceService:" + error.message);
+    logger.warn("Error in attendanceService:" + error.message);
+    throw error;
+  }
+};
+
+/**
+ * Check-out người dùng (từ phiên chấm công)
+ * @param {number} id - Attendance ID (for backward compatibility)
+ * @param {Object} criteria - { work_id, user_id, photo_url_check_out } (alternative method)
+ * @param {string} photoUrlCheckOut - Photo URL for check-out (when using id)
+ */
+export const checkOutService = async (criteria) => {
+  try {
+    let attendance;
+    // Find by work_id and user_id if criteria provided
+    if (criteria && criteria.work_id && criteria.user_id) {
+      attendance = await db.Attendance.findOne({
+        where: {
+          work_id: criteria.work_id,
+          user_id: criteria.user_id,
+          check_out_time: null, // Only find unchecked-out records
+        },
+        order: [["check_in_time", "DESC"]], // Get the most recent check-in
+      });
+    } else {
+      throw new Error("Thiếu thông tin chấm công ra (work_id, user_id)");
+    }
+
+    if (!attendance) {
+      throw new Error("Người dùng chưa chấm công vào hoặc bản ghi chấm công không tồn tại");
+    }
+
+    if (attendance.check_out_time) {
+      throw new Error("Người dùng đã thực hiện check-out trước đó");
+    }
+
+    // Kiểm tra người dùng có được gán cho công việc này hay không
+    if (criteria.work_id) {
+      const workAssignment = await db.WorkAssignment.findOne({
+        where: {
+          work_id: criteria.work_id,
+          technician_id: criteria.user_id,
+          assigned_status: { [db.Sequelize.Op.in]: ["pending", "accepted", "completed"] },
+        },
+      });
+
+      if (!workAssignment) {
+        throw new Error("Người dùng không được gán cho công việc này hoặc phân công đã bị từ chối/hủy");
+      }
+    }
+
+    if (!criteria.latitude_check_out || !criteria.longitude_check_out) {
+      throw new Error("Thiếu tọa độ chấm công ra");
+    }
+
+    const checkOutTime = new Date();
+    const photoUrlCheckOut = criteria.photo_url_check_out || null;
+    const latCheckOut = criteria.latitude_check_out || null;
+    const lngCheckOut = criteria.longitude_check_out || null;
+    const durationMinutes = Math.round((checkOutTime - attendance.check_in_time) / 60000);
+
+    await attendance.update({
+      check_out_time: checkOutTime,
+      duration_minutes: durationMinutes,
+      photo_url_check_out: photoUrlCheckOut,
+      latitude_check_out: latCheckOut ? parseFloat(latCheckOut) : null,
+      longitude_check_out: lngCheckOut ? parseFloat(lngCheckOut) : null,
+      status: "checked_out",
+    });
+
+    return { success: true, data: attendance, message: "Check-out thành công" };
+  } catch (error) {
+    logger.warn("Error in checkOutService:" + error.message);
     throw error;
   }
 };
@@ -219,7 +311,7 @@ export const getAllAttendanceService = async () => {
     });
     return { success: true, data: attendances };
   } catch (error) {
-    logger.error("Error in getAllAttendanceService:" + error.message);
+    logger.warn("Error in getAllAttendanceService:" + error.message);
     throw error;
   }
 };
@@ -241,7 +333,7 @@ export const getAttendanceByIdService = async (id) => {
     }
     return { success: true, data: attendance };
   } catch (error) {
-    logger.error("Error in getAttendanceByIdService:" + error.message);
+    logger.warn("Error in getAttendanceByIdService:" + error.message);
     throw error;
   }
 };
@@ -261,7 +353,7 @@ export const getOpenSessionSummaryByUser = async (userId) => {
     if (!session) return null;
 
     const latestAttendance = await db.Attendance.findOne({
-      where: { attendance_session_id: session.id, user_id: userId, parent_attendance_id: null },
+      where: { attendance_session_id: session.id, user_id: userId },
       order: [["check_in_time", "DESC"]],
       attributes: ["id", "check_in_time"],
     });
@@ -273,36 +365,7 @@ export const getOpenSessionSummaryByUser = async (userId) => {
       check_in_id: latestAttendance ? latestAttendance.id : null,
     };
   } catch (error) {
-    logger.error("Error in getOpenSessionSummaryByUser:" + error.message);
-    throw error;
-  }
-};
-/**
- * Check-out người dùng (từ phiên chấm công)
- */
-export const checkOutService = async (id) => {
-  try {
-    const attendance = await db.Attendance.findByPk(id);
-    if (!attendance) {
-      throw new Error("Attendance không tồn tại");
-    }
-
-    if (attendance.check_out_time) {
-      throw new Error("Đã check-out rồi");
-    }
-
-    const checkOutTime = new Date();
-    const durationMinutes = Math.round((checkOutTime - attendance.check_in_time) / 60000);
-
-    await attendance.update({
-      check_out_time: checkOutTime,
-      status: "checked_out",
-      duration_minutes: durationMinutes,
-    });
-
-    return { success: true, data: attendance };
-  } catch (error) {
-    logger.error("Error in checkOutService:" + error.message);
+    logger.warn("Error in getOpenSessionSummaryByUser:" + error.message);
     throw error;
   }
 };
@@ -332,7 +395,7 @@ export const checkOutSessionService = async (sessionId) => {
     // Hook trong model sẽ tự động xử lý cập nhật attendance records và xóa session
     return { success: true, data: session };
   } catch (error) {
-    logger.error("Error in checkOutSessionService:" + error.message);
+    logger.warn("Error in checkOutSessionService:" + error.message);
     throw error;
   }
 };
@@ -353,7 +416,7 @@ export const getAttendanceHistoryByUserIdService = async (userId) => {
 
     return { success: true, data: attendances };
   } catch (error) {
-    logger.error("Error in getAttendanceHistoryByUserIdService:" + error.message);
+    logger.warn("Error in getAttendanceHistoryByUserIdService:" + error.message);
     throw error;
   }
 };
@@ -395,7 +458,7 @@ export const getTechniciansLocationsService = async ({ includeOffline, includeHi
 
     return { success: true, data };
   } catch (error) {
-    logger.error("Error in getTechniciansLocationsService:" + error.message);
+    logger.warn("Error in getTechniciansLocationsService:" + error.message);
     throw error;
   }
 };
@@ -425,7 +488,7 @@ export const getOfficeLocationService = async () => {
 
     return { success: true, data };
   } catch (error) {
-    logger.error("Error in getOfficeLocationService:" + error.message);
+    logger.warn("Error in getOfficeLocationService:" + error.message);
     throw error;
   }
 };
@@ -458,7 +521,7 @@ export const getTechnicianLocationHistoryService = async ({ technicianId, startD
 
     return { success: true, data };
   } catch (error) {
-    logger.error("Error in getTechnicianLocationHistoryService:", error.message);
+    logger.warn("Error in getTechnicianLocationHistoryService:", error.message);
     throw error;
   }
 };
@@ -490,7 +553,7 @@ export const getJobItemsLocationsService = async ({ status, includeArchived }) =
 
     return { success: true, data };
   } catch (error) {
-    logger.error("Error in getJobItemsLocationsService:" + error.message);
+    logger.warn("Error in getJobItemsLocationsService:" + error.message);
     throw error;
   }
 };
@@ -523,7 +586,7 @@ export const getGeocodingReverseService = async ({ lat, lng, language }) => {
 
     return { success: true, data: result };
   } catch (error) {
-    logger.error("Error in getGeocodingReverseService:" + error.message);
+    logger.warn("Error in getGeocodingReverseService:" + error.message);
     throw error;
   }
 };
@@ -619,7 +682,7 @@ export const getAttendanceSummaryService = async (params) => {
 
     return { success: true, data: summary };
   } catch (error) {
-    logger.error("Error in getAttendanceSummaryService:" + error.message);
+    logger.warn("Error in getAttendanceSummaryService:" + error.message);
     throw error;
   }
 };
@@ -650,7 +713,7 @@ export const getAttendanceStatisticsService = async (params) => {
 
     return { success: true, data: stats };
   } catch (error) {
-    logger.error("Error in getAttendanceStatisticsService:" + error.message);
+    logger.warn("Error in getAttendanceStatisticsService:" + error.message);
     throw error;
   }
 };
@@ -672,7 +735,7 @@ export const getAllAttendanceSessionsService = async () => {
     });
     return { success: true, data: sessions };
   } catch (error) {
-    logger.error("Error in getAllAttendanceSessionsService:" + error.message);
+    logger.warn("Error in getAllAttendanceSessionsService:" + error.message);
     throw error;
   }
 };
@@ -695,7 +758,7 @@ export const getAttendanceSessionByIdService = async (id) => {
     }
     return { success: true, data: session };
   } catch (error) {
-    logger.error("Error in getAttendanceSessionByIdService:" + error.message);
+    logger.warn("Error in getAttendanceSessionByIdService:" + error.message);
     throw error;
   }
 };
@@ -719,7 +782,7 @@ export const getActiveSessionByUserService = async (userId) => {
     });
     return { success: true, data: session };
   } catch (error) {
-    logger.error("Error in getActiveSessionByUserService:" + error.message);
+    logger.warn("Error in getActiveSessionByUserService:" + error.message);
     throw error;
   }
 };
@@ -751,7 +814,7 @@ export const getClosedSessionsService = async ({ startDate, endDate, userId }) =
 
     return { success: true, data: sessions };
   } catch (error) {
-    logger.error("Error in getClosedSessionsService:" + error.message);
+    logger.warn("Error in getClosedSessionsService:" + error.message);
     throw error;
   }
 };
@@ -769,7 +832,7 @@ export const getAllAttendanceTypesService = async () => {
     });
     return { success: true, data: types };
   } catch (error) {
-    logger.error("Error in getAllAttendanceTypesService:" + error.message);
+    logger.warn("Error in getAllAttendanceTypesService:" + error.message);
     throw error;
   }
 };
@@ -785,7 +848,7 @@ export const getAttendanceTypeByIdService = async (id) => {
     }
     return { success: true, data: type };
   } catch (error) {
-    logger.error("Error in getAttendanceTypeByIdService:" + error.message);
+    logger.warn("Error in getAttendanceTypeByIdService:" + error.message);
     throw error;
   }
 };
@@ -813,7 +876,7 @@ export const createAttendanceTypeService = async (typeData) => {
 
     return { success: true, data: type };
   } catch (error) {
-    logger.error("Error in createAttendanceTypeService:" + error.message);
+    logger.warn("Error in createAttendanceTypeService:" + error.message);
     throw error;
   }
 };
@@ -831,7 +894,7 @@ export const updateAttendanceTypeService = async (id, typeData) => {
     await type.update(typeData);
     return { success: true, data: type };
   } catch (error) {
-    logger.error("Error in updateAttendanceTypeService:" + error.message);
+    logger.warn("Error in updateAttendanceTypeService:" + error.message);
     throw error;
   }
 };
@@ -849,7 +912,7 @@ export const deleteAttendanceTypeService = async (id) => {
     await type.update({ active: false });
     return { success: true, message: "Xóa loại chấm công thành công" };
   } catch (error) {
-    logger.error("Error in deleteAttendanceTypeService:" + error.message);
+    logger.warn("Error in deleteAttendanceTypeService:" + error.message);
     throw error;
   }
 };

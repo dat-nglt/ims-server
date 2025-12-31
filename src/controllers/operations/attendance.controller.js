@@ -41,12 +41,13 @@ export const getAttendanceByIdController = async (req, res) => {
 /**
  * Check-in người dùng
  */
-export const attendanceController = async (req, res) => {
+export const checkInController = async (req, res) => {
   try {
     const {
       user_id, // ok
       work_id, // ok
       latitude, // ok
+      project_id = null,
       longitude, // ok
       location_name, // ok
       address, // ok
@@ -87,15 +88,11 @@ export const attendanceController = async (req, res) => {
       throw new Error("Thiếu tọa độ: latitude và longitude là bắt buộc");
     }
 
-    const result = await attendanceService.attendanceService(payload);
+    const result = await attendanceService.checkInService(payload);
 
     // If service reports an already-open session, return 200 with info for client to show notification
     if (result && result.alreadyCheckedIn) {
-      return res.status(200).json({
-        status: "info",
-        data: result.session || null,
-        message: result.message || "Người dùng đã check-in vào phiên khác",
-      });
+      return res.status(200).json(result);
     }
 
     res.status(201).json({
@@ -105,34 +102,41 @@ export const attendanceController = async (req, res) => {
     });
   } catch (error) {
     logger.error(`[${req.id}] Error in attendanceController:` + error.message);
-    res.status(400).json({ error: error.message });
+    res.status(200).json({ success: false, message: error.message });
   }
 };
 
 /**
- * Check-out người dùng
+ * Check-out người dùng (by attendance id or by work_id + user_id)
  */
 export const checkOutController = async (req, res) => {
   try {
-    // Accept id in body: id | attendance_id | attendanceId
-    const { id, attendance_id, attendanceId, location, note } = req.body || {};
-    console.log(req.body);
+    // Accept id in body: id | attendance_id | attendanceId (for backward compatibility)
+    // Or accept work_id and user_id for new approach
+    const {
+      work_id,
+      user_id,
+      photo_url_check_out = null,
+      latitude_check_out = null,
+      longitude_check_out = null,
+    } = req.body || {};
 
-    const attendanceIdResolved = id ?? attendance_id ?? attendanceId;
-
-    if (!attendanceIdResolved) {
-      return res.status(400).json({ error: "Thiếu id attendance để check-out" });
+    // If work_id and user_id are provided, use them; otherwise fall back to attendance id
+    if (work_id && user_id && photo_url_check_out && latitude_check_out && longitude_check_out) {
+      const result = await attendanceService.checkOutService({
+        work_id,
+        user_id,
+        photo_url_check_out,
+        latitude_check_out,
+        longitude_check_out,
+      });
+      return res.json(result);
     }
 
-    const result = await attendanceService.checkOutService(attendanceIdResolved);
-    res.json({
-      status: "success",
-      data: result.data,
-      message: "Check-out thành công",
-    });
+    throw new Error("Thiếu work_id và user_id để check-out");
   } catch (error) {
     logger.error(`[${req.id}] Error in checkOutController:` + error.message);
-    res.status(400).json({ error: error.message });
+    res.status(200).json({ success: false, message: error.message });
   }
 };
 

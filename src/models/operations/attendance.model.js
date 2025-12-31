@@ -61,18 +61,6 @@ export default (sequelize, DataTypes) => {
         },
       },
 
-      // Bản ghi gốc nếu tạo từ multi-technician check-in
-      // Nếu technicians trong ảnh có > 1 người, sẽ tạo bản ghi cho mỗi person
-      // Và liên kết chúng với parent_attendance_id để theo dõi
-      parent_attendance_id: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        references: {
-          model: "attendance",
-          key: "id",
-        },
-      },
-
       // Thời gian check-in
       check_in_time: {
         type: DataTypes.DATE,
@@ -82,13 +70,42 @@ export default (sequelize, DataTypes) => {
       check_out_time: {
         type: DataTypes.DATE,
       },
-      // Vĩ độ với validation
+      // Vĩ độ check-in với validation (-90 to 90)
       latitude: {
         type: DataTypes.DECIMAL(10, 8),
+        allowNull: false,
+        validate: {
+          min: -90,
+          max: 90,
+        },
       },
-      // Kinh độ với validation
+      // Kinh độ check-in với validation (-180 to 180)
       longitude: {
         type: DataTypes.DECIMAL(11, 8),
+        allowNull: false,
+        validate: {
+          min: -180,
+          max: 180,
+          notNull: true,
+        },
+      },
+      // Vĩ độ check-out với validation (-90 to 90)
+      latitude_check_out: {
+        type: DataTypes.DECIMAL(10, 8),
+        allowNull: true,
+        validate: {
+          min: -90,
+          max: 90,
+        },
+      },
+      // Kinh độ check-out với validation (-180 to 180)
+      longitude_check_out: {
+        type: DataTypes.DECIMAL(11, 8),
+        allowNull: true,
+        validate: {
+          min: -180,
+          max: 180,
+        },
       },
       // Tên địa điểm
       location_name: {
@@ -101,6 +118,16 @@ export default (sequelize, DataTypes) => {
       // URL ảnh (legacy)
       photo_url: {
         type: DataTypes.TEXT,
+      },
+      // URL ảnh check-out (chứng minh chấm công ra)
+      photo_url_check_out: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      // Địa chỉ check-out
+      address_check_out: {
+        type: DataTypes.TEXT,
+        allowNull: true,
       },
 
       // Trạng thái (cập nhật: enum để hỗ trợ 'on_leave' từ TrackAttendance)
@@ -117,9 +144,18 @@ export default (sequelize, DataTypes) => {
       is_within_radius: {
         type: DataTypes.BOOLEAN,
       },
-      // Thời gian làm việc với validation
-      duration_minutes: {
-        type: DataTypes.INTEGER,
+      // Khoảng cách từ công việc khi check-out
+      distance_from_work_checkout: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+        validate: {
+          min: 0,
+        },
+      },
+      // Có trong phạm vi hay không khi check-out
+      is_within_radius_check_out: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
       },
       // Thông tin thiết bị
       device_info: {
@@ -134,7 +170,7 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
       },
       // Loại chấm công (FK tới attendance_type)
-      check_in_type_id: {
+      attendance_type_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
@@ -142,15 +178,12 @@ export default (sequelize, DataTypes) => {
           key: "id",
         },
       },
-      // Khoảng cách vi phạm (mới: từ violationDistance trong CheckIn.jsx)
+      // Khoảng cách vi phạm (từ violationDistance trong CheckIn.jsx)
       violation_distance: {
         type: DataTypes.DECIMAL(10, 2),
-      },
-      // Technicians involved at this check-in (JSONB array of user IDs)
-      technicians: {
-        type: DataTypes.JSONB,
-        allowNull: true,
-        defaultValue: [],
+        validate: {
+          min: 0,
+        },
       },
     },
     {
@@ -165,20 +198,13 @@ export default (sequelize, DataTypes) => {
         { fields: ["user_id", "check_in_time"] }, // Composite index cho truy vấn theo user và thời gian
         { fields: ["project_id"] }, // Index mới cho lọc theo dự án
         { fields: ["attendance_session_id"] }, // Index để truy xuất theo phiên chấm công
-        { fields: ["parent_attendance_id"] }, // Index để tìm child records
-        { fields: ["check_in_type_id"] }, // Index cho lọc theo loại chấm công
+        { fields: ["attendance_type_id"] }, // Index cho lọc theo loại chấm công
         { fields: ["project_id", "check_in_time"] }, // Composite for project-date queries
         { fields: ["work_id", "check_in_time"] }, // Composite for work-date queries
       ],
       hooks: {
-        // Hook: compute duration_minutes, set status from check_out_time, and populate location_point from lat/lng
+        // Hook: set status from check_out_time
         beforeSave: async (checkIn, options) => {
-          // Compute duration
-          if (checkIn.check_out_time && checkIn.check_in_time) {
-            const durationMs = new Date(checkIn.check_out_time) - new Date(checkIn.check_in_time);
-            checkIn.duration_minutes = Math.max(0, Math.floor(durationMs / (1000 * 60)));
-          }
-
           // Set status automatically
           if (checkIn.check_out_time) {
             checkIn.status = "checked_out";
@@ -232,75 +258,32 @@ export default (sequelize, DataTypes) => {
         },
 
         // After creating record, ensure session references the check-in/check-out ids properly
-        // Nếu có nhiều technicians trong ảnh, tạo bản ghi tương tự cho mỗi technician
         afterCreate: async (checkIn, options) => {
           const AttendanceSession = checkIn.sequelize.models.AttendanceSession;
           if (!AttendanceSession || !checkIn.attendance_session_id) return;
 
-          const session = await AttendanceSession.findByPk(checkIn.attendance_session_id, {
-            transaction: options.transaction,
-          });
-          if (!session) return;
+          try {
+            const session = await AttendanceSession.findByPk(checkIn.attendance_session_id, {
+              transaction: options.transaction,
+            });
+            if (!session) return;
 
-          // Make sure the session has check_in_id set for the first check-in
-          if (!session.check_in_id) {
-            await session.update({ check_in_id: checkIn.id }, { transaction: options.transaction });
-          }
-
-          // If this record includes a check_out, close the session and set check_out_id
-          if (checkIn.check_out_time) {
-            await session.update(
-              { ended_at: checkIn.check_out_time, status: "closed", check_out_id: checkIn.id },
-              { transaction: options.transaction }
-            );
-          }
-
-          // **Multi-technician logic**: Nếu technicians có > 1 người
-          // Tạo bản ghi tương tự cho các technician khác
-          if (checkIn.technicians && Array.isArray(checkIn.technicians) && checkIn.technicians.length > 1) {
-            const Attendance = checkIn.constructor;
-            const primaryTechnicianId = checkIn.user_id;
-
-            for (const technicianId of checkIn.technicians) {
-              // Bỏ qua người chấm công gốc
-              if (technicianId === primaryTechnicianId) continue;
-
-              // Tạo bản ghi tương tự cho technician khác
-              try {
-                await Attendance.create(
-                  {
-                    user_id: technicianId,
-                    work_id: checkIn.work_id,
-                    project_id: checkIn.project_id,
-                    attendance_session_id: checkIn.attendance_session_id,
-                    parent_attendance_id: checkIn.id, // Liên kết bản ghi gốc
-                    check_in_time: checkIn.check_in_time,
-                    check_out_time: checkIn.check_out_time,
-                    latitude: checkIn.latitude,
-                    longitude: checkIn.longitude,
-                    location_name: checkIn.location_name,
-                    address: checkIn.address,
-                    photo_url: checkIn.photo_url,
-                    status: checkIn.status,
-                    distance_from_work: checkIn.distance_from_work,
-                    is_within_radius: checkIn.is_within_radius,
-                    duration_minutes: checkIn.duration_minutes,
-                    device_info: checkIn.device_info,
-                    ip_address: checkIn.ip_address,
-                    notes: checkIn.notes
-                      ? `${checkIn.notes} [Co-technician of ${primaryTechnicianId}]`
-                      : `Co-technician of ${primaryTechnicianId}`,
-                    check_in_type_id: checkIn.check_in_type_id,
-                    violation_distance: checkIn.violation_distance,
-                    technicians: [technicianId, primaryTechnicianId], // Ghi lại cả 2 người trong ảnh
-                  },
-                  { transaction: options.transaction }
-                );
-              } catch (err) {
-                console.error(`Error creating co-technician record for technician ${technicianId}:`, err);
-                // Continue processing other technicians
-              }
+            // Make sure the session has check_in_id set for the first check-in
+            if (!session.check_in_id) {
+              await session.update({ check_in_id: checkIn.id }, { transaction: options.transaction });
             }
+
+            // If this record includes a check_out, close the session and set check_out_id
+            if (checkIn.check_out_time) {
+              await session.update(
+                { ended_at: checkIn.check_out_time, status: "closed", check_out_id: checkIn.id },
+                { transaction: options.transaction }
+              );
+            }
+          } catch (err) {
+            console.error("Error updating AttendanceSession in afterCreate:", err);
+            // Rollback will be handled by transaction
+            throw err;
           }
         },
 
@@ -309,31 +292,37 @@ export default (sequelize, DataTypes) => {
           const AttendanceSession = checkIn.sequelize.models.AttendanceSession;
           if (!AttendanceSession) return;
 
-          // If attendance_session_id exists, update it
-          if (checkIn.attendance_session_id && checkIn.check_out_time) {
-            await AttendanceSession.update(
-              { ended_at: checkIn.check_out_time, status: "closed", check_out_id: checkIn.id },
-              { where: { id: checkIn.attendance_session_id }, transaction: options.transaction }
-            );
-            return;
-          }
-
-          // Otherwise, try to find an open session for this user/work and close it
-          if (checkIn.check_out_time) {
-            const session = await AttendanceSession.findOne({
-              where: { user_id: checkIn.user_id, work_id: checkIn.work_id, ended_at: null },
-              transaction: options.transaction,
-            });
-            if (session) {
-              await session.update(
+          try {
+            // If attendance_session_id exists, update it
+            if (checkIn.attendance_session_id && checkIn.check_out_time) {
+              await AttendanceSession.update(
                 { ended_at: checkIn.check_out_time, status: "closed", check_out_id: checkIn.id },
-                { transaction: options.transaction }
+                { where: { id: checkIn.attendance_session_id }, transaction: options.transaction }
               );
-              // also link the check-in to the session if not already linked
-              if (!checkIn.attendance_session_id) {
-                await checkIn.update({ attendance_session_id: session.id }, { transaction: options.transaction });
+              return;
+            }
+
+            // Otherwise, try to find an open session for this user/work and close it
+            if (checkIn.check_out_time) {
+              const session = await AttendanceSession.findOne({
+                where: { user_id: checkIn.user_id, work_id: checkIn.work_id, ended_at: null },
+                transaction: options.transaction,
+              });
+              if (session) {
+                await session.update(
+                  { ended_at: checkIn.check_out_time, status: "closed", check_out_id: checkIn.id },
+                  { transaction: options.transaction }
+                );
+                // also link the check-in to the session if not already linked
+                if (!checkIn.attendance_session_id) {
+                  await checkIn.update({ attendance_session_id: session.id }, { transaction: options.transaction });
+                }
               }
             }
+          } catch (err) {
+            console.error("Error updating AttendanceSession in afterUpdate:", err);
+            // Rollback will be handled by transaction
+            throw err;
           }
         },
       },
@@ -358,7 +347,7 @@ export default (sequelize, DataTypes) => {
     });
 
     Attendance.belongsTo(models.AttendanceType, {
-      foreignKey: "check_in_type_id",
+      foreignKey: "attendance_type_id",
       as: "attendanceType",
     });
 
@@ -366,27 +355,6 @@ export default (sequelize, DataTypes) => {
     Attendance.belongsTo(models.AttendanceSession, {
       foreignKey: "attendance_session_id",
       as: "attendanceSession",
-    });
-
-    // Self-referencing: parent_attendance_id → linked to original record
-    Attendance.belongsTo(models.Attendance, {
-      foreignKey: "parent_attendance_id",
-      as: "parentAttendance",
-    });
-
-    // Self-referencing: reverse relation để tìm child records
-    Attendance.hasMany(models.Attendance, {
-      foreignKey: "parent_attendance_id",
-      as: "coTechnicianRecords",
-    });
-
-    // Technicians: many-to-many relation (optional join table `attendance_technicians`)
-    Attendance.belongsToMany(models.User, {
-      through: "attendance_technicians",
-      foreignKey: "attendance_id",
-      otherKey: "user_id",
-      as: "associatedTechnicians",
-      uniqueKey: false,
     });
   };
 
