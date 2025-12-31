@@ -3,7 +3,7 @@ import {
   // Check-in/out
   getAllAttendanceController,
   getAttendanceByIdController,
-  checkInController,
+  attendanceController,
   checkOutController,
   getAttendanceHistoryByUserIdController,
   // Locations
@@ -79,9 +79,9 @@ router.get("/user/:userId", getAttendanceHistoryByUserIdController);
  *  - location: { lat, lng, address } (object) - vị trí check-in
  *  - metadata (object): thông tin bổ sung (ghi chú, jobId...)
  * Response: 201 Created -> { data: attendance }
- * Controller: checkInController
+ * Controller: attendanceController
  */
-router.post("/check-in", checkInController);
+router.post("/check-in", attendanceController);
 
 /**
  * POST /check-out
@@ -94,7 +94,7 @@ router.post("/check-in", checkInController);
  * Controller: checkOutController
  */
 router.post("/check-out/", checkOutController);
-  
+
 /**
  * GET /:id
  * Mô tả: Lấy chi tiết một bản ghi chấm công theo id.
@@ -184,10 +184,7 @@ router.get("/locations/office", getOfficeLocationController);
  * Response: 200 OK -> { data: [locationPoints], meta }
  * Controller: getTechnicianLocationHistoryController
  */
-router.get(
-  "/locations/technicians/:technicianId/history",
-  getTechnicianLocationHistoryController
-);
+router.get("/locations/technicians/:technicianId/history", getTechnicianLocationHistoryController);
 
 /**
  * GET /locations/job-items

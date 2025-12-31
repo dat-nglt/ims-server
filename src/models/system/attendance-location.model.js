@@ -86,16 +86,5 @@ export default (sequelize, DataTypes) => {
     }
   );
 
-  // Định nghĩa các mối quan hệ
-  AttendanceLocation.associate = (models) => {
-    // Một địa điểm có nhiều bản ghi điểm danh
-    if (models.Attendance) {
-      AttendanceLocation.hasMany(models.Attendance, {
-        foreignKey: "location_id",
-        as: "attendances",
-      });
-    }
-  };
-
   return AttendanceLocation;
 };

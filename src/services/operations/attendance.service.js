@@ -7,6 +7,205 @@ import * as cloudinaryService from "../storage/cloudinary.service.js";
 // ==================== CHECK-IN/OUT SERVICES ====================
 
 /**
+ * Check-in người dùng (hỗ trợ multi-technician)
+ * @param {Object} checkInData - { user_id, work_id, project_id, latitude, longitude, ..., technicians: [id1, id2, ...], check_in_type_id }
+ */
+export const attendanceService = async (checkInData) => {
+  try {
+    const {
+      user_id,
+      work_id,
+      project_id,
+      latitude,
+      longitude,
+      location_name,
+      address,
+      photo_url,
+      photo_public_id,
+      device_info,
+      ip_address,
+      notes,
+      attendance_type_id,
+      violation_distance,
+      technicians = [],
+    } = checkInData || {};
+
+    const resolvedUserId = user_id || null;
+    const resolvedWorkId = work_id || null;
+    const resolvedProjectId = project_id || null;
+    const lat = latitude || null;
+    const lng = longitude || null;
+    const locName = location_name || null;
+    const addr = address || null;
+    const photos = photo_url || null;
+    const photoPublicIdResolved = photo_public_id || null;
+    const resolvedDevice = device_info || null;
+    const resolvedIp = ip_address || null;
+    const resolvedTypeId = attendance_type_id || null;
+    const resolvedViolation = violation_distance || null;
+
+    // Basic validation
+    if (!resolvedUserId) {
+      throw new Error("Không xác định người dùng cho bản ghi chấm công");
+    }
+
+    if (lat == null || lng == null || isNaN(parseFloat(lat)) || isNaN(parseFloat(lng))) {
+      throw new Error("Không xác định tọa độ hợp lệ cho bản ghi chấm công");
+    }
+
+    // Kiểm tra user tồn tại
+    const user = await db.User.findByPk(resolvedUserId);
+    if (!user) throw new Error("Hệ thống không tìm thấy người dùng tham chiếu đến bản ghi chấm công");
+
+    // Normalize photos to a single URL (take first element if an array or JSON array string)
+    let photoUrlNormalized = null;
+    if (Array.isArray(photos)) {
+      photoUrlNormalized = photos.length > 0 ? String(photos[0]) : null;
+    } else if (typeof photos === "string") {
+      // Try to parse JSON array string like '["url1","url2"]'
+      try {
+        const parsed = JSON.parse(photos);
+        if (Array.isArray(parsed)) {
+          photoUrlNormalized = parsed.length > 0 ? String(parsed[0]) : null;
+        } else {
+          photoUrlNormalized = photos;
+        }
+      } catch (e) {
+        photoUrlNormalized = photos;
+      }
+    } else if (photos !== null && photos !== undefined) {
+      photoUrlNormalized = String(photos);
+    }
+
+    // Validate work/project/type existence
+    if (resolvedWorkId) {
+      const work = await db.Work.findByPk(resolvedWorkId);
+      if (!work) throw new Error("Công việc không tồn tại");
+    }
+
+    if (resolvedProjectId) {
+      const project = await db.Project.findByPk(resolvedProjectId);
+      if (!project) throw new Error("Dự án không tồn tại");
+    }
+
+    if (resolvedTypeId) {
+      const attendanceType = await db.AttendanceType.findByPk(resolvedTypeId);
+      if (!attendanceType) throw new Error("Loại chấm công không tồn tại");
+    }
+
+    // Kiểm tra session open (sử dụng helper để lấy thêm thông tin work và thời điểm check-in)
+    const openSummary = await getOpenSessionSummaryByUser(resolvedUserId);
+    if (openSummary && openSummary.session) {
+      const wk = openSummary.work;
+      const workInfo = wk ? { id: wk.id, title: wk.title } : null;
+      const checkInAt = openSummary.check_in_time ? openSummary.check_in_time.toISOString() : null;
+
+      // Trả về thông tin để controller hiển thị thông báo (HTTP 200)
+      return {
+        success: true,
+        alreadyCheckedIn: true,
+        message: `Người dùng đã check-in vào phiên công việc đang mở.`,
+        session: {
+          id: openSummary.session.id,
+          work: workInfo,
+          check_in_time: checkInAt,
+          check_in_id: openSummary.check_in_id,
+        },
+      };
+    }
+
+    // Normalize technicians
+    let techArr = [];
+    if (Array.isArray(technicians) && technicians.length > 0) {
+      techArr = technicians.map((t) => (typeof t === "string" ? parseInt(t, 10) : t));
+    } else if (technicians) {
+      techArr = [typeof technicians === "string" ? parseInt(technicians, 10) : technicians];
+    } else {
+      techArr = [resolvedUserId];
+    }
+
+    // Coerce numeric IDs and normalize photos
+    const uid = Number.isFinite(Number(resolvedUserId)) ? parseInt(resolvedUserId, 10) : resolvedUserId;
+    const wid = resolvedWorkId
+      ? Number.isFinite(Number(resolvedWorkId))
+        ? parseInt(resolvedWorkId, 10)
+        : resolvedWorkId
+      : null;
+    const pid = resolvedProjectId
+      ? Number.isFinite(Number(resolvedProjectId))
+        ? parseInt(resolvedProjectId, 10)
+        : resolvedProjectId
+      : null;
+    const typeIdInt = resolvedTypeId
+      ? Number.isFinite(Number(resolvedTypeId))
+        ? parseInt(resolvedTypeId, 10)
+        : resolvedTypeId
+      : null;
+
+    // Create attendance record with improved validation error handling
+    let attendance;
+    try {
+      attendance = await db.Attendance.create({
+        user_id: uid,
+        work_id: wid,
+        project_id: pid,
+        check_in_time: new Date(),
+        latitude: parseFloat(lat),
+        longitude: parseFloat(lng),
+        location_name: locName,
+        address: addr,
+        photo_url: photoUrlNormalized,
+        status: "checked_in",
+        device_info: resolvedDevice,
+        ip_address: resolvedIp,
+        distance_from_work: violation_distance,
+        is_within_radius: violation_distance != null ? violation_distance <= 100 : null, // Example logic
+        notes,
+        check_in_type_id: typeIdInt,
+        violation_distance: resolvedViolation,
+        technicians: techArr,
+      });
+    } catch (err) {
+      // If a photo was uploaded directly by client (public id provided), attempt cleanup to avoid orphans
+      if (photoPublicIdResolved) {
+        try {
+          await cloudinaryService.deleteImage(photoPublicIdResolved);
+        } catch (delErr) {
+          logger.error("Failed to cleanup public image after attendance create error: " + delErr.message);
+        }
+      }
+
+      // Handle Sequelize validation/database errors with more context
+      if (err && (err.name === "SequelizeValidationError" || err.name === "SequelizeDatabaseError")) {
+        logger.error("Sequelize error creating Attendance", {
+          message: err.message,
+          errors: err.errors,
+          payload: {
+            user_id: uid,
+            work_id: wid,
+            project_id: pid,
+            latitude: lat,
+            longitude: lng,
+            check_in_type_id: typeIdInt,
+            technicians: techArr,
+            photo_url: photoUrlNormalized,
+          },
+        });
+        const messages =
+          err.errors && Array.isArray(err.errors) ? err.errors.map((e) => e.message).join("; ") : err.message;
+        throw new Error(`Validation error: ${messages}`);
+      }
+      throw err;
+    }
+
+    return { success: true, data: attendance, sessionId: attendance.attendance_session_id };
+  } catch (error) {
+    logger.error("Error in attendanceService:" + error.message);
+    throw error;
+  }
+};
+
+/**
  * Lấy danh sách tất cả attendance
  */
 export const getAllAttendanceService = async () => {
@@ -78,212 +277,6 @@ export const getOpenSessionSummaryByUser = async (userId) => {
     throw error;
   }
 };
-
-/**
- * Check-in người dùng (hỗ trợ multi-technician)
- * @param {Object} checkInData - { user_id, work_id, project_id, latitude, longitude, ..., technicians: [id1, id2, ...], check_in_type_id }
- */
-export const checkInService = async (checkInData) => {
-  try {
-    // Support flexible input keys and types
-    const {
-      user_id,
-      userId,
-      work_id,
-      workId,
-      project_id,
-      projectId,
-      latitude,
-      longitude,
-      location_name,
-      address,
-      photo_urls,
-      photo_url,
-      photo,
-      device_info,
-      device,
-      ip_address,
-      notes,
-      check_in_type_id,
-      typeId,
-      violation_distance,
-      violationDistance,
-      technicians = [],
-      location,
-    } = checkInData || {};
-
-    const resolvedUserId = user_id || userId;
-    const resolvedWorkId = work_id || workId || null;
-    const resolvedProjectId = project_id || projectId || null;
-    const lat = location?.lat ?? location?.latitude ?? (latitude != null ? parseFloat(latitude) : null);
-    const lng = location?.lng ?? location?.longitude ?? (longitude != null ? parseFloat(longitude) : null);
-    const locName = location?.name ?? location_name ?? null;
-    const addr = location?.address ?? address ?? null;
-    const photos = photo_urls ?? photo_url ?? photo ?? null;
-    const photoPublicId = checkInData.photo_public_id ?? checkInData.photoPublicId ?? null;
-    const resolvedDevice = device_info ?? device ?? null;
-    const resolvedIp = ip_address ?? null;
-    const resolvedTypeId = check_in_type_id ?? typeId ?? null;
-    const resolvedViolation = violation_distance ?? violationDistance ?? null;
-
-    // Basic validation
-    if (!resolvedUserId) {
-      throw new Error("Thiếu user_id");
-    }
-    if (lat == null || lng == null || isNaN(parseFloat(lat)) || isNaN(parseFloat(lng))) {
-      throw new Error("Thiếu hoặc không hợp lệ: latitude và longitude");
-    }
-
-    // Kiểm tra user tồn tại
-    const user = await db.User.findByPk(resolvedUserId);
-    if (!user) throw new Error("Người dùng không tồn tại");
-
-    // Normalize photos to a single URL (take first element if an array or JSON array string)
-    let photoUrlNormalized = null;
-    if (Array.isArray(photos)) {
-      photoUrlNormalized = photos.length > 0 ? String(photos[0]) : null;
-    } else if (typeof photos === "string") {
-      // Try to parse JSON array string like '["url1","url2"]'
-      try {
-        const parsed = JSON.parse(photos);
-        if (Array.isArray(parsed)) {
-          photoUrlNormalized = parsed.length > 0 ? String(parsed[0]) : null;
-        } else {
-          photoUrlNormalized = photos;
-        }
-      } catch (e) {
-        photoUrlNormalized = photos;
-      }
-    } else if (photos !== null && photos !== undefined) {
-      photoUrlNormalized = String(photos);
-    }
-
-    // Validate work/project/type existence
-    if (resolvedWorkId) {
-      const work = await db.Work.findByPk(resolvedWorkId);
-      if (!work) throw new Error("Công việc không tồn tại");
-    }
-
-    if (resolvedProjectId) {
-      const project = await db.Project.findByPk(resolvedProjectId);
-      if (!project) throw new Error("Dự án không tồn tại");
-    }
-
-    if (resolvedTypeId) {
-      const checkInType = await db.AttendanceType.findByPk(resolvedTypeId);
-      if (!checkInType) throw new Error("Loại chấm công không tồn tại");
-    }
-
-    // Kiểm tra session open (sử dụng helper để lấy thêm thông tin work và thời điểm check-in)
-    const openSummary = await getOpenSessionSummaryByUser(resolvedUserId);
-    if (openSummary && openSummary.session) {
-      const wk = openSummary.work;
-      const workInfo = wk ? { id: wk.id, title: wk.title } : null;
-      const checkInAt = openSummary.check_in_time ? openSummary.check_in_time.toISOString() : null;
-
-      // Trả về thông tin để controller hiển thị thông báo (HTTP 200)
-      return {
-        success: true,
-        alreadyCheckedIn: true,
-        message: `Người dùng đã check-in vào phiên công việc đang mở.`,
-        session: {
-          id: openSummary.session.id,
-          work: workInfo,
-          check_in_time: checkInAt,
-          check_in_id: openSummary.check_in_id,
-        },
-      };
-    }
-
-    // Normalize technicians
-    let techArr = [];
-    if (Array.isArray(technicians) && technicians.length > 0) {
-      techArr = technicians.map((t) => (typeof t === "string" ? parseInt(t, 10) : t));
-    } else if (technicians) {
-      techArr = [typeof technicians === "string" ? parseInt(technicians, 10) : technicians];
-    } else {
-      techArr = [resolvedUserId];
-    }
-
-    // Coerce numeric IDs and normalize photos
-    const uid = Number.isFinite(Number(resolvedUserId)) ? parseInt(resolvedUserId, 10) : resolvedUserId;
-    const wid = resolvedWorkId
-      ? Number.isFinite(Number(resolvedWorkId))
-        ? parseInt(resolvedWorkId, 10)
-        : resolvedWorkId
-      : null;
-    const pid = resolvedProjectId
-      ? Number.isFinite(Number(resolvedProjectId))
-        ? parseInt(resolvedProjectId, 10)
-        : resolvedProjectId
-      : null;
-    const typeIdInt = resolvedTypeId
-      ? Number.isFinite(Number(resolvedTypeId))
-        ? parseInt(resolvedTypeId, 10)
-        : resolvedTypeId
-      : null;
-
-    // Create attendance record with improved validation error handling
-    let attendance;
-    try {
-      attendance = await db.Attendance.create({
-        user_id: uid,
-        work_id: wid,
-        project_id: pid,
-        check_in_time: new Date(),
-        latitude: parseFloat(lat),
-        longitude: parseFloat(lng),
-        location_name: locName,
-        address: addr,
-        photo_url: photoUrlNormalized,
-        status: "checked_in",
-        device_info: resolvedDevice,
-        ip_address: resolvedIp,
-        notes,
-        check_in_type_id: typeIdInt,
-        violation_distance: resolvedViolation,
-        technicians: techArr,
-      });
-    } catch (err) {
-      // If a photo was uploaded directly by client (public id provided), attempt cleanup to avoid orphans
-      if (photoPublicId) {
-        try {
-          await cloudinaryService.deleteImage(photoPublicId);
-        } catch (delErr) {
-          logger.error("Failed to cleanup public image after attendance create error: " + delErr.message);
-        }
-      }
-
-      // Handle Sequelize validation/database errors with more context
-      if (err && (err.name === "SequelizeValidationError" || err.name === "SequelizeDatabaseError")) {
-        logger.error("Sequelize error creating Attendance", {
-          message: err.message,
-          errors: err.errors,
-          payload: {
-            user_id: uid,
-            work_id: wid,
-            project_id: pid,
-            latitude: lat,
-            longitude: lng,
-            check_in_type_id: typeIdInt,
-            technicians: techArr,
-            photo_url: photoUrlNormalized,
-          },
-        });
-        const messages =
-          err.errors && Array.isArray(err.errors) ? err.errors.map((e) => e.message).join("; ") : err.message;
-        throw new Error(`Validation error: ${messages}`);
-      }
-      throw err;
-    }
-
-    return { success: true, data: attendance, sessionId: attendance.attendance_session_id };
-  } catch (error) {
-    logger.error("Error in checkInService:" + error.message);
-    throw error;
-  }
-};
-
 /**
  * Check-out người dùng (từ phiên chấm công)
  */
