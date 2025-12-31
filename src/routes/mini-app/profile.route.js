@@ -4,6 +4,7 @@ import {
   getListOfWorkAssignmentsController,
   getListOfWorkAssignmentsInCurrentDayController,
   getLocationByUserTokenController,
+  getAttendanceLocationController,
 } from "../../controllers/mini-app/profile.controller.js";
 ``;
 const router = express.Router();
@@ -15,5 +16,6 @@ router.get("/list-of-work-assignments-current-day/:UID", getListOfWorkAssignment
 
 // POST /api/projects - Create a new project
 router.post("/location/decode", getLocationByUserTokenController);
+router.post("/attendance/location", getAttendanceLocationController);
 
 export default router;

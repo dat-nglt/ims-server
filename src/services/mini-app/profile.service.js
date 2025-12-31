@@ -214,3 +214,37 @@ export const decodeLocationByTokenService = async (locationToken, accessToken) =
     return { success: false, error: error.message };
   }
 };
+
+export const getAttendanceLocationService = async () => {
+  try {
+    const locations = await db.AttendanceLocation.findAll({
+      where: {
+        is_active: true,
+      },
+      attributes: [
+        "id",
+        "location_code",
+        "name",
+        "type",
+        "address",
+        "latitude",
+        "longitude",
+        "radius",
+        "icon",
+        "notes",
+        "created_at",
+        "updated_at",
+      ],
+      order: [["name", "ASC"]],
+    });
+
+    if (!locations || locations.length === 0) {
+      return { success: true, data: [] };
+    }
+
+    return { success: true, data: locations };
+  } catch (error) {
+    logger.error(`Error in getAttendanceLocationService: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+};
