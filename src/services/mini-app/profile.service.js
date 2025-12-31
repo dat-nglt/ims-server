@@ -235,7 +235,7 @@ export const getAttendanceLocationService = async () => {
         "created_at",
         "updated_at",
       ],
-      order: [["name", "ASC"]],
+      order: [["name", "DESC"]],
     });
 
     if (!locations || locations.length === 0) {

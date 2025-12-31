@@ -32,7 +32,7 @@ export const getAllUsersService = async () => {
           required: false, // Left join
         },
       ],
-      order: [["created_at", "ASC"]], // newest -> oldest
+      order: [["created_at", "DESC"]], // Sắp xếp theo ngày mới tạo giảm dần
     });
     return { success: true, data: users };
   } catch (error) {
