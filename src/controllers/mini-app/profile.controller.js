@@ -3,6 +3,7 @@ import {
   getListOfWorkAssignmentsService,
   decodeLocationByTokenService,
   getAttendanceLocationService,
+  getAttendanceTypeService,
 } from "../../services/mini-app/profile.service.js";
 import logger from "../../utils/logger.js";
 
@@ -58,6 +59,16 @@ export const getAttendanceLocationController = async (req, res) => {
     res.json(result);
   } catch (error) {
     logger.error(`[${req.id}] Error in getAttendanceLocationController:`, error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getAttendanceTypeController = async (req, res) => {
+  try {
+    const result = await getAttendanceTypeService();
+    res.json(result);
+  } catch (error) {
+    logger.error(`[${req.id}] Error in getAttendanceTypeController:`, error.message);
     res.status(500).json({ error: error.message });
   }
 };

@@ -248,3 +248,21 @@ export const getAttendanceLocationService = async () => {
     return { success: false, error: error.message };
   }
 };
+
+export const getAttendanceTypeService = async () => {
+  try {
+    const attendanceTypes = await db.AttendanceType.findAll({
+      where: {
+        is_active: true,
+      },
+      order: [["name", "DESC"]],
+    });
+    if (!attendanceTypes || attendanceTypes.length === 0) {
+      return { success: true, data: [] };
+    }
+    return { success: true, data: attendanceTypes };
+  } catch (error) {
+    logger.error(`Error in getAttendanceTypeService: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+};
