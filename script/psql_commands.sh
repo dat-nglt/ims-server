@@ -1,69 +1,40 @@
 #!/bin/bash
 
-# Script for PostgreSQL operations on VPS
-# This script demonstrates common psql commands for database management
+# Script to restore database from ims_db_backup.sql
+# This script restores the database from the backup file
 
-# Variables (replace with your actual values)
-VPS_HOST="your-vps-ip-or-domain"
-VPS_USER="your-ssh-username"
-DB_USER="your-db-username"
-DB_NAME="your-database-name"
-DB_PASSWORD="your-db-password"  # Consider using environment variables or .pgpass for security
+# Variables (replace with your actual values or load from .env)
+DB_HOST="localhost"
+DB_PORT="5432"
+DB_USER="ims_root"
+DB_PASSWORD="khonggilatuyetdoiBAOMAT2025"
+DB_NAME="ims_db"
 
-# Function to execute psql commands on VPS via SSH
+# Path to backup file (relative to script directory)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BACKUP_FILE="$SCRIPT_DIR/ims_db_backup.sql"
+
+# Function to execute psql commands
 execute_psql() {
     local sql_command="$1"
-    ssh $VPS_USER@$VPS_HOST "PGPASSWORD=$DB_PASSWORD psql -h localhost -U $DB_USER -d $DB_NAME -c \"$sql_command\""
+    PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "$sql_command"
 }
 
-echo "Starting PostgreSQL operations on VPS..."
+echo "Starting database restore from $BACKUP_FILE..."
 
-# 1. Create a new database
-echo "Creating database..."
-execute_psql "CREATE DATABASE IF NOT EXISTS test_db;"
+# Check if backup file exists
+if [[ ! -f "$BACKUP_FILE" ]]; then
+    echo "Error: Backup file $BACKUP_FILE not found."
+    exit 1
+fi
 
-# 2. Create a table
-echo "Creating table..."
-execute_psql "CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);"
+# Optional: Drop and recreate database if needed (uncomment if required)
+# echo "Dropping and recreating database..."
+# PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres -c "DROP DATABASE IF EXISTS \"$DB_NAME\";"
+# PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres -c "CREATE DATABASE \"$DB_NAME\";"
 
-# 3. Insert sample data
-echo "Inserting sample data..."
-execute_psql "INSERT INTO users (name, email) VALUES
-    ('John Doe', 'john@example.com'),
-    ('Jane Smith', 'jane@example.com'),
-    ('Bob Johnson', 'bob@example.com');"
+# Restore from backup
+echo "Restoring database from backup file..."
+PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$BACKUP_FILE"
 
-# 4. Query data
-echo "Querying data..."
-ssh $VPS_USER@$VPS_HOST "PGPASSWORD=$DB_PASSWORD psql -h localhost -U $DB_USER -d $DB_NAME -c 'SELECT * FROM users;'"
-
-# 5. Update data
-echo "Updating data..."
-execute_psql "UPDATE users SET name = 'John Updated' WHERE id = 1;"
-
-# 6. Delete data
-echo "Deleting data..."
-execute_psql "DELETE FROM users WHERE id = 3;"
-
-# 7. Backup database
-echo "Creating database backup..."
-ssh $VPS_USER@$VPS_HOST "PGPASSWORD=$DB_PASSWORD pg_dump -h localhost -U $DB_USER $DB_NAME > /path/to/backup.sql"
-
-# 8. Restore database (uncomment and modify as needed)
-# echo "Restoring database..."
-# ssh $VPS_USER@$VPS_HOST "PGPASSWORD=$DB_PASSWORD psql -h localhost -U $DB_USER -d $DB_NAME < /path/to/backup.sql"
-
-# 9. Show database size
-echo "Checking database size..."
-execute_psql "SELECT pg_size_pretty(pg_database_size('$DB_NAME'));"
-
-# 10. List all tables
-echo "Listing all tables..."
-execute_psql "SELECT tablename FROM pg_tables WHERE schemaname = 'public';"
-
-echo "PostgreSQL operations completed."
+echo "Database restore completed successfully."

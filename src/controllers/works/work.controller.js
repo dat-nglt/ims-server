@@ -31,22 +31,6 @@ export const getTechnicianListToAssignController = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-/**
- * Lấy danh sách công việc với filters
- */
-export const getWorksController = async (req, res) => {
-  try {
-    const result = await workService.getWorksService(req.query);
-    res.json({
-      status: "success",
-      ...result.data,
-      message: "Lấy danh sách công việc thành công",
-    });
-  } catch (error) {
-    logger.error(`[${req.id}] Error in getWorksController:` + error.message);
-    res.status(500).json({ error: error.message });
-  }
-};
 
 /**
  * Lấy thống kê công việc
@@ -62,24 +46,6 @@ export const getWorksStatisticsController = async (req, res) => {
     });
   } catch (error) {
     logger.error(`[${req.id}] Error in getWorksStatisticsController:`, error.message);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-/**
- * Lấy phân bố công việc
- */
-export const getWorksDistributionController = async (req, res) => {
-  try {
-    const { dateRange } = req.query;
-    const result = await workService.getWorksDistributionService(dateRange);
-    res.json({
-      status: "success",
-      data: result.data,
-      message: "Lấy phân bố công việc thành công",
-    });
-  } catch (error) {
-    logger.error(`[${req.id}] Error in getWorksDistributionController:`, error.message);
     res.status(500).json({ error: error.message });
   }
 };
@@ -180,23 +146,6 @@ export const deleteWorkController = async (req, res) => {
 };
 
 /**
- * Lấy danh sách danh mục công việc
- */
-export const getWorkCategoriesController = async (req, res) => {
-  try {
-    const result = await workService.getWorkCategoriesService();
-    res.json({
-      status: "success",
-      data: result.data,
-      message: "Lấy danh sách danh mục công việc thành công",
-    });
-  } catch (error) {
-    logger.error(`[${req.id}] Error in getWorkCategoriesController:`, error.message);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-/**
  * Lấy danh sách loại dịch vụ
  */
 export const getServiceTypesController = async (req, res) => {
@@ -232,24 +181,6 @@ export const exportWorksController = async (req, res) => {
     res.send(result.data);
   } catch (error) {
     logger.error(`[${req.id}] Error in exportWorksController:`, error.message);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-/**
- * Lấy công việc theo trạng thái
- */
-export const getWorksByStatusController = async (req, res) => {
-  try {
-    const { status } = req.params;
-    const result = await workService.getWorksByStatusService(status);
-    res.json({
-      status: "success",
-      data: result.data,
-      message: `Lấy danh sách công việc trạng thái ${status} thành công`,
-    });
-  } catch (error) {
-    logger.error(`[${req.id}] Error in getWorksByStatusController:`, error.message);
     res.status(500).json({ error: error.message });
   }
 };

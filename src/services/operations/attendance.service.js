@@ -23,11 +23,12 @@ export const checkInService = async (checkInData) => {
       address,
       photo_url,
       photo_public_id,
+      notes,
       device_info,
       ip_address,
-      notes,
       attendance_type_id,
       violation_distance,
+      distance_from_work,
       technicians = [],
     } = checkInData || {};
 
@@ -44,6 +45,7 @@ export const checkInService = async (checkInData) => {
     const resolvedIp = ip_address || null;
     const resolvedTypeId = attendance_type_id || null;
     const resolvedViolation = violation_distance || null;
+    const resolvedDistanceFromWork = distance_from_work || null;
 
     // Basic validation
     if (!resolvedUserId) {
@@ -175,15 +177,15 @@ export const checkInService = async (checkInData) => {
         location_name: locName,
         address: addr,
         photo_url: photoUrlNormalized,
-        status: "checked_in",
         device_info: resolvedDevice,
         ip_address: resolvedIp,
-        distance_from_work: violation_distance,
-        is_within_radius: violation_distance != null ? violation_distance <= 100 : null, // Example logic
+        is_within_radius: resolvedDistanceFromWork != null ? resolvedViolation <= 150 : null, // Example logic
         notes,
         attendance_type_id: attendanceTypeIdInt,
         violation_distance: resolvedViolation,
+        distance_from_work: resolvedDistanceFromWork,
         technicians: techArr,
+        status: "checked_in",
       });
     } catch (err) {
       // If a photo was uploaded directly by client (public id provided), attempt cleanup to avoid orphans
@@ -235,11 +237,12 @@ export const checkOutService = async (criteria) => {
   try {
     let attendance;
     // Find by work_id and user_id if criteria provided
-    if (criteria && criteria.work_id && criteria.user_id) {
+    if (criteria && criteria.work_id && criteria.user_id && criteria.attendance_type_id) {
       attendance = await db.Attendance.findOne({
         where: {
           work_id: criteria.work_id,
           user_id: criteria.user_id,
+          attendance_type_id: criteria.attendance_type_id,
           check_out_time: null, // Only find unchecked-out records
         },
         order: [["check_in_time", "DESC"]], // Get the most recent check-in
@@ -279,6 +282,7 @@ export const checkOutService = async (criteria) => {
     const photoUrlCheckOut = criteria.photo_url_check_out || null;
     const latCheckOut = criteria.latitude_check_out || null;
     const lngCheckOut = criteria.longitude_check_out || null;
+    const distanceFromWorkCheckOut = criteria.distance_from_work_checkout || null;
     const durationMinutes = Math.round((checkOutTime - attendance.check_in_time) / 60000);
 
     await attendance.update({
@@ -287,6 +291,8 @@ export const checkOutService = async (criteria) => {
       photo_url_check_out: photoUrlCheckOut,
       latitude_check_out: latCheckOut ? parseFloat(latCheckOut) : null,
       longitude_check_out: lngCheckOut ? parseFloat(lngCheckOut) : null,
+      distance_from_work_checkout: distanceFromWorkCheckOut,
+      is_within_radius_check_out: distanceFromWorkCheckOut != null ? distanceFromWorkCheckOut <= 150 : null,
       status: "checked_out",
     });
 

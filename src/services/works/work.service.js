@@ -24,6 +24,7 @@ export const getAllWorksService = async () => {
   }
 };
 
+// Lấy danh sách kỹ thuật viên để phân công
 export const getTechnicianListToAssignService = async () => {
   try {
     const technicians = await db.User.findAll({
@@ -37,14 +38,7 @@ export const getTechnicianListToAssignService = async () => {
   }
 };
 
-/**
- * Lấy công việc theo mã công việc (work_code) - bao gồm báo cáo và phân công liên quan
- * Lấy đầy đủ các dữ liệu cần thiết cho WorkDetail page, bao gồm:
- * - Thông tin cơ bản công việc
- * - Các báo cáo tiến độ (work reports)
- * - Thông tin phân công cho kỹ thuật viên (work assignments)
- * - Chi tiết các user liên quan
- */
+// Lấy thông tin công việc theo mã công việc
 export const getWorkByCodeService = async (workCode) => {
   try {
     const work = await db.Work.findOne({
@@ -144,10 +138,7 @@ export const getWorkByCodeService = async (workCode) => {
   }
 };
 
-/**
- * Lấy công việc theo ID - bao gồm báo cáo và phân công liên quan
- * Lấy đầy đủ các dữ liệu cần thiết cho WorkDetail page
- */
+// Lấy thông tin công việc theo ID
 export const getWorkByIdService = async (workId) => {
   try {
     const work = await db.Work.findByPk(workId, {
@@ -278,103 +269,6 @@ export const getWorkByIdService = async (workId) => {
     return { success: true, data: work };
   } catch (error) {
     logger.error("Error in getWorkByIdService: " + error.message);
-    throw error;
-  }
-};
-
-/**
- * Lấy danh sách phân công công việc (work assignments) cho một công việc
- * Bao gồm thông tin kỹ thuật viên được phân công
- */
-export const getWorkAssignmentsService = async (workId) => {
-  try {
-    const assignments = await db.WorkAssignment.findAll({
-      where: { work_id: workId },
-      include: [
-        {
-          model: db.User,
-          as: "technician",
-          attributes: ["id", "name", "email", "phone", "avatar_url", "position", "dailySalary", "hourly_rate"],
-        },
-        {
-          model: db.User,
-          as: "assignedByUser",
-          attributes: ["id", "name", "email", "position"],
-        },
-        {
-          model: db.Work,
-          as: "work",
-          attributes: ["id", "work_code", "title", "status"],
-        },
-      ],
-      order: [["assignment_date", "DESC"]],
-    });
-
-    return { success: true, data: assignments };
-  } catch (error) {
-    logger.error("Error in getWorkAssignmentsService: " + error.message);
-    throw error;
-  }
-};
-
-/**
- * Lấy danh sách báo cáo công việc (work reports) cho một công việc
- * Bao gồm thông tin người báo cáo, phê duyệt
- */
-export const getWorkReportsService = async (workId) => {
-  try {
-    const reports = await db.WorkReport.findAll({
-      where: { work_id: workId },
-      attributes: [
-        "id",
-        "work_id",
-        "progress_percentage",
-        "status",
-        "description",
-        "notes",
-        "title",
-        "location",
-        "before_images",
-        "during_images",
-        "after_images",
-        "materials_used",
-        "issues_encountered",
-        "solution_applied",
-        "time_spent_hours",
-        "next_steps",
-        "approval_status",
-        "quality_rating",
-        "rejection_reason",
-        "reported_at",
-        "approved_at",
-        "created_at",
-        "reported_by",
-        "approved_by",
-        "assigned_approver",
-      ],
-      include: [
-        {
-          model: db.User,
-          as: "reporter",
-          attributes: ["id", "name", "email", "phone", "avatar_url", "position"],
-        },
-        {
-          model: db.User,
-          as: "approver",
-          attributes: ["id", "name", "email", "phone", "avatar_url", "position"],
-        },
-        {
-          model: db.User,
-          as: "assignedApprover",
-          attributes: ["id", "name", "email", "phone", "avatar_url", "position"],
-        },
-      ],
-      order: [["reported_at", "DESC"]],
-    });
-
-    return { success: true, data: reports };
-  } catch (error) {
-    logger.error("Error in getWorkReportsService: " + error.message);
     throw error;
   }
 };
@@ -1210,21 +1104,6 @@ export const deleteWorkService = async (id) => {
 };
 
 /**
- * Lấy danh sách danh mục công việc
- */
-export const getWorkCategoriesService = async () => {
-  try {
-    const categories = await db.WorkCategory.findAll({
-      attributes: ["id", "name"],
-    });
-    return { success: true, data: categories };
-  } catch (error) {
-    logger.error("Error in getWorkCategoriesService: " + error.message);
-    throw error;
-  }
-};
-
-/**
  * Lấy danh sách loại dịch vụ
  */
 export const getServiceTypesService = async () => {
@@ -1363,147 +1242,6 @@ export const exportWorksService = async (queryParams) => {
 };
 
 /**
- * Lấy công việc theo trạng thái
- */
-export const getWorksByStatusService = async (status) => {
-  try {
-    const works = await db.Work.findAll({
-      where: { status },
-      include: [
-        { model: db.WorkCategory, as: "category" },
-        { model: db.User, as: "salesPerson" },
-      ],
-    });
-    return { success: true, data: works };
-  } catch (error) {
-    logger.error("Error in getWorksByStatusService: " + error.message);
-    throw error;
-  }
-};
-
-/**
- * Lấy danh sách công việc với filters, pagination, search, sort
- */
-export const getWorksService = async (queryParams) => {
-  try {
-    const {
-      page = 1,
-      limit = 20,
-      search,
-      status,
-      priority,
-      category_id,
-      date,
-      dateRange = "all",
-      sortBy = "created_date",
-      order = "desc",
-    } = queryParams;
-
-    const where = {};
-    const include = [
-      { model: db.WorkCategory, as: "category" },
-      { model: db.User, as: "salesPerson" },
-      { model: db.Project, as: "project" },
-      {
-        model: db.WorkAssignment,
-        as: "assignments",
-        include: [
-          {
-            model: db.User,
-            as: "technician",
-            attributes: ["id", "name", "email", "phone", "avatar_url"],
-          },
-          {
-            model: db.User,
-            as: "assignedByUser",
-            attributes: ["id", "name", "email"],
-          },
-        ],
-      },
-    ];
-
-    // Search
-    if (search) {
-      where[Op.or] = [
-        { work_code: { [Op.like]: `%${search}%` } },
-        { title: { [Op.like]: `%${search}%` } },
-        { customer_name: { [Op.like]: `%${search}%` } },
-      ];
-    }
-
-    // Filters
-    if (status) where.status = status;
-    if (priority) where.priority = priority;
-    if (category_id) where.category_id = category_id;
-
-    // Date range
-    const now = new Date();
-    let startDate, endDate;
-    switch (dateRange) {
-      case "today":
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-        break;
-      case "thisWeek":
-        const dayOfWeek = now.getDay();
-        startDate = new Date(now.getTime() - dayOfWeek * 24 * 60 * 60 * 1000);
-        startDate.setHours(0, 0, 0, 0);
-        endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-        break;
-      case "thisMonth":
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-        break;
-      default:
-        // all
-        break;
-    }
-    if (startDate && endDate) {
-      where.created_date = { [Op.between]: [startDate, endDate] };
-    }
-
-    // Specific date
-    if (date) {
-      const specificDate = new Date(date);
-      where.created_date = {
-        [Op.gte]: specificDate,
-        [Op.lt]: new Date(specificDate.getTime() + 24 * 60 * 60 * 1000),
-      };
-    }
-
-    // Sort
-    const orderBy = [[sortBy, order.toUpperCase()]];
-
-    // Pagination
-    const offset = (page - 1) * limit;
-
-    const { count, rows } = await db.Work.findAndCountAll({
-      where,
-      include,
-      order: orderBy,
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-    });
-
-    const totalPages = Math.ceil(count / limit);
-
-    return {
-      success: true,
-      data: {
-        data: rows,
-        total: count,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages,
-      },
-    };
-  } catch (error) {
-    logger.error("Error in getWorksService: " + error.message);
-    throw error;
-  }
-};
-
-/**
  * Lấy thống kê công việc
  */
 export const getWorksStatisticsService = async (dateRange = "all") => {
@@ -1582,81 +1320,6 @@ export const getWorksStatisticsService = async (dateRange = "all") => {
     };
   } catch (error) {
     logger.error("Error in getWorksStatisticsService: " + error.message);
-    throw error;
-  }
-};
-
-/**
- * Lấy phân bố công việc theo status và priority
- */
-export const getWorksDistributionService = async (dateRange = "all") => {
-  try {
-    const where = {};
-
-    // Date range (same as above)
-    const now = new Date();
-    let startDate, endDate;
-    switch (dateRange) {
-      case "today":
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-        break;
-      case "thisWeek":
-        const dayOfWeek = now.getDay();
-        startDate = new Date(now.getTime() - dayOfWeek * 24 * 60 * 60 * 1000);
-        startDate.setHours(0, 0, 0, 0);
-        endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-        break;
-      case "thisMonth":
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-        break;
-      default:
-        break;
-    }
-    if (startDate && endDate) {
-      where.created_date = { [Op.between]: [startDate, endDate] };
-    }
-
-    const total = await db.Work.count({ where });
-
-    // Status distribution
-    const statusGroups = await db.Work.findAll({
-      where,
-      attributes: ["status", [db.sequelize.fn("COUNT", db.sequelize.col("status")), "count"]],
-      group: ["status"],
-      raw: true,
-    });
-
-    const statusDistribution = statusGroups.map((group) => ({
-      status: group.status,
-      count: parseInt(group.count),
-      percentage: total > 0 ? ((parseInt(group.count) / total) * 100).toFixed(2) : 0,
-    }));
-
-    // Priority distribution
-    const priorityGroups = await db.Work.findAll({
-      where,
-      attributes: ["priority", [db.sequelize.fn("COUNT", db.sequelize.col("priority")), "count"]],
-      group: ["priority"],
-      raw: true,
-    });
-
-    const priorityDistribution = priorityGroups.map((group) => ({
-      priority: group.priority,
-      count: parseInt(group.count),
-      percentage: total > 0 ? ((parseInt(group.count) / total) * 100).toFixed(2) : 0,
-    }));
-
-    return {
-      success: true,
-      data: {
-        statusDistribution,
-        priorityDistribution,
-      },
-    };
-  } catch (error) {
-    logger.error("Error in getWorksDistributionService: " + error.message);
     throw error;
   }
 };

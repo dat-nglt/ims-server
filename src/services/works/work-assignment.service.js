@@ -4,66 +4,50 @@ import { Op } from "sequelize";
 import { createWorkHistoryService } from "./work-history.service.js";
 
 /**
- * Lấy danh sách tất cả phân công (legacy)
+ * Lấy danh sách tất cả phân công và group theo công việc
  */
 export const getAllWorkAssignmentsService = async () => {
   try {
     const assignments = await db.WorkAssignment.findAll({
       include: [
-        { model: db.Work, as: "work", attributes: ["id", "title", "status", "due_date"] },
-        { model: db.User, as: "technician", attributes: ["id", "name", "email"] },
-        { model: db.User, as: "assignedByUser", attributes: ["id", "name"] },
+        {
+          model: db.Work,
+          as: "work",
+          attributes: ["id", "work_code", "title", "status", "due_date"],
+        },
+        {
+          model: db.User,
+          as: "technician",
+        },
+        {
+          model: db.User,
+          as: "assignedByUser",
+          attributes: ["id", "name", "email", "position_id"],
+        },
       ],
       order: [["assignment_date", "DESC"]],
     });
-    return { success: true, data: assignments };
+
+    // Group assignments by work
+    const groupedAssignments = new Map();
+
+    for (const assignment of assignments) {
+      const workId = assignment.work_id;
+      if (!groupedAssignments.has(workId)) {
+        groupedAssignments.set(workId, {
+          work: assignment.work,
+          assignments: [],
+        });
+      }
+      groupedAssignments.get(workId).assignments.push(assignment);
+    }
+
+    // Convert to array
+    const result = Array.from(groupedAssignments.values());
+
+    return { success: true, data: result };
   } catch (error) {
-    logger.error("Error in getAllWorkAssignmentsService:" + error.message);
-    throw error;
-  }
-};
-
-export const getWorkAssignmentsService = async (queryParams = {}) => {
-  try {
-    const { page = 1, limit = 20, technician_id, work_id, assigned_status, assigned_by } = queryParams;
-
-    const where = {};
-    if (technician_id) where.technician_id = technician_id;
-    if (work_id) where.work_id = work_id;
-    if (assigned_status) where.assigned_status = assigned_status;
-    if (assigned_by) where.assigned_by = assigned_by;
-
-    // Loại trừ các bản ghi bị từ chối và đã hủy
-    where.assigned_status = { [Op.notIn]: ["rejected", "cancelled"] };
-
-    const offset = (page - 1) * limit;
-
-    const { count, rows } = await db.WorkAssignment.findAndCountAll({
-      where,
-      include: [
-        { model: db.Work, as: "work", attributes: ["id", "title", "status", "due_date"] },
-        { model: db.User, as: "technician", attributes: ["id", "name", "email"] },
-        { model: db.User, as: "assignedByUser", attributes: ["id", "name"] },
-      ],
-      order: [["assignment_date", "DESC"]],
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-    });
-
-    const totalPages = Math.ceil(count / limit);
-
-    return {
-      success: true,
-      data: {
-        assignments: rows,
-        total: count,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages,
-      },
-    };
-  } catch (error) {
-    logger.error("Error in getWorkAssignmentsService:" + error.message);
+    logger.error("Error in getAllWorkAssignmentsService: " + error.message);
     throw error;
   }
 };

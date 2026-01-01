@@ -46,18 +46,18 @@ export const checkInController = async (req, res) => {
     const {
       user_id, // ok
       work_id, // ok
-      latitude, // ok
       project_id = null,
+      latitude, // ok
       longitude, // ok
       location_name, // ok
       address, // ok
-      photo_url, // ok
-      photo_public_id, // ok
-      notes,
       attendance_type_id, // Support từ client
+      photo_url, // ok
+      photo_public_id, // không gửi lên
+      notes,
       violation_distance,
+      distance_from_work,
       technicians,
-      attendance_mode, // in/out mode
     } = req.body || {};
 
     // Build normalized payload
@@ -71,13 +71,13 @@ export const checkInController = async (req, res) => {
       address: address || null,
       photo_url: photo_url || null,
       photo_public_id: photo_public_id || null,
+      notes: notes || null,
       device_info: req.headers["user-agent"] || null,
       ip_address: req.headers["x-forwarded-for"] || null,
-      notes: notes || null,
       attendance_type_id: attendance_type_id || null,
       violation_distance: violation_distance || null,
+      distance_from_work: distance_from_work || null,
       technicians: Array.isArray(technicians) ? technicians : technicians ? [technicians] : [],
-      attendance_mode: attendance_mode || "in", // Default to 'in' if not specified
     };
 
     if (!payload.user_id) {
@@ -119,6 +119,8 @@ export const checkOutController = async (req, res) => {
       photo_url_check_out = null,
       latitude_check_out = null,
       longitude_check_out = null,
+      distance_from_work_checkout = null,
+      attendance_type_id,
     } = req.body || {};
 
     // If work_id and user_id are provided, use them; otherwise fall back to attendance id
@@ -129,6 +131,8 @@ export const checkOutController = async (req, res) => {
         photo_url_check_out,
         latitude_check_out,
         longitude_check_out,
+        distance_from_work_checkout,
+        attendance_type_id,
       });
       return res.json(result);
     }
