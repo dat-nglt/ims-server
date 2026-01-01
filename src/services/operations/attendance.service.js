@@ -310,10 +310,25 @@ export const getAllAttendanceService = async () => {
   try {
     const attendances = await db.Attendance.findAll({
       include: [
-        { model: db.User, as: "user" },
-        { model: db.Work, as: "work" },
+        { model: db.User, as: "user", attributes: ["id", "name", "email", "avatar_url", "phone", "zalo_id"] },
+        {
+          model: db.Work,
+          as: "work",
+          attributes: [
+            "id",
+            "work_code",
+            "title",
+            "status",
+            "required_time_hour",
+            "required_time_minute",
+            "location_lat",
+            "location_lng",
+            "required_date",
+          ],
+        },
+        { model: db.Project, as: "project", attributes: ["id", "name"] },
         { model: db.AttendanceSession, as: "attendanceSession" },
-        { model: db.AttendanceType, as: "attendanceType" },
+        { model: db.AttendanceType, as: "attendanceType", attributes: ["id", "name", "code", "time"] },
       ],
     });
     return { success: true, data: attendances };
