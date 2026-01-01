@@ -313,6 +313,7 @@ export const getAllAttendanceService = async () => {
         { model: db.User, as: "user" },
         { model: db.Work, as: "work" },
         { model: db.AttendanceSession, as: "attendanceSession" },
+        { model: db.AttendanceType, as: "attendanceType" },
       ],
     });
     return { success: true, data: attendances };
