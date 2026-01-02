@@ -29,6 +29,8 @@ Lưu trữ từng lần check-in/check-out
 - `technicians`: JSONB array (danh sách user IDs tham gia)
 - `check_in_type_id`: FK→attendance_type
 - `violation_distance`: Khoảng cách vi phạm từ công việc
+- `is_valid_time_check_in`: Boolean (null = chưa đánh giá, true = hợp lệ, false = không hợp lệ) — đánh giá sơ bộ khi check-in (ví dụ: kiểm tra thời gian)
+- `is_valid_time_check_out`: Boolean (null = chưa đánh giá, true = hợp lệ, false = không hợp lệ) — đánh giá cuối cùng khi check-out (sau khi có duration). Note: if the attendance type defines a `start_time` and the check-in time is at or after that `start_time`, the system will consider the record valid with respect to the duration requirement.
 
 #### 2. **AttendanceSession** (attendance_sessions)
 Quản lý một phiên chấm công (cặp check-in/out)

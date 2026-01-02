@@ -4,6 +4,7 @@ import axios from "axios";
 import { Op } from "sequelize";
 import * as cloudinaryService from "../storage/cloudinary.service.js";
 import { toVietnamTimeISO } from "../../utils/helper.js";
+import { createNotificationService } from "./notification.service.js";
 
 // ==================== CHECK-IN/OUT SERVICES ====================
 
@@ -15,107 +16,67 @@ export const checkInService = async (checkInData) => {
   try {
     const {
       user_id,
-      work_id,
-      project_id,
+      work_id = null,
+      project_id = null,
       latitude,
       longitude,
-      location_name,
-      address,
-      photo_url,
-      photo_public_id,
-      notes,
-      device_info,
-      ip_address,
-      attendance_type_id,
-      violation_distance,
-      distance_from_work,
+      location_name = null,
+      address = null,
+      photo_url = null,
+      notes = null,
+      device_info = null,
+      ip_address = null,
+      attendance_type_id = null,
+      distance_from_work = null,
       technicians = [],
     } = checkInData || {};
 
-    const resolvedUserId = user_id || null;
-    const resolvedWorkId = work_id || null;
-    const resolvedProjectId = project_id || null;
-    const lat = latitude || null;
-    const lng = longitude || null;
-    const locName = location_name || null;
-    const addr = address || null;
-    const photos = photo_url || null;
-    const photoPublicIdResolved = photo_public_id || null;
-    const resolvedDevice = device_info || null;
-    const resolvedIp = ip_address || null;
-    const resolvedTypeId = attendance_type_id || null;
-    const resolvedViolation = violation_distance || null;
-    const resolvedDistanceFromWork = distance_from_work || null;
-
-    // Basic validation
-    if (!resolvedUserId) {
-      throw new Error("Không xác định người dùng cho bản ghi chấm công");
+    if (!user_id) throw new Error("Không xác định người dùng cho bản ghi chấm công");
+    if (latitude == null || longitude == null || isNaN(Number(latitude)) || isNaN(Number(longitude))) {
+      throw new Error("Thiếu tọa độ hợp lệ cho bản ghi chấm công");
     }
 
-    // Kiểm tra tọa độ hợp lệ
-    if (lat == null || lng == null || isNaN(parseFloat(lat)) || isNaN(parseFloat(lng))) {
-      throw new Error("Không xác định tọa độ hợp lệ cho bản ghi chấm công");
-    }
-
-    // Kiểm tra user tồn tại
-    const user = await db.User.findByPk(resolvedUserId);
+    const user = await db.User.findByPk(user_id);
     if (!user) throw new Error("Hệ thống không tìm thấy người dùng tham chiếu đến bản ghi chấm công");
 
-    // Normalize photos to a single URL (take first element if an array or JSON array string)
-    let photoUrlNormalized = null;
-    if (Array.isArray(photos)) {
-      photoUrlNormalized = photos.length > 0 ? String(photos[0]) : null;
-    } else if (typeof photos === "string") {
-      // Try to parse JSON array string like '["url1","url2"]'
-      try {
-        const parsed = JSON.parse(photos);
-        if (Array.isArray(parsed)) {
-          photoUrlNormalized = parsed.length > 0 ? String(parsed[0]) : null;
-        } else {
-          photoUrlNormalized = photos;
+    const normalizePhoto = (p) => {
+      if (!p) return null;
+      if (Array.isArray(p)) return p[0] ? String(p[0]) : null;
+      if (typeof p === "string") {
+        try {
+          const parsed = JSON.parse(p);
+          if (Array.isArray(parsed)) return parsed[0] ? String(parsed[0]) : null;
+        } catch (e) {
+          /* not JSON */
         }
-      } catch (e) {
-        photoUrlNormalized = photos;
+        return p;
       }
-    } else if (photos !== null && photos !== undefined) {
-      photoUrlNormalized = String(photos);
-    }
+      return String(p);
+    };
+    const photoUrlNormalized = normalizePhoto(photo_url);
 
-    // Validate work/project/type existence
-    if (resolvedWorkId) {
-      const work = await db.Work.findByPk(resolvedWorkId);
+    if (work_id) {
+      const work = await db.Work.findByPk(work_id);
       if (!work) throw new Error("Công việc không tồn tại");
-
-      // Kiểm tra người dùng có được gán cho công việc này hay không
-      const workAssignment = await db.WorkAssignment.findOne({
-        where: {
-          work_id: resolvedWorkId,
-          technician_id: resolvedUserId,
-        },
-      });
-
-      if (!workAssignment) {
-        throw new Error("Người dùng không được gán cho công việc này");
-      }
+      const workAssignment = await db.WorkAssignment.findOne({ where: { work_id, technician_id: user_id } });
+      if (!workAssignment) throw new Error("Người dùng không được gán cho công việc này");
     }
 
-    if (resolvedProjectId) {
-      const project = await db.Project.findByPk(resolvedProjectId);
+    if (project_id) {
+      const project = await db.Project.findByPk(project_id);
       if (!project) throw new Error("Dự án không tồn tại");
     }
 
-    if (resolvedTypeId) {
-      const attendanceType = await db.AttendanceType.findByPk(resolvedTypeId);
+    let attendanceType = null;
+    if (attendance_type_id) {
+      attendanceType = await db.AttendanceType.findByPk(attendance_type_id);
       if (!attendanceType) throw new Error("Loại chấm công không tồn tại");
     }
 
-    // Kiểm tra session open (sử dụng helper để lấy thêm thông tin work và thời điểm check-in)
-    const openSummary = await getOpenSessionSummaryByUser(resolvedUserId);
-    if (openSummary && openSummary.session) {
-      const wk = openSummary.work;
-      const workInfo = wk ? { id: wk.id, title: wk.title } : null;
+    const openSummary = await getOpenSessionSummaryByUser(user_id, work_id);
+    if (openSummary?.session) {
+      console.log("User already has an open attendance session:", openSummary.session.id);
       const checkInAt = openSummary.check_in_time ? toVietnamTimeISO(openSummary.check_in_time) : null;
-      // Trả về thông tin để controller hiển thị thông báo (HTTP 200)
       return {
         success: true,
         alreadyCheckedIn: true,
@@ -124,100 +85,110 @@ export const checkInService = async (checkInData) => {
           .substring(0, 5)}`,
         session: {
           id: openSummary.session.id,
-          work: workInfo,
+          work: openSummary.work ? { id: openSummary.work.id, title: openSummary.work.title } : null,
           check_in_time: checkInAt,
           check_in_id: openSummary.check_in_id,
         },
       };
     }
 
-    // Normalize technicians
-    let techArr = [];
-    if (Array.isArray(technicians) && technicians.length > 0) {
-      techArr = technicians.map((t) => (typeof t === "string" ? parseInt(t, 10) : t));
-    } else if (technicians) {
-      techArr = [typeof technicians === "string" ? parseInt(technicians, 10) : technicians];
-    } else {
-      techArr = [resolvedUserId];
+    const techArr = Array.isArray(technicians)
+      ? technicians.map((t) => (typeof t === "string" ? parseInt(t, 10) : t))
+      : technicians
+      ? [typeof technicians === "string" ? parseInt(technicians, 10) : technicians]
+      : [user_id];
+
+    const parseId = (v) => (v != null && Number.isFinite(Number(v)) ? parseInt(v, 10) : v);
+    const uid = parseId(user_id);
+    const wid = parseId(work_id);
+    const pid = parseId(project_id);
+    const attendanceTypeIdInt = parseId(attendance_type_id);
+
+    // Helper function to parse time string (HH:MM format) to minutes
+    const parseTimeToMinutes = (timeStr) => {
+      if (!timeStr) return null;
+      const parts = String(timeStr)
+        .split(":")
+        .map((p) => parseInt(p, 10) || 0);
+      return (parts[0] || 0) * 60 + (parts[1] || 0);
+    };
+
+    // Check if check-in time is after attendance type start_time
+    let isAfterStartTime = false;
+    if (attendanceType && attendanceType.start_time) {
+      try {
+        const startTimeMinutes = parseTimeToMinutes(attendanceType.start_time);
+        const checkInTimeObj = new Date();
+        const checkInMinutes = checkInTimeObj.getHours() * 60 + checkInTimeObj.getMinutes();
+        isAfterStartTime = checkInMinutes >= startTimeMinutes;
+      } catch (e) {
+        // Ignore parse errors
+      }
     }
 
-    // Chuyển đổi ID người dùng sang số nếu có thể
-    const uid = Number.isFinite(Number(resolvedUserId)) ? parseInt(resolvedUserId, 10) : resolvedUserId;
-    // Chuyển đổi ID công việc sang số nếu có thể
-    const wid = resolvedWorkId
-      ? Number.isFinite(Number(resolvedWorkId))
-        ? parseInt(resolvedWorkId, 10)
-        : resolvedWorkId
-      : null;
+    // Calculate violation_distance if distance_from_work > 150
+    let calculatedViolationDistance = null;
+    if (distance_from_work != null && distance_from_work > 150) {
+      calculatedViolationDistance = distance_from_work - 150;
+    }
 
-    // Chuyển đổi ID dự án sang số nếu có thể
-    const pid = resolvedProjectId
-      ? Number.isFinite(Number(resolvedProjectId))
-        ? parseInt(resolvedProjectId, 10)
-        : resolvedProjectId
-      : null;
+    // Determine validity based on new logic
 
-    // Chuyển đổi ID loại chấm công sang số nếu có thể
-    const attendanceTypeIdInt = resolvedTypeId
-      ? Number.isFinite(Number(resolvedTypeId))
-        ? parseInt(resolvedTypeId, 10)
-        : resolvedTypeId
-      : null;
+    const isWithinAtCheckIn = distance_from_work <= 150 ? true : distance_from_work > 150 ? false : null;
 
-    // Create attendance record with improved validation error handling
-    let attendance;
+    // is_valid_time_check_in is true when:
+    // 1. Check-in time is after attendance type start_time, OR
+    // 2. Within radius (distance_from_work <= 150)
+    let isValidTimeCheckIn = null;
+    if (isAfterStartTime) {
+      isValidTimeCheckIn = false;
+    }
+
+    const attendance = await db.Attendance.create({
+      user_id: uid,
+      work_id: wid,
+      project_id: pid,
+      check_in_time: new Date(),
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
+      location_name,
+      address,
+      photo_url: photoUrlNormalized,
+      device_info,
+      ip_address,
+      is_within_radius: isWithinAtCheckIn,
+      notes,
+      attendance_type_id: attendanceTypeIdInt,
+      violation_distance: calculatedViolationDistance,
+      distance_from_work,
+      technicians: techArr,
+      is_valid_time_check_in: isValidTimeCheckIn,
+      status: "checked_in",
+    });
+
+    // Update work status to in_progress when check-in is successful
+    if (wid) {
+      await db.Work.update({ status: "in_progress" }, { where: { id: wid } });
+    }
+
     try {
-      attendance = await db.Attendance.create({
-        user_id: uid,
-        work_id: wid,
-        project_id: pid,
-        check_in_time: new Date(),
-        latitude: parseFloat(lat),
-        longitude: parseFloat(lng),
-        location_name: locName,
-        address: addr,
-        photo_url: photoUrlNormalized,
-        device_info: resolvedDevice,
-        ip_address: resolvedIp,
-        is_within_radius: resolvedDistanceFromWork != null ? resolvedViolation <= 150 : null, // Example logic
-        notes,
-        attendance_type_id: attendanceTypeIdInt,
-        violation_distance: resolvedViolation,
-        distance_from_work: resolvedDistanceFromWork,
-        technicians: techArr,
-        status: "checked_in",
+      // System notification about work creation
+      await createNotificationService({
+        title: `Chấm công vào công việc`,
+        message: `Người dùng ${user.name} đã chấm công vào công việc "${work_id}".`,
+        type: "check_in",
+        related_work_id: work_id,
+        priority: "medium",
+        broadcast: false,
+        systemNotification: {
+          title: `Chấm công vào công việc`,
+          message: `Người dùng ${user.name} đã chấm công vào công việc "${work_id}".`,
+          broadcast: false,
+        },
       });
+      logger.info(`System notification for work creation created for work id: ${createdWork.id}`);
     } catch (err) {
-      // If a photo was uploaded directly by client (public id provided), attempt cleanup to avoid orphans
-      if (photoPublicIdResolved) {
-        try {
-          await cloudinaryService.deleteImage(photoPublicIdResolved);
-        } catch (delErr) {
-          logger.warn("Lỗi xóa ảnh công khai: " + delErr.message);
-        }
-      }
-
-      // Handle Sequelize validation/database errors with more context
-      if (err && (err.name === "SequelizeValidationError" || err.name === "SequelizeDatabaseError")) {
-        logger.warn("Sequelize error creating Attendance", {
-          message: err.message,
-          errors: err.errors,
-          payload: {
-            user_id: uid,
-            work_id: wid,
-            project_id: pid,
-            latitude: lat,
-            longitude: lng,
-            check_in_type_id: attendanceTypeIdInt,
-            technicians: techArr,
-            photo_url: photoUrlNormalized,
-          },
-        });
-        const messages =
-          err.errors && Array.isArray(err.errors) ? err.errors.map((e) => e.message).join("; ") : err.message;
-        throw new Error(`Validation error: ${messages}`);
-      }
-      throw err;
+      logger.error("Failed to create system notification for work creation: " + err.message);
     }
 
     return { success: true, data: attendance, sessionId: attendance.attendance_session_id };
@@ -243,7 +214,6 @@ export const checkOutService = async (criteria) => {
           work_id: criteria.work_id,
           user_id: criteria.user_id,
           attendance_type_id: criteria.attendance_type_id,
-          check_out_time: null, // Only find unchecked-out records
         },
         order: [["check_in_time", "DESC"]], // Get the most recent check-in
       });
@@ -282,19 +252,143 @@ export const checkOutService = async (criteria) => {
     const photoUrlCheckOut = criteria.photo_url_check_out || null;
     const latCheckOut = criteria.latitude_check_out || null;
     const lngCheckOut = criteria.longitude_check_out || null;
-    const distanceFromWorkCheckOut = criteria.distance_from_work_checkout || null;
-    const durationMinutes = Math.round((checkOutTime - attendance.check_in_time) / 60000);
+    const addressCheckOut = criteria.address_check_out || null;
+    const distanceFromWorkCheckOut = criteria.distance_from_work_check_out || null;
+    const durationMinutes = Math.round((checkOutTime - attendance.check_in_time) / 60000); // Thời gian làm việc tính bằng phút
+
+    // Calculate violation_distance_check_out if distance_from_work_check_out > 150
+    let calculatedViolationDistanceCheckOut = null;
+    if (distanceFromWorkCheckOut != null && distanceFromWorkCheckOut > 150) {
+      calculatedViolationDistanceCheckOut = distanceFromWorkCheckOut - 150;
+    }
+
+    // Determine is_within_radius_check_out based on distance
+    // Set to false if distance_from_work_check_out > 150, otherwise true if within 150
+    const isWithinAtCheckOut =
+      distanceFromWorkCheckOut != null ? (distanceFromWorkCheckOut <= 150 ? true : false) : null;
 
     await attendance.update({
       check_out_time: checkOutTime,
       duration_minutes: durationMinutes,
       photo_url_check_out: photoUrlCheckOut,
+      address_check_out: addressCheckOut,
       latitude_check_out: latCheckOut ? parseFloat(latCheckOut) : null,
       longitude_check_out: lngCheckOut ? parseFloat(lngCheckOut) : null,
-      distance_from_work_checkout: distanceFromWorkCheckOut,
-      is_within_radius_check_out: distanceFromWorkCheckOut != null ? distanceFromWorkCheckOut <= 150 : null,
+      distance_from_work_check_out: distanceFromWorkCheckOut,
+      is_within_radius_check_out: isWithinAtCheckOut,
+      violation_distance_check_out: calculatedViolationDistanceCheckOut,
       status: "checked_out",
     });
+
+    // Compute validity and violation reason based on business rules
+    try {
+      const fullAttendance = await db.Attendance.findByPk(attendance.id, {
+        include: [
+          { model: db.AttendanceType, as: "attendanceType" },
+          { model: db.Work, as: "work" },
+        ],
+      });
+
+      let updateData = { is_valid_time_check_out: true };
+      let isEarlyCompletion = false;
+      if (fullAttendance.attendanceType && fullAttendance.attendanceType.end_time && fullAttendance.check_in_time) {
+        const parseToMinutes = (t) => {
+          const parts = String(t)
+            .split(":")
+            .map((p) => parseInt(p, 10) || 0);
+          return (parts[0] || 0) * 60 + (parts[1] || 0);
+        };
+        try {
+          const endMin = parseToMinutes(fullAttendance.attendanceType.end_time);
+          const co = new Date(checkOutTime);
+          const checkOutMin = co.getHours() * 60 + co.getMinutes();
+          if (checkOutMin < endMin) {
+            isEarlyCompletion = true;
+          }
+        } catch (e) {
+          // ignore parse errors
+        }
+      }
+
+      // Nếu checkout sớm, kiểm tra có công việc khác được gán không
+      // Logic:
+      // - Nếu không có công việc khác: Đánh dấu hoàn thành sớm (early_completion_flag = true)
+      //   và ghi nhận là hợp lệ (is_valid_time_check_out = true) để quản lý phê duyệt
+      // - Nếu còn công việc khác: Không đánh dấu hoàn thành sớm, ghi nhận không hợp lệ
+      //   (is_valid_time_check_out = false) vì kỹ thuật viên cần tiếp tục công việc khác
+      if (isEarlyCompletion) {
+        const otherAssignmentCount = await db.WorkAssignment.count({
+          where: {
+            technician_id: criteria.user_id,
+            assigned_status: { [db.Sequelize.Op.in]: ["pending", "accepted"] },
+            work_id: { [db.Sequelize.Op.ne]: criteria.work_id }, // Exclude current work
+          },
+        });
+
+        if (otherAssignmentCount === 0) {
+          // Không có công việc khác → Đánh dấu hoàn thành sớm
+          updateData.early_completion_flag = true;
+          updateData.early_completion_time = checkOutTime;
+          updateData.early_completion_notes = criteria.early_completion_notes || "Hoàn thành sớm";
+          updateData.early_completion_reviewed = null; // Pending review
+          updateData.is_valid_time_check_out = false; // Valid để quản lý phê duyệt
+        } else {
+          // Còn công việc khác → Không hợp lệ, không đánh dấu early completion
+          updateData.is_valid_time_check_out = true;
+        }
+      }
+
+      await attendance.update(updateData);
+
+      // Tạo notification cho manager để review early completion
+      if (updateData.early_completion_flag) {
+        try {
+          const user = await db.User.findByPk(criteria.user_id);
+          const work = await db.Work.findByPk(criteria.work_id);
+
+          if (work && user) {
+            await db.Notification.create({
+              recipient_id: work.created_by, // Manager/Creator của công việc
+              type: "early_completion_review",
+              title: "Yêu cầu phê duyệt hoàn thành sớm",
+              message: `Kỹ thuật viên ${user.name} đã hoàn thành công việc "${work.title}" sớm hơn thời gian quy định. Vui lòng xem xét phê duyệt.`,
+              related_attendance_id: attendance.id,
+              related_work_id: work.id,
+              status: "unread",
+            });
+          }
+        } catch (notificationErr) {
+          logger.warn("Failed to create early completion notification: " + notificationErr.message);
+        }
+      }
+    } catch (err) {
+      logger.warn("Failed to compute attendance validity: " + err.message);
+    }
+
+    // Update work status to completed when check-out is successful
+    if (criteria.work_id) {
+      await db.Work.update({ status: "completed" }, { where: { id: criteria.work_id } });
+    }
+
+    try {
+      // System notification about work creation
+      await createNotificationService({
+        title: `Chấm công ra công việc`,
+        message: `Người dùng ${user.name} đã chấm công ra công việc "${work_id}".`,
+        type: "check_out",
+        related_work_id: work_id,
+        priority: "medium",
+        broadcast: false,
+        systemNotification: {
+          title: `Chấm công ra công việc`,
+          message: `Người dùng ${user.name} đã chấm công ra công việc "${work_id}".`,
+          broadcast: false,
+        },
+      });
+      logger.info(`System notification for work creation created for work id: ${createdWork.id}`);
+    } catch (err) {
+      logger.error("Failed to create system notification for work creation: " + err.message);
+    }
 
     return { success: true, data: attendance, message: "Check-out thành công" };
   } catch (error) {
@@ -310,7 +404,11 @@ export const getAllAttendanceService = async () => {
   try {
     const attendances = await db.Attendance.findAll({
       include: [
-        { model: db.User, as: "user", attributes: ["id", "name", "email", "avatar_url", "phone", "zalo_id"] },
+        {
+          model: db.User,
+          as: "user",
+          attributes: ["id", "name", "email", "avatar_url", "phone", "zalo_id", "employee_id"],
+        },
         {
           model: db.Work,
           as: "work",
@@ -329,7 +427,11 @@ export const getAllAttendanceService = async () => {
         },
         { model: db.Project, as: "project", attributes: ["id", "name"] },
         { model: db.AttendanceSession, as: "attendanceSession" },
-        { model: db.AttendanceType, as: "attendanceType", attributes: ["id", "name", "code", "time"] },
+        {
+          model: db.AttendanceType,
+          as: "attendanceType",
+          attributes: ["id", "name", "code", "start_time", "end_time", "default_duration_minutes"],
+        },
       ],
     });
     return { success: true, data: attendances };
@@ -366,11 +468,26 @@ export const getAttendanceByIdService = async (id) => {
  * @param {number} userId
  * @returns {Object|null} { session, work, check_in_time, check_in_id } hoặc null
  */
-export const getOpenSessionSummaryByUser = async (userId) => {
+export const getOpenSessionSummaryByUser = async (userId, work_id) => {
   try {
+    // Only consider sessions that started today (local server date)
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(todayStart);
+    todayEnd.setDate(todayEnd.getDate() + 1);
+
+    console.log("start of today:", todayStart);
+    console.log("end of today:", todayEnd);
+
+    const where = {
+      user_id: userId,
+      started_at: { [Op.between]: [todayStart, todayEnd] },
+    };
+
+    if (work_id != null) where.work_id = work_id;
+
     const session = await db.AttendanceSession.findOne({
-      where: { user_id: userId, status: "open", ended_at: null },
-      include: [{ model: db.Work, as: "work" }],
+      where,
     });
 
     if (!session) return null;

@@ -145,7 +145,7 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
       },
       // Khoảng cách từ công việc khi check-out
-      distance_from_work_checkout: {
+      distance_from_work_check_out: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: true,
         validate: {
@@ -185,6 +185,67 @@ export default (sequelize, DataTypes) => {
           min: 0,
         },
       },
+
+      violation_distance_check_out: {
+        type: DataTypes.DECIMAL(10, 2),
+        validate: {
+          min: 0,
+        },
+      },
+      // Bản ghi chấm công hợp lệ về mặt thời gian (null = chưa đánh giá, true/false = đã đánh giá)
+      is_valid_time_check_in: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: null,
+      },
+      is_valid_time_check_out: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: null,
+      },
+
+      // Xử lý hoàn thành sớm (kỹ thuật viên hoàn thành việc sớm hơn giờ checkout)
+      // Đánh dấu nếu công việc được hoàn thành trước khi checkout chính thức
+      early_completion_flag: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: false,
+      },
+      // Thời gian kỹ thuật viên báo hoàn thành công việc
+      early_completion_time: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      // Ghi chú của kỹ thuật viên về lý do hoàn thành sớm
+      early_completion_notes: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      // Trạng thái xét duyệt hoàn thành sớm (null = chưa xét duyệt, true = duyệt, false = từ chối)
+      early_completion_reviewed: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: null,
+      },
+      // ID người xét duyệt (FK tới users)
+      early_completion_reviewer_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "users",
+          key: "id",
+        },
+      },
+      // Thời gian xét duyệt
+      early_completion_review_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      // Ghi chú xét duyệt từ người quản lý
+      early_completion_review_notes: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
     },
     {
       tableName: "attendance",
@@ -195,10 +256,15 @@ export default (sequelize, DataTypes) => {
         { fields: ["work_id"] },
         { fields: ["check_in_time"] },
         { fields: ["status"] },
+        { fields: ["is_valid_time_check_in"] },
+        { fields: ["is_valid_time_check_out"] },
+        { fields: ["early_completion_flag"] },
+        { fields: ["early_completion_reviewed"] },
         { fields: ["user_id", "check_in_time"] }, // Composite index cho truy vấn theo user và thời gian
         { fields: ["project_id"] }, // Index mới cho lọc theo dự án
         { fields: ["attendance_session_id"] }, // Index để truy xuất theo phiên chấm công
         { fields: ["attendance_type_id"] }, // Index cho lọc theo loại chấm công
+        { fields: ["early_completion_reviewer_id"] }, // Index cho truy xuất theo người xét duyệt
         { fields: ["project_id", "check_in_time"] }, // Composite for project-date queries
         { fields: ["work_id", "check_in_time"] }, // Composite for work-date queries
       ],
@@ -355,6 +421,12 @@ export default (sequelize, DataTypes) => {
     Attendance.belongsTo(models.AttendanceSession, {
       foreignKey: "attendance_session_id",
       as: "attendanceSession",
+    });
+
+    // Liên kết tới người xét duyệt hoàn thành sớm
+    Attendance.belongsTo(models.User, {
+      foreignKey: "early_completion_reviewer_id",
+      as: "earlyCompletionReviewer",
     });
   };
 

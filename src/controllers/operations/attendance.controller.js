@@ -46,7 +46,7 @@ export const checkInController = async (req, res) => {
     const {
       user_id, // ok
       work_id, // ok
-      project_id = null,
+      project_id = null, // ok
       latitude, // ok
       longitude, // ok
       location_name, // ok
@@ -55,7 +55,6 @@ export const checkInController = async (req, res) => {
       photo_url, // ok
       photo_public_id, // không gửi lên
       notes,
-      violation_distance,
       distance_from_work,
       technicians,
     } = req.body || {};
@@ -72,10 +71,9 @@ export const checkInController = async (req, res) => {
       photo_url: photo_url || null,
       photo_public_id: photo_public_id || null,
       notes: notes || null,
-      device_info: req.headers["user-agent"] || null,
-      ip_address: req.headers["x-forwarded-for"] || null,
+      device_info: req.headers["user-agent"] || null, // Lấy thông tin thiết bị từ header
+      ip_address: req.headers["x-forwarded-for"] || null, // Lấy IP từ header (nếu có)
       attendance_type_id: attendance_type_id || null,
-      violation_distance: violation_distance || null,
       distance_from_work: distance_from_work || null,
       technicians: Array.isArray(technicians) ? technicians : technicians ? [technicians] : [],
     };
@@ -95,11 +93,7 @@ export const checkInController = async (req, res) => {
       return res.status(200).json(result);
     }
 
-    res.status(201).json({
-      status: "success",
-      data: result.data,
-      message: "Check-in thành công",
-    });
+    res.status(201).json(result);
   } catch (error) {
     logger.error(`[${req.id}] Error in attendanceController:` + error.message);
     res.status(200).json({ success: false, message: error.message });
@@ -119,8 +113,9 @@ export const checkOutController = async (req, res) => {
       photo_url_check_out = null,
       latitude_check_out = null,
       longitude_check_out = null,
-      distance_from_work_checkout = null,
+      distance_from_work_check_out = null,
       attendance_type_id,
+      address_check_out = null,
     } = req.body || {};
 
     // If work_id and user_id are provided, use them; otherwise fall back to attendance id
@@ -131,8 +126,9 @@ export const checkOutController = async (req, res) => {
         photo_url_check_out,
         latitude_check_out,
         longitude_check_out,
-        distance_from_work_checkout,
+        distance_from_work_check_out,
         attendance_type_id,
+        address_check_out,
       });
       return res.json(result);
     }

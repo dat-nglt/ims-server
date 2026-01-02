@@ -103,7 +103,7 @@ export async function up(queryInterface, Sequelize) {
       type: Sequelize.BOOLEAN,
       comment: "Có trong phạm vi hay không",
     },
-    distance_from_work_checkout: {
+    distance_from_work_check_out: {
       type: Sequelize.DECIMAL(10, 2),
       allowNull: true,
       comment: "Khoảng cách từ công việc khi check-out",
@@ -142,6 +142,66 @@ export async function up(queryInterface, Sequelize) {
       type: Sequelize.DECIMAL(10, 2),
       comment: "Khoảng cách vi phạm vị trí",
     },
+    violation_distance_check_out: {
+      type: Sequelize.DECIMAL(10, 2),
+      comment: "Khoảng cách vi phạm vị trí khi check-out",
+    },
+    // Bản ghi chấm công hợp lệ về mặt thời gian (null = chưa đánh giá, true/false = đã đánh giá)
+    is_valid_time_check_in: {
+      type: Sequelize.BOOLEAN,
+      allowNull: true,
+      defaultValue: null,
+      comment: "Bản ghi chấm công hợp lệ về thời gian (null = chưa đánh giá)",
+    },
+    is_valid_time_check_out: {
+      type: Sequelize.BOOLEAN,
+      allowNull: true,
+      defaultValue: null,
+      comment: "Bản ghi chấm công hợp lệ về thời gian (null = chưa đánh giá)",
+    },
+
+    // Xử lý hoàn thành sớm (kỹ thuật viên hoàn thành việc sớm hơn giờ checkout)
+    early_completion_flag: {
+      type: Sequelize.BOOLEAN,
+      allowNull: true,
+      defaultValue: false,
+      comment: "Đánh dấu công việc được hoàn thành sớm",
+    },
+    early_completion_time: {
+      type: Sequelize.DATE,
+      allowNull: true,
+      comment: "Thời gian kỹ thuật viên báo hoàn thành công việc",
+    },
+    early_completion_notes: {
+      type: Sequelize.TEXT,
+      allowNull: true,
+      comment: "Ghi chú của kỹ thuật viên về lý do hoàn thành sớm",
+    },
+    early_completion_reviewed: {
+      type: Sequelize.BOOLEAN,
+      allowNull: true,
+      defaultValue: null,
+      comment: "Trạng thái xét duyệt hoàn thành sớm (null = chưa xét duyệt, true = duyệt, false = từ chối)",
+    },
+    early_completion_reviewer_id: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: "users",
+        key: "id",
+      },
+      comment: "ID người xét duyệt hoàn thành sớm",
+    },
+    early_completion_review_at: {
+      type: Sequelize.DATE,
+      allowNull: true,
+      comment: "Thời gian xét duyệt hoàn thành sớm",
+    },
+    early_completion_review_notes: {
+      type: Sequelize.TEXT,
+      allowNull: true,
+      comment: "Ghi chú xét duyệt từ người quản lý",
+    },
 
     technicians: {
       type: Sequelize.JSONB,
@@ -164,6 +224,13 @@ export async function up(queryInterface, Sequelize) {
   await queryInterface.addIndex("attendance", ["check_in_time"]);
   await queryInterface.addIndex("attendance", ["is_within_radius"]);
   await queryInterface.addIndex("attendance", ["status"]);
+  // Indexes for quick lookup of validity states (check-in and check-out)
+  await queryInterface.addIndex("attendance", ["is_valid_time_check_in"]);
+  await queryInterface.addIndex("attendance", ["is_valid_time_check_out"]);
+  // Indexes for early completion handling
+  await queryInterface.addIndex("attendance", ["early_completion_flag"]);
+  await queryInterface.addIndex("attendance", ["early_completion_reviewed"]);
+  await queryInterface.addIndex("attendance", ["early_completion_reviewer_id"]);
   await queryInterface.addIndex("attendance", ["user_id", "check_in_time"]); // Composite index cho truy vấn theo user và thời gian
   // Thêm indexes mới
   await queryInterface.addIndex("attendance", ["project_id"]);

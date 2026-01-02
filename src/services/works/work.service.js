@@ -31,8 +31,10 @@ export const getAllWorksService = async (query = {}) => {
     // Default: return full works with relations
     const works = await db.Work.findAll({
       include: [
-        { model: db.WorkCategory, as: "category" },
-        { model: db.User, as: "salesPerson" },
+        // { model: db.WorkCategory, as: "category", attributes: ["id", "name"] },
+        { model: db.Project, as: "project", attributes: ["id", "name"] },
+        { model: db.WorkAssignment, as: "assignments", attributes: ["id", "work_id", "technician_id"] },
+        { model: db.User, as: "salesPerson", attributes: ["id", "name", "employee_id", "avatar_url", "phone"] },
       ],
     });
     return { success: true, data: works, message: "Lấy danh sách công việc thành công" };
