@@ -324,6 +324,7 @@ export const getAllAttendanceService = async () => {
             "location_lat",
             "location_lng",
             "required_date",
+            "location",
           ],
         },
         { model: db.Project, as: "project", attributes: ["id", "name"] },
