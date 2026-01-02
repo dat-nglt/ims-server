@@ -8,19 +8,37 @@ import { createNotificationService } from "../operations/notification.service.js
 
 /**
  * Lấy danh sách tất cả công việc
+ * Hỗ trợ query.fields (ví dụ: "title,id") để chỉ trả về các trường cần thiết
  */
-export const getAllWorksService = async () => {
+export const getAllWorksService = async (query = {}) => {
   try {
+    // If client requests specific fields (e.g., ?fields=title,id)
+    if (query.fields) {
+      const requested = query.fields.split(",").map((f) => f.trim());
+
+      // Only accept DB column names (use 'title' — do not accept 'name' alias)
+      const attributes = requested;
+
+      // Order by title if requested, otherwise by id
+      const orderField = attributes.includes("title") ? "title" : "id";
+
+      const works = await db.Work.findAll({ attributes, order: [[orderField, "ASC"]] });
+      const rows = works.map((w) => w.toJSON());
+
+      return { success: true, data: rows, message: "Lấy danh sách công việc thành công" };
+    }
+
+    // Default: return full works with relations
     const works = await db.Work.findAll({
       include: [
         { model: db.WorkCategory, as: "category" },
         { model: db.User, as: "salesPerson" },
       ],
     });
-    return { success: true, data: works };
+    return { success: true, data: works, message: "Lấy danh sách công việc thành công" };
   } catch (error) {
     logger.error("Error in getAllWorksService: " + error.message);
-    throw error;
+    return { success: false, data: [], message: "Lấy danh sách công việc thất bại: " + error.message };
   }
 };
 

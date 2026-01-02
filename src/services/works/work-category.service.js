@@ -54,10 +54,7 @@ export const createWorkCategoryService = async (categoryData) => {
 
     // Find existing category by case-insensitive name match
     const existingCategory = await db.WorkCategory.findOne({
-      where: db.Sequelize.where(
-        db.Sequelize.fn("LOWER", db.Sequelize.col("name")),
-        normalized
-      ),
+      where: db.Sequelize.where(db.Sequelize.fn("LOWER", db.Sequelize.col("name")), normalized),
     });
 
     if (existingCategory) {
@@ -121,10 +118,7 @@ export const updateWorkCategoryService = async (id, updateData) => {
       const normalized = trimmedName.toLowerCase();
 
       const existing = await db.WorkCategory.findOne({
-        where: db.Sequelize.where(
-          db.Sequelize.fn("LOWER", db.Sequelize.col("name")),
-          normalized
-        ),
+        where: db.Sequelize.where(db.Sequelize.fn("LOWER", db.Sequelize.col("name")), normalized),
       });
 
       if (existing && existing.id !== category.id && existing.is_active) {
@@ -136,10 +130,9 @@ export const updateWorkCategoryService = async (id, updateData) => {
     if (is_active === true) {
       const checkName = (name !== undefined ? name.trim() : category.name).toLowerCase();
       const existingActive = await db.WorkCategory.findOne({
-        where: db.Sequelize.and(
-          db.Sequelize.where(db.Sequelize.fn("LOWER", db.Sequelize.col("name")), checkName),
-          { is_active: true }
-        ),
+        where: db.Sequelize.and(db.Sequelize.where(db.Sequelize.fn("LOWER", db.Sequelize.col("name")), checkName), {
+          is_active: true,
+        }),
       });
 
       if (existingActive && existingActive.id !== category.id) {

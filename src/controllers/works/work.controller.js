@@ -6,12 +6,8 @@ import * as workService from "../../services/works/index.js";
  */
 export const getAllWorksController = async (req, res) => {
   try {
-    const result = await workService.getAllWorksService();
-    res.json({
-      status: "success",
-      data: result.data,
-      message: "Lấy danh sách công việc thành công",
-    });
+    const result = await workService.getAllWorksService(req.query);
+    res.json(result);
   } catch (error) {
     logger.error(`[${req.id}] Error in getAllWorksController:`, error.message);
     res.status(500).json({ error: error.message });

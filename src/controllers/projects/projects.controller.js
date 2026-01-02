@@ -10,18 +10,10 @@ import {
 } from "../../services/projects/projects.service.js";
 import { getAllProjectHistoriesService } from "../../services/projects/project-history.service.js";
 
-/**
- * Lấy danh sách dự án với bộ lọc, sắp xếp, phân trang
- */
 export const getProjectsController = async (req, res) => {
   try {
-    // Return all projects without filters or pagination
-    const result = await getProjectsService();
-    res.json({
-      status: "success",
-      data: result.data,
-      message: "Lấy danh sách dự án thành công",
-    });
+    const result = await getProjectsService(req.query);
+    res.json(result);
   } catch (error) {
     logger.error(`[${req.id}] Error in getProjectsController:`, error.message);
     res.status(500).json({ error: error.message });
