@@ -111,6 +111,9 @@ export default (sequelize, DataTypes) => {
       location_name: {
         type: DataTypes.STRING(255),
       },
+      location_name_check_out: {
+        type: DataTypes.STRING(255),
+      },
       // Địa chỉ đầy đủ
       address: {
         type: DataTypes.TEXT,

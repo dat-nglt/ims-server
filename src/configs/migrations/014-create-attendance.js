@@ -75,6 +75,9 @@ export async function up(queryInterface, Sequelize) {
     location_name: {
       type: Sequelize.STRING(255),
     },
+    location_name_check_out: {
+      type: Sequelize.STRING(255),
+    },
     address: {
       type: Sequelize.TEXT,
     },

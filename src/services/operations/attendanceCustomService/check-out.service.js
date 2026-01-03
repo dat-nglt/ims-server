@@ -133,6 +133,9 @@ const prepareCheckOutData = (attendance, criteria, checkOutTime) => {
   const photoUrlCheckOut = criteria.photo_url_check_out ? String(criteria.photo_url_check_out).trim() : null;
   const latCheckOut = criteria.latitude_check_out || null;
   const lngCheckOut = criteria.longitude_check_out || null;
+  const locationNameCheckOut = criteria.location_name_check_out
+    ? String(criteria.location_name_check_out).trim()
+    : null;
   const addressCheckOut = criteria.address_check_out || null;
   const distanceFromWorkCheckOut = criteria.distance_from_work_check_out || null;
   const durationMinutes = Math.round((checkOutTime - attendance.check_in_time) / 60000);
@@ -152,6 +155,7 @@ const prepareCheckOutData = (attendance, criteria, checkOutTime) => {
     address_check_out: addressCheckOut,
     latitude_check_out: latCheckOut ? parseFloat(latCheckOut) : null,
     longitude_check_out: lngCheckOut ? parseFloat(lngCheckOut) : null,
+    location_name_check_out: locationNameCheckOut,
     distance_from_work_check_out: distanceFromWorkCheckOut,
     is_within_radius_check_out: isWithinAtCheckOut,
     violation_distance_check_out: calculatedViolationDistanceCheckOut,
