@@ -11,9 +11,10 @@
 export async function up(queryInterface, Sequelize) {
   const locations = [
     {
-      location_code: "warehouse",
+      id: -1,
+      location_code: "office",
       name: "Văn phòng Proshop - Daikin",
-      type: "warehouse",
+      type: "office",
       address: "89 Lê Thị Riêng, Phường Thới An, Quận 12, TP.HCM",
       latitude: 10.86571654,
       longitude: 106.65439575,
@@ -25,7 +26,8 @@ export async function up(queryInterface, Sequelize) {
       updated_at: new Date("2025-01-01T00:00:00.000Z"),
     },
     {
-      location_code: "warehouse2",
+      id: -2,
+      location_code: "warehouse",
       name: "Kho Vật Tư LQD - Quận 12",
       type: "warehouse",
       address: "189a Đ. TX 25, Thạnh Xuân, Quận 12, TP.HCM",
