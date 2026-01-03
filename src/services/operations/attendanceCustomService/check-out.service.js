@@ -51,7 +51,7 @@ const validateWorkAssignment = async (criteria) => {
     });
 
     if (!workAssignment) {
-      throw new Error("Người dùng không được phân bổ cho công việc này");
+      throw new Error("Hệ thống yêu cầu chỉ chấm công ra tại địa điểm công việc được phân bổ");
     }
 
     // Kiểm tra ngày yêu cầu công việc có phải trong hôm nay hay không (chỉ cho work_id > 0)
