@@ -13,30 +13,7 @@ export const getAllWorkAssignmentsController = async (req, res) => {
       message: "Lấy danh sách phân công công việc thành công",
     });
   } catch (error) {
-    logger.error(
-      `[${req.id}] Error in getAllWorkAssignmentsController:`,
-      error.message
-    );
-    res.status(500).json({ error: error.message });
-  }
-};
-
-/**
- * Lấy danh sách phân công với filters
- */
-export const getWorkAssignmentsController = async (req, res) => {
-  try {
-    const result = await workAssignmentService.getWorkAssignmentsService(req.query);
-    res.json({
-      status: "success",
-      ...result.data,
-      message: "Lấy danh sách phân công công việc thành công",
-    });
-  } catch (error) {
-    logger.error(
-      `[${req.id}] Error in getWorkAssignmentsController:`,
-      error.message
-    );
+    logger.error(`[${req.id}] Error in getAllWorkAssignmentsController:`, error.message);
     res.status(500).json({ error: error.message });
   }
 };
@@ -54,10 +31,7 @@ export const getWorkAssignmentForTechnicianController = async (req, res) => {
       message: "Lấy thông tin phân công thành công",
     });
   } catch (error) {
-    logger.error(
-      `[${req.id}] Error in getWorkAssignmentByIdController:`,
-      error.message
-    );
+    logger.error(`[${req.id}] Error in getWorkAssignmentByIdController:`, error.message);
     res.status(404).json({ error: error.message });
   }
 };
@@ -74,10 +48,7 @@ export const createWorkAssignmentController = async (req, res) => {
       message: "Tạo phân công công việc thành công",
     });
   } catch (error) {
-    logger.error(
-      `[${req.id}] Error in createWorkAssignmentController:`,
-      error.message
-    );
+    logger.error(`[${req.id}] Error in createWorkAssignmentController:`, error.message);
     res.status(400).json({ error: error.message });
   }
 };
@@ -95,10 +66,7 @@ export const acceptWorkAssignmentController = async (req, res) => {
       message: "Chấp nhận phân công thành công",
     });
   } catch (error) {
-    logger.error(
-      `[${req.id}] Error in acceptWorkAssignmentController:`,
-      error.message
-    );
+    logger.error(`[${req.id}] Error in acceptWorkAssignmentController:`, error.message);
     res.status(400).json({ error: error.message });
   }
 };
@@ -116,10 +84,7 @@ export const rejectWorkAssignmentController = async (req, res) => {
       message: "Từ chối phân công thành công",
     });
   } catch (error) {
-    logger.error(
-      `[${req.id}] Error in rejectWorkAssignmentController:`,
-      error.message
-    );
+    logger.error(`[${req.id}] Error in rejectWorkAssignmentController:`, error.message);
     res.status(400).json({ error: error.message });
   }
 };
@@ -137,10 +102,7 @@ export const completeWorkAssignmentController = async (req, res) => {
       message: "Hoàn thành phân công thành công",
     });
   } catch (error) {
-    logger.error(
-      `[${req.id}] Error in completeWorkAssignmentController:`,
-      error.message
-    );
+    logger.error(`[${req.id}] Error in completeWorkAssignmentController:`, error.message);
     res.status(400).json({ error: error.message });
   }
 };
@@ -158,10 +120,7 @@ export const updateWorkAssignmentController = async (req, res) => {
       message: "Cập nhật phân công thành công",
     });
   } catch (error) {
-    logger.error(
-      `[${req.id}] Error in updateWorkAssignmentController:`,
-      error.message
-    );
+    logger.error(`[${req.id}] Error in updateWorkAssignmentController:`, error.message);
     if (error.message.includes("không tồn tại")) {
       res.status(404).json({ error: error.message });
     } else {
@@ -183,10 +142,7 @@ export const startWorkAssignmentController = async (req, res) => {
       message: "Bắt đầu công việc thành công",
     });
   } catch (error) {
-    logger.error(
-      `[${req.id}] Error in startWorkAssignmentController:`,
-      error.message
-    );
+    logger.error(`[${req.id}] Error in startWorkAssignmentController:`, error.message);
     res.status(400).json({ error: error.message });
   }
 };
@@ -204,10 +160,7 @@ export const getWorkAssignmentsByWorkIdController = async (req, res) => {
       message: "Lấy danh sách phân công của công việc thành công",
     });
   } catch (error) {
-    logger.error(
-      `[${req.id}] Error in getWorkAssignmentsByWorkIdController:`,
-      error.message
-    );
+    logger.error(`[${req.id}] Error in getWorkAssignmentsByWorkIdController:`, error.message);
     res.status(404).json({ error: error.message });
   }
 };

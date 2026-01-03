@@ -27,6 +27,7 @@ import {
   createAttendanceTypeController,
   updateAttendanceTypeController,
   deleteAttendanceTypeController,
+  getTodayAttendanceHistoryByUserIdController,
 } from "../../controllers/operations/attendance.controller.js";
 
 const router = express.Router();
@@ -70,6 +71,15 @@ router.get("/", getAllAttendanceController);
  */
 router.get("/user/:userId", getAttendanceHistoryByUserIdController);
 
+/** * GET /user/today/:userId
+ * Mô tả: Lấy lịch sử chấm công trong ngày hôm nay của một người dùng cụ thể.
+ * Path params:
+ *  - userId (string): id của người dùng
+ * Response: 200 OK -> { data: [attendance] }
+ * Controller: getTodayAttendanceHistoryByUserIdController
+ */
+router.get("/user/today/:userId", getTodayAttendanceHistoryByUserIdController);
+
 /**
  * POST /check-in
  * Mô tả: Thực hiện check-in cho một người dùng (bắt đầu bản ghi chấm công mới).
@@ -93,8 +103,8 @@ router.post("/check-in", checkInController);
  * Response: 200 OK -> { data: updatedAttendance }
  * Controller: checkOutController
  */
-router.post("/check-out/", checkOutController);
-  
+router.post("/check-out", checkOutController);
+
 /**
  * GET /:id
  * Mô tả: Lấy chi tiết một bản ghi chấm công theo id.
@@ -184,10 +194,7 @@ router.get("/locations/office", getOfficeLocationController);
  * Response: 200 OK -> { data: [locationPoints], meta }
  * Controller: getTechnicianLocationHistoryController
  */
-router.get(
-  "/locations/technicians/:technicianId/history",
-  getTechnicianLocationHistoryController
-);
+router.get("/locations/technicians/:technicianId/history", getTechnicianLocationHistoryController);
 
 /**
  * GET /locations/job-items

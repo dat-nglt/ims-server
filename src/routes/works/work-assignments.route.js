@@ -1,7 +1,6 @@
 import express from "express";
 import {
   getAllWorkAssignmentsController,
-  getWorkAssignmentsController,
   getWorkAssignmentForTechnicianController,
   createWorkAssignmentController,
   updateWorkAssignmentController,
@@ -13,10 +12,6 @@ import {
 } from "../../controllers/works/work-assignment.controller.js";
 
 const router = express.Router();
-
-// GET work assignments with filters and pagination
-// Query params: ?page=1&limit=20&technician_id=1&work_id=1&assigned_status=pending&assigned_by=1
-router.get("/", getWorkAssignmentsController);
 
 // GET all work assignments (legacy)
 router.get("/all", getAllWorkAssignmentsController);

@@ -11,14 +11,13 @@ import {
   Attendance,
   AttendanceSession,
   AttendanceSessionHistory,
-  CheckInType,
   Notification,
   NotificationRecipient,
   OfficeLocation,
   LocationHistory,
 } from "./operations/index.js";
 import { SalesReportDaily } from "./reports/index.js";
-import { SystemConfig } from "./system/index.js";
+import { SystemConfig, AttendanceLocation, AttendanceType } from "./system/index.js";
 import { Permission, Role, User, RolePermissions, UserRoles } from "./users/index.js";
 import { ProjectHistory, Project, ProjectTeamMember } from "./projects/index.js";
 import { Work, WorkAssignment, WorkCategory, WorkHistory, WorkReport } from "./works/index.js";
@@ -58,13 +57,14 @@ const models = [
   Attendance,
   AttendanceSession,
   AttendanceSessionHistory,
-  CheckInType,
+  AttendanceType,
   Notification,
   NotificationRecipient,
   OfficeLocation,
   LocationHistory,
   SalesReportDaily,
   SystemConfig,
+  AttendanceLocation,
   Permission,
   Role,
   User,

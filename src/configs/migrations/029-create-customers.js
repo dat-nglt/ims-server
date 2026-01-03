@@ -32,10 +32,15 @@ export async function up(queryInterface, Sequelize) {
       type: Sequelize.TEXT,
       comment: 'Địa chỉ',
     },
-    status: {
-      type: Sequelize.ENUM('active', 'inactive', 'prospect', 'suspended'),
-      defaultValue: 'active',
-      comment: 'Trạng thái khách hàng',
+    is_active: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: true,
+      comment: 'Trạng thái hoạt động (true = hoạt động, false = không hoạt động)',
+    },
+    customer_status: {
+      type: Sequelize.ENUM('normal', 'prospect', 'suspended'),
+      defaultValue: 'normal',
+      comment: 'Phân loại trạng thái khách hàng',
     },
     customer_type: {
       type: Sequelize.ENUM('khách lẻ', 'doanh nghiệp', 'đại lý', 'vip'),
@@ -113,7 +118,8 @@ export async function up(queryInterface, Sequelize) {
   });
 
   await queryInterface.addIndex('customers', ['name']);
-  await queryInterface.addIndex('customers', ['status']);
+  await queryInterface.addIndex('customers', ['is_active']);
+  await queryInterface.addIndex('customers', ['customer_status']);
   await queryInterface.addIndex('customers', ['customer_type']);
   await queryInterface.addIndex('customers', ['customer_code']);
   await queryInterface.addIndex('customers', ['account_manager_id']);
@@ -138,6 +144,7 @@ export async function down(queryInterface, Sequelize) {
 
   await queryInterface.dropTable('customers');
 
-  // For Postgres: drop enum type created for customer_type (cleanup)
+  // For Postgres: drop enum types created (cleanup)
+  await queryInterface.sequelize.query('DROP TYPE IF EXISTS "enum_customers_customer_status";');
   await queryInterface.sequelize.query('DROP TYPE IF EXISTS "enum_customers_customer_type";');
 }

@@ -197,7 +197,7 @@ export const zaloLoginController = async (req, res) => {
         phone: null, // Có thể để null hoặc yêu cầu cập nhật sau
         email: `zalo_${zaloProfile.id}@temp.com`, // Email tạm thời
         zalo_id: zaloProfile.id,
-        employee_id: `IMS-LQD-${Date.now()}-${zaloProfile.id.slice(5)}`, // Tạo employee_id unique từ timestamp và phần cuối zalo_id
+        employee_id: zaloProfile.id, // Tạo employee_id unique từ timestamp và phần cuối zalo_id
         status: "active",
         is_active: true,
         approved: "pending",

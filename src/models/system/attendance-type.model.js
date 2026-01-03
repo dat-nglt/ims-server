@@ -107,7 +107,7 @@ export default (sequelize, DataTypes) => {
   AttendanceType.associate = (models) => {
     // optional: will be referenced by CheckIn
     AttendanceType.hasMany(models.Attendance, {
-      foreignKey: "check_in_type_id",
+      foreignKey: "attendance_type_id",
       as: "attendance",
     });
   };

@@ -17,9 +17,21 @@ const formatDateDMY = (d) => {
   return `${day}/${month}/${year}`;
 };
 
-// Fetch projects with filters, includes, and computed fields
-export const getProjectsService = async () => {
+export const getProjectsService = async (query = {}) => {
   try {
+    if (query.fields) {
+      const fieldArray = query.fields.split(",").map((f) => f.trim());
+      const projects = await db.Project.findAll({
+        attributes: fieldArray,
+        order: [["name", "ASC"]],
+      });
+
+      return {
+        success: true,
+        data: projects,
+      };
+    }
+
     // Fetch all projects without filters or pagination
     const queryOptions = {
       include: [

@@ -69,11 +69,36 @@ export async function up(queryInterface, Sequelize) {
         },
     });
 
-    await queryInterface.addIndex("notifications", ["is_system"]);
-    await queryInterface.addIndex("notifications", ["type"]);
-    await queryInterface.addIndex("notifications", ["priority"]);
-    await queryInterface.addIndex("notifications", ["created_at"]);
-    await queryInterface.addIndex("notifications", ["related_project_id"]);
+    // Add indexes with error handling for idempotency
+    try {
+        await queryInterface.addIndex("notifications", ["is_system"]);
+    } catch (error) {
+        if (!error.message.includes("already exists")) throw error;
+    }
+    
+    try {
+        await queryInterface.addIndex("notifications", ["type"]);
+    } catch (error) {
+        if (!error.message.includes("already exists")) throw error;
+    }
+    
+    try {
+        await queryInterface.addIndex("notifications", ["priority"]);
+    } catch (error) {
+        if (!error.message.includes("already exists")) throw error;
+    }
+    
+    try {
+        await queryInterface.addIndex("notifications", ["created_at"]);
+    } catch (error) {
+        if (!error.message.includes("already exists")) throw error;
+    }
+    
+    try {
+        await queryInterface.addIndex("notifications", ["related_project_id"]);
+    } catch (error) {
+        if (!error.message.includes("already exists")) throw error;
+    }
 }
 
 export async function down(queryInterface, Sequelize) {
