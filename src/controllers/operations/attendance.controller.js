@@ -1,5 +1,7 @@
 import logger from "../../utils/logger.js";
 import * as attendanceService from "../../services/operations/attendance.service.js";
+import { checkInService } from "../../services/operations/attendanceCustomService/check-in.service.js";
+import { checkOutService } from "../../services/operations/attendanceCustomService/check-out.service.js";
 
 // ==================== CHECK-IN/OUT CONTROLLERS ====================
 
@@ -86,7 +88,7 @@ export const checkInController = async (req, res) => {
       throw new Error("Thiếu tọa độ: latitude và longitude là bắt buộc");
     }
 
-    const result = await attendanceService.checkInService(payload);
+    const result = await checkInService(payload);
 
     // If service reports an already-open session, return 200 with info for client to show notification
     if (result && result.alreadyCheckedIn) {
@@ -120,7 +122,7 @@ export const checkOutController = async (req, res) => {
 
     // If work_id and user_id are provided, use them; otherwise fall back to attendance id
     if (work_id && user_id && photo_url_check_out && latitude_check_out && longitude_check_out) {
-      const result = await attendanceService.checkOutService({
+      const result = await checkOutService({
         work_id,
         user_id,
         photo_url_check_out,
