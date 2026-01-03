@@ -29,7 +29,7 @@ export const checkOutService = async (criteria) => {
     return { success: true, data: attendance, message: "Check-out thành công" };
   } catch (error) {
     logger.warn("Error in checkOutService:" + error.message);
-    throw error;
+    return { success: false, error: "Chấm công thất bại", data: null };
   }
 };
 

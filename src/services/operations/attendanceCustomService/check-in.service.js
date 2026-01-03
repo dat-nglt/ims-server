@@ -1,4 +1,5 @@
 import db from "../../../models/index.js";
+import { Op } from "sequelize";
 import logger from "../../../utils/logger.js";
 import { toVietnamTimeISO } from "../../../utils/helper.js";
 import { createNotificationService } from "../notification.service.js";
@@ -46,7 +47,7 @@ export const checkInService = async (checkInData) => {
     };
   } catch (error) {
     logger.warn("Error in attendanceService:" + error.message);
-    throw error;
+    return { success: false, error: "Chấm công thất bại", data: null };
   }
 };
 
@@ -102,6 +103,50 @@ const validateAttendanceType = async (attendance_type_id) => {
 };
 
 const checkExistingSession = async (user_id, work_id, HUB_WORK_IDS) => {
+  // First check if the user has any open session started today (regardless of work)
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date(todayStart);
+  todayEnd.setDate(todayEnd.getDate() + 1);
+
+  const anySession = await db.AttendanceSession.findOne({
+    where: {
+      user_id,
+      status: "open",
+      started_at: { [Op.between]: [todayStart, todayEnd] },
+    },
+    include: [{ model: db.Work, as: "work" }],
+    order: [["started_at", "DESC"]],
+  });
+
+  if (anySession) {
+    console.log("Người dùng đã có phiên chấm công hiện tại với phiên mã:", anySession.id);
+    const latestAttendance = await db.Attendance.findOne({
+      where: { attendance_session_id: anySession.id, user_id },
+      order: [["check_in_time", "DESC"]],
+      attributes: ["id", "check_in_time"],
+    });
+
+    const checkInAt = latestAttendance ? toVietnamTimeISO(latestAttendance.check_in_time) : null;
+
+    return {
+      success: true,
+      alreadyCheckedIn: true,
+      message: checkInAt
+        ? `Người dùng đã chấm công vào phiên hiện tại lúc ${checkInAt.split("T")[0]} ${checkInAt
+            .split("T")[1]
+            .substring(0, 5)}`
+        : `Người dùng đã có phiên chấm công hiện tại`,
+      session: {
+        id: anySession.id,
+        work: anySession.work ? { id: anySession.work.id, title: anySession.work.title } : null,
+        check_in_time: checkInAt,
+        check_in_id: latestAttendance ? latestAttendance.id : null,
+      },
+    };
+  }
+
+  // If no session found for the user, continue with the existing work-specific check
   const sessionLookupWorkId = HUB_WORK_IDS.includes(work_id) ? null : work_id;
   const attendanceSessionSummary = await getOpenSessionSummaryByUser(user_id, sessionLookupWorkId);
   if (attendanceSessionSummary?.session) {
@@ -112,9 +157,11 @@ const checkExistingSession = async (user_id, work_id, HUB_WORK_IDS) => {
     return {
       success: true,
       alreadyCheckedIn: true,
-      message: `Người dùng đã chấm công vào công việc lúc ${checkInAt.split("T")[0]} ${checkInAt
-        .split("T")[1]
-        .substring(0, 5)}`,
+      message: checkInAt
+        ? `Người dùng đã chấm công vào công việc lúc ${checkInAt.split("T")[0]} ${checkInAt
+            .split("T")[1]
+            .substring(0, 5)}`
+        : `Người dùng đã chấm công vào công việc`,
       session: {
         id: attendanceSessionSummary.session.id,
         work: attendanceSessionSummary.work
@@ -125,6 +172,7 @@ const checkExistingSession = async (user_id, work_id, HUB_WORK_IDS) => {
       },
     };
   }
+
   return null;
 };
 

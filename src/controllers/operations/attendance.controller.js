@@ -98,7 +98,7 @@ export const checkInController = async (req, res) => {
     res.status(201).json(result);
   } catch (error) {
     logger.error(`[${req.id}] Error in attendanceController:` + error.message);
-    res.status(200).json({ success: false, message: error.message });
+    res.status(200).json({ success: false, message: "Chấm công thất bại", data: null });
   }
 };
 
@@ -140,7 +140,7 @@ export const checkOutController = async (req, res) => {
     throw new Error("Thiếu work_id và user_id để check-out");
   } catch (error) {
     logger.error(`[${req.id}] Error in checkOutController:` + error.message);
-    res.status(200).json({ success: false, message: error.message });
+    res.status(200).json({ success: false, message: "Chấm công thất bại", data: null });
   }
 };
 
