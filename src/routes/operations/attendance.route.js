@@ -27,6 +27,7 @@ import {
   createAttendanceTypeController,
   updateAttendanceTypeController,
   deleteAttendanceTypeController,
+  getTodayAttendanceHistoryByUserIdController,
 } from "../../controllers/operations/attendance.controller.js";
 
 const router = express.Router();
@@ -69,6 +70,15 @@ router.get("/", getAllAttendanceController);
  * Lưu ý: route này phải đặt trước `/:id` để tránh xung đột với route lấy theo id
  */
 router.get("/user/:userId", getAttendanceHistoryByUserIdController);
+
+/** * GET /user/today/:userId
+ * Mô tả: Lấy lịch sử chấm công trong ngày hôm nay của một người dùng cụ thể.
+ * Path params:
+ *  - userId (string): id của người dùng
+ * Response: 200 OK -> { data: [attendance] }
+ * Controller: getTodayAttendanceHistoryByUserIdController
+ */
+router.get("/user/today/:userId", getTodayAttendanceHistoryByUserIdController);
 
 /**
  * POST /check-in

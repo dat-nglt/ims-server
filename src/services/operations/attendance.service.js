@@ -158,7 +158,50 @@ export const checkOutSessionService = async (sessionId) => {
 
 /**
  * Lấy lịch sử attendance của một người dùng
+ * @param {number} userId
+ * @param {Object} [options] - Tùy chọn lọc
+ * @param {boolean} [options.todayOnly=false] - Nếu true, chỉ lấy chấm công trong ngày hôm nay
+ * @param {Date|string} [options.startDate] - Ngày bắt đầu (kết hợp với endDate để lọc theo khoảng)
+ * @param {Date|string} [options.endDate] - Ngày kết thúc
  */
+export const getTodayAttendanceHistoryByUserIdService = async (userId, options = {}) => {
+  try {
+    const { todayOnly = false, startDate, endDate } = options;
+
+    const where = { user_id: userId };
+
+    if (todayOnly) {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date(todayStart);
+      todayEnd.setDate(todayEnd.getDate() + 1);
+      where.check_in_time = { [Op.between]: [todayStart, todayEnd] };
+    } else if (startDate && endDate) {
+      where.check_in_time = { [Op.between]: [new Date(startDate), new Date(endDate)] };
+    }
+
+    const attendances = await db.Attendance.findAll({
+      where,
+      include: [
+        { model: db.Work, as: "work" },
+        { model: db.Project, as: "project" },
+        { model: db.AttendanceSession, as: "attendanceSession" },
+        {
+          model: db.AttendanceType,
+          as: "attendanceType",
+          attributes: ["id", "name", "code"],
+        },
+      ],
+      order: [["check_in_time", "DESC"]],
+    });
+
+    return { success: true, data: attendances };
+  } catch (error) {
+    logger.warn("Error in getAttendanceHistoryByUserIdService:" + error.message);
+    throw error;
+  }
+};
+
 export const getAttendanceHistoryByUserIdService = async (userId) => {
   try {
     const attendances = await db.Attendance.findAll({
@@ -176,6 +219,7 @@ export const getAttendanceHistoryByUserIdService = async (userId) => {
     throw error;
   }
 };
+
 
 // ==================== LOCATION SERVICES ====================
 

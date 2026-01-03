@@ -161,6 +161,22 @@ export const getAttendanceHistoryByUserIdController = async (req, res) => {
   }
 };
 
+export const getTodayAttendanceHistoryByUserIdController = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await attendanceService.getTodayAttendanceHistoryByUserIdService(userId);
+
+    res.json({
+      status: "success",
+      data: result.data,
+      message: "Lấy lịch sử attendance thành công",
+    });
+  } catch (error) {
+    logger.error(`[${req.id}] Error in getAttendanceHistoryByUserIdController:`, error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // ==================== LOCATION CONTROLLERS ====================
 
 /**
