@@ -42,19 +42,19 @@ export const checkInService = async (checkInData) => {
     return {
       success: true,
       data: attendance,
-      sessionId: attendance.attendance_session_id,
+      sessionId: attendance?.attendance_session_id,
       message: "Chấm công vào thành công",
     };
   } catch (error) {
     logger.warn("Error in attendanceService:" + error.message);
-    return { success: false, error: "Chấm công thất bại", data: null };
+    return { success: false, message: error.message || "Chấm công vào thất bại", data: null };
   }
 };
 
 // Helper functions for checkInService optimization
 const validateInput = (checkInData) => {
   const { user_id, latitude, longitude } = checkInData || {};
-  if (!user_id) throw new Error("Không xác định người dùng cho bản ghi chấm công");
+  if (!user_id) throw new Error("Không tìm thấy hồ sơ làm việc của kỹ thuật viên");
   if (latitude == null || longitude == null || isNaN(Number(latitude)) || isNaN(Number(longitude))) {
     throw new Error("Thiếu tọa độ hợp lệ cho bản ghi chấm công");
   }
@@ -62,16 +62,16 @@ const validateInput = (checkInData) => {
 
 const validateUser = async (user_id) => {
   const user = await db.User.findByPk(user_id);
-  if (!user) throw new Error("Hệ thống không tìm thấy người dùng tham chiếu đến bản ghi chấm công");
+  if (!user) throw new Error("Không tìm thấy hồ sơ người dùng của kỹ thuật viên");
   return user;
 };
 
 const validateWork = async (work_id, user_id, HUB_WORK_IDS) => {
   if (work_id && !HUB_WORK_IDS.includes(work_id)) {
     const work = await db.Work.findByPk(work_id);
-    if (!work) throw new Error("Công việc không tồn tại");
+    if (!work) throw new Error("Không tìm thấy công việc tương ứng");
     const workAssignment = await db.WorkAssignment.findOne({ where: { work_id, technician_id: user_id } });
-    if (!workAssignment) throw new Error("Người dùng không được gán cho công việc này");
+    if (!workAssignment) throw new Error("Người dùng không được phân bổ cho công việc này");
 
     // Kiểm tra ngày yêu cầu công việc có phải trong hôm nay hay không
     if (work.required_date) {

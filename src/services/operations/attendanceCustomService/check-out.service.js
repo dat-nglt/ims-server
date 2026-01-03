@@ -26,10 +26,10 @@ export const checkOutService = async (criteria) => {
 
     await updateSession(criteria);
 
-    return { success: true, data: attendance, message: "Check-out thành công" };
+    return { success: true, data: attendance, message: "Chấm công ra thành công" };
   } catch (error) {
     logger.warn("Error in checkOutService:" + error.message);
-    return { success: false, error: "Chấm công thất bại", data: null };
+    return { success: false, message: error.message || "Chấm công ra thất bại", data: null };
   }
 };
 
@@ -51,7 +51,7 @@ const validateWorkAssignment = async (criteria) => {
     });
 
     if (!workAssignment) {
-      throw new Error("Người dùng không được gán cho công việc này hoặc phân công đã bị từ chối/hủy");
+      throw new Error("Người dùng không được phân bổ cho công việc này");
     }
 
     // Kiểm tra ngày yêu cầu công việc có phải trong hôm nay hay không (chỉ cho work_id > 0)
@@ -121,7 +121,7 @@ const findAttendanceRecord = async (criteria) => {
 
 const validateCheckOutConditions = (attendance, criteria) => {
   if (attendance.check_out_time) {
-    throw new Error("Người dùng đã thực hiện check-out trước đó");
+    throw new Error("Người dùng đã thực hiện chấm công ra trước đó");
   }
 
   if (!criteria.latitude_check_out || !criteria.longitude_check_out) {
