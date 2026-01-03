@@ -164,22 +164,45 @@ export const checkOutSessionService = async (sessionId) => {
  * @param {Date|string} [options.startDate] - Ngày bắt đầu (kết hợp với endDate để lọc theo khoảng)
  * @param {Date|string} [options.endDate] - Ngày kết thúc
  */
-export const getTodayAttendanceHistoryByUserIdService = async (userId, options = {}) => {
+export const getAttendanceHistoryByUserIdService = async (userId, type = "day", options = {}) => {
   try {
-    const { todayOnly = false, startDate, endDate } = options;
-
+    const { startDate, endDate } = options;
     const where = { user_id: userId };
 
-    if (todayOnly) {
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      const todayEnd = new Date(todayStart);
-      todayEnd.setDate(todayEnd.getDate() + 1);
-      where.check_in_time = { [Op.between]: [todayStart, todayEnd] };
-    } else if (startDate && endDate) {
-      where.check_in_time = { [Op.between]: [new Date(startDate), new Date(endDate)] };
+    let start, end;
+    const now = new Date();
+
+    // 1. Xử lý logic thời gian dựa trên tham số 'type'
+    switch (type) {
+      case "today":
+      case "day":
+        start = new Date(now.setHours(0, 0, 0, 0));
+        end = new Date(now.setHours(23, 59, 59, 999));
+        break;
+
+      case "month":
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        break;
+
+      case "custom":
+        if (startDate && endDate) {
+          start = new Date(startDate);
+          end = new Date(endDate);
+        }
+        break;
+
+      default:
+        // Mặc định nếu không truyền type rõ ràng
+        start = new Date(now.setHours(0, 0, 0, 0));
+        end = new Date(now.setHours(23, 59, 59, 999));
     }
 
+    if (start && end) {
+      where.check_in_time = { [Op.between]: [start, end] };
+    }
+
+    // 2. Thực hiện truy vấn (Gộp chung phần DB query)
     const attendances = await db.Attendance.findAll({
       where,
       include: [
@@ -197,29 +220,10 @@ export const getTodayAttendanceHistoryByUserIdService = async (userId, options =
 
     return { success: true, data: attendances };
   } catch (error) {
-    logger.warn("Error in getAttendanceHistoryByUserIdService:" + error.message);
+    logger.error(`Error in getAttendanceHistoryService (${type}): ${error.message}`);
     throw error;
   }
 };
-
-export const getAttendanceHistoryByUserIdService = async (userId) => {
-  try {
-    const attendances = await db.Attendance.findAll({
-      where: { user_id: userId },
-      include: [
-        { model: db.Work, as: "work" },
-        { model: db.AttendanceSession, as: "attendanceSession" },
-      ],
-      order: [["check_in_time", "DESC"]],
-    });
-
-    return { success: true, data: attendances };
-  } catch (error) {
-    logger.warn("Error in getAttendanceHistoryByUserIdService:" + error.message);
-    throw error;
-  }
-};
-
 
 // ==================== LOCATION SERVICES ====================
 

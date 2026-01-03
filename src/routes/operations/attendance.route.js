@@ -27,7 +27,8 @@ import {
   createAttendanceTypeController,
   updateAttendanceTypeController,
   deleteAttendanceTypeController,
-  getTodayAttendanceHistoryByUserIdController,
+  getCurrentDayAttendanceHistoryByUserIdController,
+  getCurrentMonthAttendanceHistoryByUserIdController,
 } from "../../controllers/operations/attendance.controller.js";
 
 const router = express.Router();
@@ -76,9 +77,18 @@ router.get("/user/:userId", getAttendanceHistoryByUserIdController);
  * Path params:
  *  - userId (string): id của người dùng
  * Response: 200 OK -> { data: [attendance] }
- * Controller: getTodayAttendanceHistoryByUserIdController
+ * Controller: getCurrentDayAttendanceHistoryByUserIdController
  */
-router.get("/user/today/:userId", getTodayAttendanceHistoryByUserIdController);
+router.get("/user/today/:userId", getCurrentDayAttendanceHistoryByUserIdController);
+
+/** * GET /user/month/:userId
+ * Mô tả: Lấy lịch sử chấm công trong tháng hiện tại của một người dùng cụ thể.
+ * Path params:
+ *  - userId (string): id của người dùng
+ * Response: 200 OK -> { data: [attendance] }
+ * Controller: getCurrentMonthAttendanceHistoryByUserIdController
+ */
+router.get("/user/month/:userId", getCurrentMonthAttendanceHistoryByUserIdController);
 
 /**
  * POST /check-in

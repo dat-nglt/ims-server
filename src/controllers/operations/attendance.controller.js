@@ -152,6 +152,18 @@ export const getAttendanceHistoryByUserIdController = async (req, res) => {
     const { userId } = req.params;
     const result = await attendanceService.getAttendanceHistoryByUserIdService(userId);
 
+    res.json(result);
+  } catch (error) {
+    logger.error(`[${req.id}] Error in getAttendanceHistoryByUserIdController:`, error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getCurrentDayAttendanceHistoryByUserIdController = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await attendanceService.getAttendanceHistoryByUserIdService(userId, "today");
+
     res.json({
       status: "success",
       data: result.data,
@@ -163,16 +175,12 @@ export const getAttendanceHistoryByUserIdController = async (req, res) => {
   }
 };
 
-export const getTodayAttendanceHistoryByUserIdController = async (req, res) => {
+export const getCurrentMonthAttendanceHistoryByUserIdController = async (req, res) => {
   try {
     const { userId } = req.params;
-    const result = await attendanceService.getTodayAttendanceHistoryByUserIdService(userId);
+    const result = await attendanceService.getAttendanceHistoryByUserIdService(userId, "month");
 
-    res.json({
-      status: "success",
-      data: result.data,
-      message: "Lấy lịch sử attendance thành công",
-    });
+    res.json(result);
   } catch (error) {
     logger.error(`[${req.id}] Error in getAttendanceHistoryByUserIdController:`, error.message);
     res.status(500).json({ error: error.message });
