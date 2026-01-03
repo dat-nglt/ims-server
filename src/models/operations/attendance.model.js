@@ -169,6 +169,12 @@ export default (sequelize, DataTypes) => {
       notes: {
         type: DataTypes.TEXT,
       },
+      // Metadata (JSON) - used for hub info and other metadata
+      metadata: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+        defaultValue: {},
+      },
       // Loại chấm công (FK tới attendance_type)
       attendance_type_id: {
         type: DataTypes.INTEGER,
@@ -288,15 +294,22 @@ export default (sequelize, DataTypes) => {
           if (checkIn.attendance_session_id) return;
 
           // If check_out_time exists we create a closed session, otherwise try to find or create an open session
+          // Helper: if work_id indicates a hub (warehouse/office), do not set FK on session.work_id
+          const HUB_WORK_IDS = [-1, -2];
+          const isHub = HUB_WORK_IDS.includes(checkIn.work_id);
+          const sessionWorkId = isHub ? null : checkIn.work_id;
+          const sessionMetadata = isHub ? { hub: checkIn.work_id === -1 ? "warehouse" : "office" } : {};
+
           if (checkIn.check_out_time) {
             const session = await AttendanceSession.create(
               {
                 user_id: checkIn.user_id,
-                work_id: checkIn.work_id,
+                work_id: sessionWorkId,
                 project_id: checkIn.project_id,
                 started_at: checkIn.check_in_time || null,
                 ended_at: checkIn.check_out_time,
                 status: "closed",
+                metadata: sessionMetadata,
               },
               { transaction: options.transaction }
             );
@@ -306,15 +319,16 @@ export default (sequelize, DataTypes) => {
             const [session] = await AttendanceSession.findOrCreate({
               where: {
                 user_id: checkIn.user_id,
-                work_id: checkIn.work_id,
+                work_id: sessionWorkId,
                 ended_at: null,
               },
               defaults: {
                 user_id: checkIn.user_id,
-                work_id: checkIn.work_id,
+                work_id: sessionWorkId,
                 project_id: checkIn.project_id,
                 started_at: checkIn.check_in_time || new Date(),
                 status: "open",
+                metadata: sessionMetadata,
               },
               transaction: options.transaction,
             });

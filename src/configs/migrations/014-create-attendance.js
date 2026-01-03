@@ -24,6 +24,7 @@ export async function up(queryInterface, Sequelize) {
     },
     work_id: {
       type: Sequelize.INTEGER,
+      allowNull: true,
       references: {
         model: "works",
         key: "id",
@@ -126,6 +127,13 @@ export async function up(queryInterface, Sequelize) {
     },
     notes: {
       type: Sequelize.TEXT,
+    },
+    // Metadata (JSONB) - used for hub info and other metadata
+    metadata: {
+      type: Sequelize.JSONB,
+      allowNull: true,
+      defaultValue: {},
+      comment: "Additional metadata (e.g. hub: 'warehouse'|'office')",
     },
     // Thêm attendance_type_id: FK tới bảng attendance_type
     attendance_type_id: {
@@ -252,6 +260,22 @@ export async function up(queryInterface, Sequelize) {
           AND c.relname = 'attendance_is_within_radius'
       ) THEN
         CREATE INDEX attendance_is_within_radius ON attendance (is_within_radius) WHERE is_within_radius = false;
+      END IF;
+    END
+    $$;
+  `);
+
+  // Create expression index for metadata.hub to speed hub lookups (Postgres)
+  await queryInterface.sequelize.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE c.relkind = 'i'
+          AND c.relname = 'attendance_metadata_hub_idx'
+      ) THEN
+        CREATE INDEX attendance_metadata_hub_idx ON attendance ((metadata->>'hub'));
       END IF;
     END
     $$;
