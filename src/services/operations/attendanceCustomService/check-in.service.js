@@ -130,7 +130,7 @@ const checkExistingSession = async (user_id, work_id, HUB_WORK_IDS) => {
     const checkInAt = latestAttendance ? toVietnamTimeISO(latestAttendance.check_in_time) : null;
 
     return {
-      success: true,
+      success: false,
       alreadyCheckedIn: true,
       message: checkInAt
         ? `Người dùng đã chấm công vào phiên hiện tại lúc ${checkInAt.split("T")[0]} ${checkInAt
@@ -155,7 +155,7 @@ const checkExistingSession = async (user_id, work_id, HUB_WORK_IDS) => {
       ? toVietnamTimeISO(attendanceSessionSummary.check_in_time)
       : null;
     return {
-      success: true,
+      success: false,
       alreadyCheckedIn: true,
       message: checkInAt
         ? `Người dùng đã chấm công vào công việc lúc ${checkInAt.split("T")[0]} ${checkInAt
