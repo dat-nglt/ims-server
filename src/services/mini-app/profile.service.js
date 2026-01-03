@@ -249,6 +249,7 @@ export const getAttendanceLocationService = async () => {
   }
 };
 
+// Lấy danh sách loại chấm công
 export const getAttendanceTypeService = async () => {
   try {
     const attendanceTypes = await db.AttendanceType.findAll({
