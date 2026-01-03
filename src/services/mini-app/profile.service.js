@@ -253,7 +253,7 @@ export const getAttendanceTypeService = async () => {
   try {
     const attendanceTypes = await db.AttendanceType.findAll({
       where: {
-        is_active: true,
+        active: true,
       },
       order: [["name", "DESC"]],
     });
