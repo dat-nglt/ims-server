@@ -1,0 +1,214 @@
+{
+  "info": {
+    "_postman_id": "zalo-notification-collection",
+    "name": "IMS Zalo Mini App Notification",
+    "description": "Zalo Mini App Notification API - Test Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Send Generic Notification",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"receiverId\": \"3708075640650630601\",\n  \"templateData\": {\n    \"buttonText\": \"Xem chi tiết\",\n    \"buttonUrl\": \"https://zalo.me/\",\n    \"title\": \"Thông báo từ hệ thống\",\n    \"contentTitle\": \"Cập nhật quan trọng\",\n    \"contentDescription\": \"Bạn có một thông báo mới từ hệ thống quản lý công việc\"\n  },\n  \"templateId\": \"00126fd75392bacce383\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v1/ims/mini-app/notification/send",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "v1", "ims", "mini-app", "notification", "send"]
+        },
+        "description": "Send a generic notification with custom template data"
+      },
+      "response": []
+    },
+    {
+      "name": "Send Order Confirmation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"receiverId\": \"3708075640650630601\",\n  \"orderData\": {\n    \"title\": \"ZaUI Coffee - Xác nhận đơn hàng\",\n    \"contentDescription\": \"Chúng tôi đã nhận yêu cầu đặt hàng từ bạn. Đơn hàng #ORD-2025-001 đã được xác nhận. Thời gian giao dự kiến: 30 phút\",\n    \"buttonUrl\": \"https://zalo.me/s/194839900003483517/\",\n    \"buttonText\": \"Xem chi tiết đơn hàng\"\n  }\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v1/ims/mini-app/notification/send-order-confirmation",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "v1", "ims", "mini-app", "notification", "send-order-confirmation"]
+        },
+        "description": "Send order confirmation notification to customer"
+      },
+      "response": []
+    },
+    {
+      "name": "Send Custom Notification - Project Update",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"receiverId\": \"3708075640650630601\",\n  \"title\": \"Cập nhật dự án\",\n  \"contentTitle\": \"Công việc được gán cho bạn\",\n  \"contentDescription\": \"Bạn vừa được gán công việc 'Sửa chữa máy in' trong dự án 'Bảo trì hệ thống'. Vui lòng kiểm tra chi tiết và bắt đầu làm việc.\",\n  \"buttonText\": \"Xem chi tiết công việc\",\n  \"buttonUrl\": \"https://your-app.com/work/assignments\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v1/ims/mini-app/notification/send-custom",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "v1", "ims", "mini-app", "notification", "send-custom"]
+        },
+        "description": "Send custom notification about project/work assignment"
+      },
+      "response": []
+    },
+    {
+      "name": "Send Custom Notification - Attendance Reminder",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"receiverId\": \"3708075640650630601\",\n  \"title\": \"Nhắc nhở chấm công\",\n  \"contentTitle\": \"Thời gian chấm công\",\n  \"contentDescription\": \"Đừng quên chấm công vào hôm nay. Bạn cần chấm công tại điểm 'Văn phòng chính' trước 09:30.\",\n  \"buttonText\": \"Chấm công ngay\",\n  \"buttonUrl\": \"https://your-app.com/attendance/check-in\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v1/ims/mini-app/notification/send-custom",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "v1", "ims", "mini-app", "notification", "send-custom"]
+        },
+        "description": "Send attendance reminder notification"
+      },
+      "response": []
+    },
+    {
+      "name": "Send Custom Notification - Report Deadline",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"receiverId\": \"3708075640650630601\",\n  \"title\": \"Nhắc nhở: Hạn chót nộp báo cáo\",\n  \"contentTitle\": \"Báo cáo công việc tuần này\",\n  \"contentDescription\": \"Hạn chót nộp báo cáo công việc tuần này là hôm nay lúc 17:00. Vui lòng hoàn thành và gửi báo cáo của bạn.\",\n  \"buttonText\": \"Gửi báo cáo\",\n  \"buttonUrl\": \"https://your-app.com/reports/submit\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v1/ims/mini-app/notification/send-custom",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "v1", "ims", "mini-app", "notification", "send-custom"]
+        },
+        "description": "Send report deadline reminder notification"
+      },
+      "response": []
+    },
+    {
+      "name": "Send Custom Notification - Material Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"receiverId\": \"3708075640650630601\",\n  \"title\": \"Yêu cầu vật liệu mới\",\n  \"contentTitle\": \"Phê duyệt yêu cầu vật liệu\",\n  \"contentDescription\": \"Yêu cầu vật liệu #MAT-2025-045 từ kho cần sự phê duyệt của bạn. Chi phí ước tính: 5.000.000 VND.\",\n  \"buttonText\": \"Xem chi tiết\",\n  \"buttonUrl\": \"https://your-app.com/materials/requests/MAT-2025-045\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v1/ims/mini-app/notification/send-custom",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "v1", "ims", "mini-app", "notification", "send-custom"]
+        },
+        "description": "Send material request approval notification"
+      },
+      "response": []
+    },
+    {
+      "name": "Send Generic Notification - Multiple Recipients",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"receiverId\": \"3708075640650630601\",\n  \"templateData\": {\n    \"buttonText\": \"Xem hướng dẫn\",\n    \"buttonUrl\": \"https://your-app.com/help\",\n    \"title\": \"Thông báo quan trọng\",\n    \"contentTitle\": \"Nâng cấp hệ thống\",\n    \"contentDescription\": \"Hệ thống sẽ bảo trì vào ngày 6/1/2025 từ 22:00 đến 23:00. Vui lòng lưu ý và hoàn thành công việc trước đó.\"\n  }\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v1/ims/mini-app/notification/send",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "v1", "ims", "mini-app", "notification", "send"]
+        },
+        "description": "Send system maintenance notification"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "receiver_id",
+      "value": "3708075640650630601",
+      "type": "string"
+    },
+    {
+      "key": "mini_app_id",
+      "value": "4077565557940731886",
+      "type": "string"
+    },
+    {
+      "key": "api_key",
+      "value": "52T59yrUn1eU9bubmbh47WSdN2JRNiiR1oPGBZGrwqol3CvUt1a",
+      "type": "string"
+    }
+  ]
+}

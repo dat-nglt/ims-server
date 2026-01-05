@@ -1,6 +1,6 @@
 // Mini App Routes
 
-import { routeForProfileMiniApp } from "./mini-app/index.js";
+import { routeForProfileMiniApp, routeForNotificationMiniApp } from "./mini-app/index.js";
 
 // IMS Routes
 import {
@@ -36,6 +36,7 @@ import examplesRouter from "./examples.js";
 const mainRouter = (server) => {
   // Mini App Routes
   server.use("/api/v1/ims/mini-app/profile", routeForProfileMiniApp);
+  server.use("/api/v1/ims/mini-app/notification", routeForNotificationMiniApp);
 
   // --- IMS ROUTES (API v1) ---
   // User Management
