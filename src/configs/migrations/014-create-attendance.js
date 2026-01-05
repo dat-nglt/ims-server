@@ -54,6 +54,16 @@ export async function up(queryInterface, Sequelize) {
     check_out_time: {
       type: Sequelize.DATE,
     },
+    check_in_time_on_local: {
+      type: Sequelize.DATE,
+      allowNull: true,
+      comment: "Thời gian check-in theo múi giờ địa phương (không chuyển đổi UTC)",
+    },
+    check_out_time_on_local: {
+      type: Sequelize.DATE,
+      allowNull: true,
+      comment: "Thời gian check-out theo múi giờ địa phương (không chuyển đổi UTC)",
+    },
     latitude: {
       type: Sequelize.DECIMAL(10, 8),
       comment: "Vĩ độ check-in",
