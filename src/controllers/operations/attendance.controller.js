@@ -59,6 +59,7 @@ export const checkInController = async (req, res) => {
       notes,
       distance_from_work,
       technicians,
+      check_in_time_on_local = null,
     } = req.body || {};
 
     // Build normalized payload
@@ -78,6 +79,7 @@ export const checkInController = async (req, res) => {
       attendance_type_id: attendance_type_id || null,
       distance_from_work: distance_from_work || null,
       technicians: Array.isArray(technicians) ? technicians : technicians ? [technicians] : [],
+      check_in_time_on_local: check_in_time_on_local || null,
     };
 
     if (!payload.user_id) {
@@ -119,6 +121,7 @@ export const checkOutController = async (req, res) => {
       distance_from_work_check_out = null,
       attendance_type_id,
       address_check_out = null,
+      check_out_time_on_local = null,
     } = req.body || {};
 
     // If work_id and user_id are provided, use them; otherwise fall back to attendance id
@@ -133,6 +136,7 @@ export const checkOutController = async (req, res) => {
         distance_from_work_check_out,
         attendance_type_id,
         address_check_out,
+        check_out_time_on_local,
       });
       return res.json(result);
     }

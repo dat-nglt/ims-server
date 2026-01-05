@@ -70,6 +70,16 @@ export default (sequelize, DataTypes) => {
       check_out_time: {
         type: DataTypes.DATE,
       },
+      // Thời gian check-in theo múi giờ địa phương (không chuyển đổi UTC)
+      check_in_time_on_local: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      // Thời gian check-out theo múi giờ địa phương (không chuyển đổi UTC)
+      check_out_time_on_local: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
       // Vĩ độ check-in với validation (-90 to 90)
       latitude: {
         type: DataTypes.DECIMAL(10, 8),

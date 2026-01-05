@@ -252,6 +252,7 @@ const prepareAttendanceData = (checkInData, user, attendanceType, HUB_WORK_IDS) 
     work_id: createWorkId,
     project_id: pid,
     check_in_time: new Date(),
+    check_in_time_on_local: checkInData.check_in_time_on_local || null,
     latitude: parseFloat(latitude),
     longitude: parseFloat(longitude),
     location_name,

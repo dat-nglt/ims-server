@@ -136,6 +136,9 @@ const prepareCheckOutData = (attendance, criteria, checkOutTime) => {
   const locationNameCheckOut = criteria.location_name_check_out
     ? String(criteria.location_name_check_out).trim()
     : null;
+  const checkOutTimeOnLocal = criteria.check_out_time_on_local
+    ? new Date(criteria.check_out_time_on_local)
+    : null;
   const addressCheckOut = criteria.address_check_out || null;
   const distanceFromWorkCheckOut = criteria.distance_from_work_check_out || null;
   const durationMinutes = Math.round((checkOutTime - attendance.check_in_time) / 60000);
@@ -150,6 +153,7 @@ const prepareCheckOutData = (attendance, criteria, checkOutTime) => {
   return {
     work_id: criteria.work_id,
     check_out_time: checkOutTime,
+    check_out_time_on_local: checkOutTimeOnLocal,
     duration_minutes: durationMinutes,
     photo_url_check_out: photoUrlCheckOut,
     address_check_out: addressCheckOut,
