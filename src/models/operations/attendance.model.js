@@ -335,6 +335,7 @@ export default (sequelize, DataTypes) => {
             const [session] = await AttendanceSession.findOrCreate({
               where: {
                 user_id: checkIn.user_id,
+                attendance_type_id: checkIn.attendance_type_id,
                 work_id: sessionWorkId,
                 ended_at: null,
               },
