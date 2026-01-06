@@ -1,15 +1,15 @@
-'use strict';
+"use strict";
 
 /**
  * Model AttendanceSession
- * 
+ *
  * Lưu trữ phiên chấm công cho 1 kỹ thuật trên 1 công việc (một phiên = một cặp check-in/out)
  */
-import { Op } from 'sequelize';
+import { Op } from "sequelize";
 
 export default (sequelize, DataTypes) => {
   const AttendanceSession = sequelize.define(
-    'AttendanceSession',
+    "AttendanceSession",
     {
       id: {
         type: DataTypes.INTEGER,
@@ -20,23 +20,23 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: 'users',
-          key: 'id',
+          model: "users",
+          key: "id",
         },
       },
       work_id: {
         type: DataTypes.INTEGER,
         references: {
-          model: 'works',
-          key: 'id',
+          model: "works",
+          key: "id",
         },
       },
       project_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
-          model: 'projects',
-          key: 'id',
+          model: "projects",
+          key: "id",
         },
       },
       started_at: {
@@ -46,8 +46,8 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DATE,
       },
       status: {
-        type: DataTypes.ENUM('open', 'closed'),
-        defaultValue: 'open',
+        type: DataTypes.ENUM("open", "closed"),
+        defaultValue: "open",
       },
       duration_minutes: {
         type: DataTypes.INTEGER,
@@ -59,23 +59,23 @@ export default (sequelize, DataTypes) => {
       check_in_id: {
         type: DataTypes.INTEGER,
         references: {
-          model: 'attendance',
-          key: 'id',
+          model: "attendance",
+          key: "id",
         },
       },
       check_out_id: {
         type: DataTypes.INTEGER,
         references: {
-          model: 'attendance',
-          key: 'id',
+          model: "attendance",
+          key: "id",
         },
       },
       attendance_type_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
-          model: 'attendance_type',
-          key: 'id',
+          model: "attendance_type",
+          key: "id",
         },
       },
       notes: {
@@ -96,16 +96,16 @@ export default (sequelize, DataTypes) => {
       },
     },
     {
-      tableName: 'attendance_sessions',
+      tableName: "attendance_sessions",
       timestamps: true,
       underscored: true,
       indexes: [
-        { fields: ['user_id'] },
-        { fields: ['work_id'] },
-        { fields: ['started_at'] },
-        { fields: ['ended_at'] },
-        { fields: ['status'] },
-        { fields: ['attendance_type_id'] },
+        { fields: ["user_id"] },
+        { fields: ["work_id"] },
+        { fields: ["started_at"] },
+        { fields: ["ended_at"] },
+        { fields: ["status"] },
+        { fields: ["attendance_type_id"] },
       ],
       hooks: {
         beforeSave: (session) => {
@@ -115,9 +115,9 @@ export default (sequelize, DataTypes) => {
           }
 
           if (session.ended_at) {
-            session.status = 'closed';
+            session.status = "closed";
           } else {
-            session.status = 'open';
+            session.status = "open";
           }
         },
 
@@ -130,9 +130,10 @@ export default (sequelize, DataTypes) => {
           const existingSession = await session.constructor.findOne({
             where: {
               user_id: session.user_id,
+              attendance_type_id: session.attendance_type_id,
               work_id: session.work_id,
               ended_at: null,
-              status: 'open',
+              status: "open",
             },
             transaction: options.transaction,
           });
@@ -150,25 +151,29 @@ export default (sequelize, DataTypes) => {
           if (!AttendanceSessionHistory) return;
 
           // Ghi nhận lịch sử check-in
-          await AttendanceSessionHistory.create({
-            original_id: session.id,
-            user_id: session.user_id,
-            work_id: session.work_id,
-            project_id: session.project_id,
-            started_at: session.started_at,
-            ended_at: session.ended_at,
-            status: session.status,
-            duration_minutes: session.duration_minutes,
-            check_in_id: session.check_in_id,
-            check_out_id: session.check_out_id,
-            attendee_user_ids: [session.user_id], // Bắt đầu với primary user
-            notes: session.notes,
-            metadata: session.metadata,
-            latitude: session.latitude,
-            longitude: session.longitude,
-            archived_at: new Date(),
-            archived_by: options && options.userId ? options.userId : null,
-          }, { transaction: options.transaction });
+          await AttendanceSessionHistory.create(
+            {
+              original_id: session.id,
+              user_id: session.user_id,
+              work_id: session.work_id,
+              project_id: session.project_id,
+              started_at: session.started_at,
+              ended_at: session.ended_at,
+              status: session.status,
+              attendance_type_id: session.attendance_type_id,
+              duration_minutes: session.duration_minutes,
+              check_in_id: session.check_in_id,
+              check_out_id: session.check_out_id,
+              attendee_user_ids: [session.user_id], // Bắt đầu với primary user
+              notes: session.notes,
+              metadata: session.metadata,
+              latitude: session.latitude,
+              longitude: session.longitude,
+              archived_at: new Date(),
+              archived_by: options && options.userId ? options.userId : null,
+            },
+            { transaction: options.transaction }
+          );
         },
 
         // Logic check-out: Khi session chuyển sang 'closed'
@@ -178,9 +183,9 @@ export default (sequelize, DataTypes) => {
         afterUpdate: async (session, options) => {
           try {
             const prevStatus = session._previousDataValues && session._previousDataValues.status;
-            
+
             // Nếu chuyển từ open sang closed → check-out
-            if (session.status === 'closed' && prevStatus === 'open') {
+            if (session.status === "closed" && prevStatus === "open") {
               const AttendanceSessionHistory = session.sequelize.models.AttendanceSessionHistory;
               const Attendance = session.sequelize.models.Attendance;
 
@@ -188,12 +193,12 @@ export default (sequelize, DataTypes) => {
                 // Lấy danh sách tất cả users tham gia session (primary + co-technicians)
                 const attendanceRecords = await Attendance.findAll({
                   where: { attendance_session_id: session.id },
-                  attributes: ['user_id'],
+                  attributes: ["user_id"],
                   raw: true,
                   transaction: options.transaction,
                 });
 
-                const attendeeUserIds = [...new Set(attendanceRecords.map(r => r.user_id))]; // Remove duplicates
+                const attendeeUserIds = [...new Set(attendanceRecords.map((r) => r.user_id))]; // Remove duplicates
 
                 // Ghi nhận lịch sử check-out
                 const data = {
@@ -203,6 +208,7 @@ export default (sequelize, DataTypes) => {
                   project_id: session.project_id,
                   started_at: session.started_at,
                   ended_at: session.ended_at,
+                  attendance_type_id: session.attendance_type_id,
                   status: session.status,
                   duration_minutes: session.duration_minutes,
                   check_in_id: session.check_in_id,
@@ -223,7 +229,7 @@ export default (sequelize, DataTypes) => {
               if (session.check_out_id && Attendance) {
                 // Cập nhật primary attendance record
                 await Attendance.update(
-                  { status: 'checked_out', check_out_time: session.ended_at },
+                  { status: "checked_out", check_out_time: session.ended_at },
                   {
                     where: { id: session.check_out_id },
                     transaction: options.transaction,
@@ -242,7 +248,7 @@ export default (sequelize, DataTypes) => {
 
                 for (const coRecord of coTechnicianRecords) {
                   await coRecord.update(
-                    { status: 'checked_out', check_out_time: session.ended_at },
+                    { status: "checked_out", check_out_time: session.ended_at },
                     { transaction: options.transaction }
                   );
                 }
@@ -266,24 +272,27 @@ export default (sequelize, DataTypes) => {
             transaction: options.transaction,
           });
           if (!exists) {
-            await AttendanceSessionHistory.create({
-              original_id: session.id,
-              user_id: session.user_id,
-              work_id: session.work_id,
-              project_id: session.project_id,
-              started_at: session.started_at,
-              ended_at: session.ended_at,
-              status: session.status,
-              duration_minutes: session.duration_minutes,
-              check_in_id: session.check_in_id,
-              check_out_id: session.check_out_id,
-              notes: session.notes,
-              metadata: session.metadata,
-              latitude: session.latitude,
-              longitude: session.longitude,
-              archived_at: new Date(),
-              archived_by: options && options.userId ? options.userId : null,
-            }, { transaction: options.transaction });
+            await AttendanceSessionHistory.create(
+              {
+                original_id: session.id,
+                user_id: session.user_id,
+                work_id: session.work_id,
+                project_id: session.project_id,
+                started_at: session.started_at,
+                ended_at: session.ended_at,
+                status: session.status,
+                duration_minutes: session.duration_minutes,
+                check_in_id: session.check_in_id,
+                check_out_id: session.check_out_id,
+                notes: session.notes,
+                metadata: session.metadata,
+                latitude: session.latitude,
+                longitude: session.longitude,
+                archived_at: new Date(),
+                archived_by: options && options.userId ? options.userId : null,
+              },
+              { transaction: options.transaction }
+            );
           }
         },
       },
@@ -292,38 +301,38 @@ export default (sequelize, DataTypes) => {
 
   AttendanceSession.associate = (models) => {
     AttendanceSession.belongsTo(models.User, {
-      foreignKey: 'user_id',
-      as: 'user',
+      foreignKey: "user_id",
+      as: "user",
     });
 
     AttendanceSession.belongsTo(models.Work, {
-      foreignKey: 'work_id',
-      as: 'work',
+      foreignKey: "work_id",
+      as: "work",
     });
 
     AttendanceSession.belongsTo(models.Project, {
-      foreignKey: 'project_id',
-      as: 'project',
+      foreignKey: "project_id",
+      as: "project",
     });
 
     AttendanceSession.belongsTo(models.AttendanceType, {
-      foreignKey: 'attendance_type_id',
-      as: 'attendance_type',
+      foreignKey: "attendance_type_id",
+      as: "attendance_type",
     });
 
     AttendanceSession.belongsTo(models.Attendance, {
-      foreignKey: 'check_in_id',
-      as: 'check_in',
+      foreignKey: "check_in_id",
+      as: "check_in",
     });
 
     AttendanceSession.belongsTo(models.Attendance, {
-      foreignKey: 'check_out_id',
-      as: 'check_out',
+      foreignKey: "check_out_id",
+      as: "check_out",
     });
 
     AttendanceSession.hasMany(models.Attendance, {
-      foreignKey: 'attendance_session_id',
-      as: 'attendances',
+      foreignKey: "attendance_session_id",
+      as: "attendances",
     });
   };
 
