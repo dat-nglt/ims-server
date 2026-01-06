@@ -10,13 +10,13 @@ export async function up(queryInterface, Sequelize) {
   const usersData = [
     {
       employee_id: "EMP001",
-      name: "Nhân viên 1",
+      name: "Nguyễn Lê Tấn Đạt",
       position_id: null,
       avatar_url: null,
       phone: "0397364664",
       email: "dat.nglt@gmail.com",
       password: "0397364664",
-      zalo_id: null,
+      zalo_id: "3708075640650630601",
       status: "active",
       manager_id: 1,
       is_active: true,
