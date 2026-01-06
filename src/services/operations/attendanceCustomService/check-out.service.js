@@ -283,6 +283,8 @@ const updateSession = async (checkOutPayLoad) => {
     await hubSessionSummary.session.update({ work_id: checkOutPayLoad.work_id });
     logger.info(`Attached work_id=${checkOutPayLoad.work_id} to hub session id=${hubSessionSummary.session.id}`);
   } else {
-    logger.info(`No hub session to attach for user=${checkOutPayLoad.user_id} attendance_type=${checkOutPayLoad.attendance_type_id}`);
+    logger.info(
+      `No hub session to attach for user=${checkOutPayLoad.user_id} attendance_type=${checkOutPayLoad.attendance_type_id}`
+    );
   }
 };
