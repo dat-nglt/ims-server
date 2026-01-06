@@ -273,7 +273,7 @@ const updateWorkStatus = async (work_id) => {
 
 const updateSession = async (checkOutPayLoad) => {
   // Look up hub session for the same attendance_type so we can attach the work_id when checking out
-  const hubSessionSummary = await getAlreadySession(
+  const hubSessionSummary = await getAlreadyOpenSession(
     checkOutPayLoad.user_id,
     checkOutPayLoad.attendance_type_id,
     null
