@@ -252,7 +252,11 @@ export const getDailyCheckInRangeByUser = async (userId, attendance_type_id, dat
       where,
       attributes: ["id", "attendance_type_id", "check_in_time", "check_out_time"],
       include: [
-        { model: db.AttendanceType, as: "attendanceType", attributes: ["id", "name", "code", "default_duration_minutes"] },
+        {
+          model: db.AttendanceType,
+          as: "attendanceType",
+          attributes: ["id", "name", "code", "default_duration_minutes"],
+        },
       ],
       order: [["check_in_time", "ASC"]],
     });
@@ -312,9 +316,8 @@ export const getDailyCheckInRangeByUser = async (userId, attendance_type_id, dat
       if (requiredDurationMinutes != null) {
         requiredDuration = `${Math.floor(requiredDurationMinutes / 60)}h ${requiredDurationMinutes % 60}m`;
       }
-      const isDurationSufficient = durationMinutes != null && requiredDurationMinutes != null 
-        ? durationMinutes >= requiredDurationMinutes 
-        : null;
+      const isDurationSufficient =
+        durationMinutes != null && requiredDurationMinutes != null ? durationMinutes >= requiredDurationMinutes : null;
 
       resultArray.push({
         attendance_type_id: entry.attendance_type_id,
