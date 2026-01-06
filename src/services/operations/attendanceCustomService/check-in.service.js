@@ -145,9 +145,9 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id, HUB_WO
     };
   }
 
-  // If no session found for the user, continue with the existing work-specific check
+  // Kiểm tra nếu không có phiên mở chung, kiểm tra phiên mở cụ thể cho công việc hiện tại
   const sessionLookupWorkId = HUB_WORK_IDS.includes(work_id) ? null : work_id;
-  const attendanceSessionSummary = await getOpenSessionSummaryByUser(user_id, sessionLookupWorkId);
+  const attendanceSessionSummary = await getOpenSessionSummaryByUser(user_id, attendance_type_id, sessionLookupWorkId);
   if (attendanceSessionSummary?.session) {
     console.log("Người dùng đã thực hiện chấm công với phiên có mã là:", attendanceSessionSummary.session.id);
     const checkInAt = attendanceSessionSummary.check_in_time

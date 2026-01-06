@@ -78,7 +78,7 @@ export const getAttendanceByIdService = async (id) => {
  *   check_in_id: (number|null)
  * } | null>}
  */
-export const getOpenSessionSummaryByUser = async (userId, work_id) => {
+export const getOpenSessionSummaryByUser = async (userId, attendance_type_id, work_id) => {
   try {
     // Only consider sessions that started today (local server date)
     const todayStart = new Date();
@@ -86,11 +86,9 @@ export const getOpenSessionSummaryByUser = async (userId, work_id) => {
     const todayEnd = new Date(todayStart);
     todayEnd.setDate(todayEnd.getDate() + 1);
 
-    console.log("start of today:", todayStart);
-    console.log("end of today:", todayEnd);
-
     const where = {
       user_id: userId,
+      attendance_type_id: attendance_type_id,
       started_at: { [Op.between]: [todayStart, todayEnd] },
     };
 
