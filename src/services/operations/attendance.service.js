@@ -251,35 +251,48 @@ export const getDailyCheckInRangeByUser = async (userId, attendance_type_id, dat
     const records = await db.Attendance.findAll({
       where,
       attributes: ["id", "attendance_type_id", "check_in_time", "check_out_time"],
+      include: [
+        { model: db.AttendanceType, as: "attendanceType", attributes: ["id", "name", "code"] },
+      ],
       order: [["check_in_time", "ASC"]],
     });
 
-    // Group by attendance_type_id (treat null as 'null') and compute earliest check-in and latest check-out
+    // Group by attendance_type_id (treat null as '__null') and compute earliest check-in, latest check-in and latest check-out
     const map = new Map();
     records.forEach((r) => {
       const key = r.attendance_type_id == null ? "__null" : String(r.attendance_type_id);
       if (!map.has(key)) {
         map.set(key, {
           attendance_type_id: r.attendance_type_id,
+          attendance_type_name: r.attendanceType ? r.attendanceType.name : null,
+          attendance_type_code: r.attendanceType ? r.attendanceType.code : null,
           earliest: r.check_in_time || null,
           earliestAttendanceId: r.id || null,
+          latestCheckIn: r.check_in_time || null,
+          latestCheckInAttendanceId: r.id || null,
           latestCheckOut: r.check_out_time || null,
-          latestAttendanceId: r.check_out_time ? r.id : null,
+          latestCheckOutAttendanceId: r.check_out_time ? r.id : null,
         });
         return;
       }
 
       const entry = map.get(key);
-      // earliest check_in_time (records ordered asc, so first occurrence already earliest)
+      // earliest check_in_time
       if (r.check_in_time && (!entry.earliest || r.check_in_time < entry.earliest)) {
         entry.earliest = r.check_in_time;
         entry.earliestAttendanceId = r.id;
       }
 
+      // latest check_in_time
+      if (r.check_in_time && (!entry.latestCheckIn || r.check_in_time > entry.latestCheckIn)) {
+        entry.latestCheckIn = r.check_in_time;
+        entry.latestCheckInAttendanceId = r.id;
+      }
+
       // latest check_out_time (we only consider records that have check_out_time)
       if (r.check_out_time && (!entry.latestCheckOut || r.check_out_time > entry.latestCheckOut)) {
         entry.latestCheckOut = r.check_out_time;
-        entry.latestAttendanceId = r.id;
+        entry.latestCheckOutAttendanceId = r.id;
       }
     });
 
@@ -292,10 +305,15 @@ export const getDailyCheckInRangeByUser = async (userId, attendance_type_id, dat
 
       resultArray.push({
         attendance_type_id: entry.attendance_type_id,
+        attendance_type_name: entry.attendance_type_name || null,
+        attendance_type_code: entry.attendance_type_code || null,
         earliest: entry.earliest,
         earliestAttendanceId: entry.earliestAttendanceId,
-        latestCheckOut: entry.latestCheckOut,
-        latestAttendanceId: entry.latestAttendanceId,
+        latestCheckIn: entry.latestCheckIn || null,
+        latestCheckInAttendanceId: entry.latestCheckInAttendanceId || null,
+        latestCheckOut: entry.latestCheckOut || null,
+        latestCheckOutAttendanceId: entry.latestCheckOutAttendanceId || null,
+        completed: !!entry.latestCheckOut,
         durationMinutes,
         duration: durationMinutes != null ? `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m` : null,
       });
