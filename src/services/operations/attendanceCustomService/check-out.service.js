@@ -1,4 +1,4 @@
-import { getOpenSessionSummaryByUser } from "../attendance.service.js";
+import { getAlreadySession } from "../attendance.service.js";
 import db from "../../../models/index.js";
 import logger from "../../../utils/logger.js";
 /**
@@ -72,7 +72,7 @@ const findAttendanceRecord = async (checkOutPayLoad) => {
   let attendance;
 
   // 1) Thử lấy phiên đang mở hôm nay cho người dùng & công việc
-  const sessionSummary = await getOpenSessionSummaryByUser(
+  const sessionSummary = await getAlreadySession(
     checkOutPayLoad.user_id,
     checkOutPayLoad.attendance_type_id,
     checkOutPayLoad.work_id
@@ -265,7 +265,7 @@ const updateWorkStatus = async (work_id) => {
 };
 
 const updateSession = async (checkOutPayLoad) => {
-  const hubSessionSummary = await getOpenSessionSummaryByUser(checkOutPayLoad.user_id, null);
+  const hubSessionSummary = await getAlreadySession(checkOutPayLoad.user_id, null);
   if (hubSessionSummary?.session && hubSessionSummary.session.work_id === null && checkOutPayLoad.work_id) {
     await hubSessionSummary.session.update({ work_id: checkOutPayLoad.work_id });
   }
