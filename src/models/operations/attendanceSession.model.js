@@ -74,7 +74,7 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
-          model: 'attendance_types',
+          model: 'attendance_type',
           key: 'id',
         },
       },
