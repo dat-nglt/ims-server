@@ -299,23 +299,19 @@ export const getDailyCheckInRangeByUser = async (userId, attendance_type_id, dat
     const resultArray = [];
     for (const [, entry] of map.entries()) {
       let durationMinutes = null;
+      let duration = null;
       if (entry.earliest && entry.latestCheckOut) {
         durationMinutes = Math.round((new Date(entry.latestCheckOut) - new Date(entry.earliest)) / 60000);
+        duration = `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m`;
       }
 
       resultArray.push({
         attendance_type_id: entry.attendance_type_id,
         attendance_type_name: entry.attendance_type_name || null,
         attendance_type_code: entry.attendance_type_code || null,
-        earliest: entry.earliest,
-        earliestAttendanceId: entry.earliestAttendanceId,
-        latestCheckIn: entry.latestCheckIn || null,
-        latestCheckInAttendanceId: entry.latestCheckInAttendanceId || null,
+        earliest: entry.earliest || null,
         latestCheckOut: entry.latestCheckOut || null,
-        latestCheckOutAttendanceId: entry.latestCheckOutAttendanceId || null,
-        completed: !!entry.latestCheckOut,
-        durationMinutes,
-        duration: durationMinutes != null ? `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m` : null,
+        duration,
       });
     }
 
