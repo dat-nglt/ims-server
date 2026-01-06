@@ -29,6 +29,7 @@ import {
   deleteAttendanceTypeController,
   getCurrentDayAttendanceHistoryByUserIdController,
   getCurrentMonthAttendanceHistoryByUserIdController,
+  getDailyCheckInRangeByUserController,
 } from "../../controllers/operations/attendance.controller.js";
 
 const router = express.Router();
@@ -298,5 +299,9 @@ router.get("/reports/summary", getAttendanceSummaryController);
  * Controller: getAttendanceStatisticsController
  */
 router.get("/reports/statistics", getAttendanceStatisticsController);
+
+// GET /reports/daily-range/user/:userId
+// Query params: attendance_type_id (optional), date (ISO string, optional)
+router.get("/reports/daily-range/user/:userId", getDailyCheckInRangeByUserController);
 
 export default router;

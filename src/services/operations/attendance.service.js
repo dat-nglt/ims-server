@@ -224,6 +224,98 @@ export const getAttendanceHistoryByUserIdService = async (userId, type = "day", 
   }
 };
 
+/**
+ * Lấy thời điểm chấm công sớm nhất và trễ nhất của một người theo attendance_type trong 1 ngày
+ * @param {number} userId
+ * @param {number|null} attendance_type_id
+ * @param {Date|string} [date] - Ngày cần kiểm tra (theo timezone server)
+ * @returns {{ earliest: Date|null, earliestAttendanceId: number|null, latest: Date|null, latestAttendanceId: number|null }}
+ */
+export const getDailyCheckInRangeByUser = async (userId, attendance_type_id, date = new Date()) => {
+  try {
+    const day = new Date(date);
+    day.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(day);
+    dayEnd.setDate(dayEnd.getDate() + 1);
+
+    const where = {
+      user_id: userId,
+      check_in_time: { [Op.between]: [day, dayEnd] },
+    };
+
+    if (attendance_type_id != null) {
+      where.attendance_type_id = attendance_type_id;
+    }
+
+    // Fetch daily attendances for the user (optionally filtered by type)
+    const records = await db.Attendance.findAll({
+      where,
+      attributes: ["id", "attendance_type_id", "check_in_time", "check_out_time"],
+      order: [["check_in_time", "ASC"]],
+    });
+
+    // Group by attendance_type_id (treat null as 'null') and compute earliest check-in and latest check-out
+    const map = new Map();
+    records.forEach((r) => {
+      const key = r.attendance_type_id == null ? "__null" : String(r.attendance_type_id);
+      if (!map.has(key)) {
+        map.set(key, {
+          attendance_type_id: r.attendance_type_id,
+          earliest: r.check_in_time || null,
+          earliestAttendanceId: r.id || null,
+          latestCheckOut: r.check_out_time || null,
+          latestAttendanceId: r.check_out_time ? r.id : null,
+        });
+        return;
+      }
+
+      const entry = map.get(key);
+      // earliest check_in_time (records ordered asc, so first occurrence already earliest)
+      if (r.check_in_time && (!entry.earliest || r.check_in_time < entry.earliest)) {
+        entry.earliest = r.check_in_time;
+        entry.earliestAttendanceId = r.id;
+      }
+
+      // latest check_out_time (we only consider records that have check_out_time)
+      if (r.check_out_time && (!entry.latestCheckOut || r.check_out_time > entry.latestCheckOut)) {
+        entry.latestCheckOut = r.check_out_time;
+        entry.latestAttendanceId = r.id;
+      }
+    });
+
+    const resultArray = [];
+    for (const [, entry] of map.entries()) {
+      let durationMinutes = null;
+      if (entry.earliest && entry.latestCheckOut) {
+        durationMinutes = Math.round((new Date(entry.latestCheckOut) - new Date(entry.earliest)) / 60000);
+      }
+
+      resultArray.push({
+        attendance_type_id: entry.attendance_type_id,
+        earliest: entry.earliest,
+        earliestAttendanceId: entry.earliestAttendanceId,
+        latestCheckOut: entry.latestCheckOut,
+        latestAttendanceId: entry.latestAttendanceId,
+        durationMinutes,
+        duration: durationMinutes != null ? `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m` : null,
+      });
+    }
+
+    // Sort output by attendance_type_id (nulls last)
+    resultArray.sort((a, b) => {
+      if (a.attendance_type_id == null && b.attendance_type_id == null) return 0;
+      if (a.attendance_type_id == null) return 1;
+      if (b.attendance_type_id == null) return -1;
+      return a.attendance_type_id - b.attendance_type_id;
+    });
+
+    return { success: true, data: resultArray };
+  } catch (error) {
+    logger.warn(`Error in getDailyCheckInRangeByUser: ${error.message}`);
+    throw error;
+  }
+};
+
 // ==================== LOCATION SERVICES ====================
 
 /**

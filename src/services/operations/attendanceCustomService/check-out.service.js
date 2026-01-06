@@ -71,13 +71,14 @@ const validateWorkAssignment = async (checkOutPayLoad) => {
 const findAttendanceRecord = async (checkOutPayLoad) => {
   let attendance;
 
-  // 1) Thử lấy phiên đang mở hôm nay cho người dùng & công việc
+  // 1) Tìm bản ghi chấm công mở trong phiên chấm công tương ứng với work_id và attendance_type_id của người dùng
   const sessionSummary = await getAlreadyOpenSession(
     checkOutPayLoad.user_id,
     checkOutPayLoad.attendance_type_id,
     checkOutPayLoad.work_id
   );
 
+  // Nếu có phiên chấm công mở, tìm bản ghi chấm công mở tương ứng với công việc và loại chấm công
   if (sessionSummary?.session) {
     attendance = await db.Attendance.findOne({
       where: {
@@ -92,12 +93,11 @@ const findAttendanceRecord = async (checkOutPayLoad) => {
 
     // If session exists but no open attendance found for this work/type, treat as already checked-out
     if (!attendance) {
-      throw new Error("Bản ghi chấm công cho công việc này đã được chấm công ra hoặc không tồn tại");
+      throw new Error("Công việc đã hoàn thành chấm công trước đó hoặc bản ghi chấm công không tồn tại");
     }
   }
 
   if (!attendance) {
-    // Fallback: match checkout with the earliest hub check-in that is still open
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const todayEnd = new Date(todayStart);
@@ -115,15 +115,11 @@ const findAttendanceRecord = async (checkOutPayLoad) => {
       },
       order: [["check_in_time", "ASC"]],
     });
-
     if (hubAttendance) {
       attendance = hubAttendance;
       const hubName = attendance.metadata && attendance.metadata.hub ? attendance.metadata.hub : attendance.work_id;
-      logger.info(
-        `checkOutService: matched hub check-in id=${attendance.id} hub=${hubName} to checkout for work_id=${checkOutPayLoad.work_id}`
-      );
     } else {
-      throw new Error("Người dùng chưa chấm công vào hoặc bản ghi chấm công không tồn tại");
+      throw new Error("Người dùng chưa chấm công vào cho công việc này");
     }
   }
 

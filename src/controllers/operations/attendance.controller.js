@@ -189,6 +189,23 @@ export const getCurrentMonthAttendanceHistoryByUserIdController = async (req, re
   }
 };
 
+// Lấy thời điểm chấm công sớm nhất - trễ nhất trong ngày cho 1 user
+export const getDailyCheckInRangeByUserController = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { attendance_type_id, date } = req.query;
+    const parsedTypeId = attendance_type_id != null ? parseInt(attendance_type_id, 10) : null;
+    const parsedDate = date ? new Date(date) : new Date();
+
+    const result = await attendanceService.getDailyCheckInRangeByUser(parseInt(userId, 10), parsedTypeId, parsedDate);
+
+    res.json({ status: "success", data: result.data, message: "Lấy thời điểm chấm công sớm nhất và trễ nhất thành công" });
+  } catch (error) {
+    logger.error(`[${req.id}] Error in getDailyCheckInRangeByUserController:`, error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // ==================== LOCATION CONTROLLERS ====================
 
 /**
