@@ -46,16 +46,15 @@ export const getAttendanceByIdController = async (req, res) => {
 export const checkInController = async (req, res) => {
   try {
     const {
-      user_id, // ok
-      work_id, // ok
-      project_id = null, // ok
-      latitude, // ok
-      longitude, // ok
-      location_name, // ok
-      address, // ok
-      attendance_type_id, // Support từ client
-      photo_url, // ok
-      photo_public_id, // không gửi lên
+      user_id,
+      work_id,
+      project_id = null,
+      latitude,
+      longitude,
+      location_name,
+      address,
+      attendance_type_id,
+      photo_url,
       notes,
       distance_from_work,
       technicians,
@@ -72,7 +71,6 @@ export const checkInController = async (req, res) => {
       location_name: location_name || null,
       address: address || null,
       photo_url: photo_url || null,
-      photo_public_id: photo_public_id || null,
       notes: notes || null,
       device_info: req.headers["user-agent"] || null, // Lấy thông tin thiết bị từ header
       ip_address: req.headers["x-forwarded-for"] || null, // Lấy IP từ header (nếu có)

@@ -319,6 +319,7 @@ export default (sequelize, DataTypes) => {
                 user_id: checkIn.user_id,
                 work_id: sessionWorkId,
                 project_id: checkIn.project_id,
+                attendance_type_id: checkIn.attendance_type_id,
                 started_at: checkIn.check_in_time || null,
                 ended_at: checkIn.check_out_time,
                 status: "closed",
@@ -341,6 +342,7 @@ export default (sequelize, DataTypes) => {
                 user_id: checkIn.user_id,
                 work_id: sessionWorkId,
                 project_id: checkIn.project_id,
+                attendance_type_id: checkIn.attendance_type_id,
                 started_at: checkIn.check_in_time || new Date(),
                 status: "open",
                 latitude: checkIn.latitude,
@@ -373,7 +375,12 @@ export default (sequelize, DataTypes) => {
             // If this record includes a check_out, close the session and set check_out_id
             if (checkIn.check_out_time) {
               await session.update(
-                { ended_at: checkIn.check_out_time, status: "closed", check_out_id: checkIn.id },
+                {
+                  ended_at: checkIn.check_out_time,
+                  status: "closed",
+                  check_out_id: checkIn.id,
+                  attendance_type_id: checkIn.attendance_type_id,
+                },
                 { transaction: options.transaction }
               );
             }
@@ -397,6 +404,7 @@ export default (sequelize, DataTypes) => {
                   ended_at: checkIn.check_out_time,
                   status: "closed",
                   check_out_id: checkIn.id,
+                  attendance_type_id: checkIn.attendance_type_id,
                   latitude: checkIn.latitude,
                   longitude: checkIn.longitude,
                 },
@@ -417,6 +425,7 @@ export default (sequelize, DataTypes) => {
                     ended_at: checkIn.check_out_time,
                     status: "closed",
                     check_out_id: checkIn.id,
+                    attendance_type_id: checkIn.attendance_type_id,
                     latitude: checkIn.latitude,
                     longitude: checkIn.longitude,
                   },

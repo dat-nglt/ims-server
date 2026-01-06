@@ -57,6 +57,10 @@ export async function up(queryInterface, Sequelize) {
         check_out_id: {
             type: Sequelize.INTEGER,
         },
+        attendance_type_id: {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+        },
         // Danh sách user IDs tham gia phiên (primary + co-technicians)
         attendee_user_ids: {
             type: Sequelize.JSONB,
@@ -106,6 +110,7 @@ export async function up(queryInterface, Sequelize) {
     await queryInterface.addIndex("attendance_session_histories", ["work_id"]);
     await queryInterface.addIndex("attendance_session_histories", ["project_id"]);
     await queryInterface.addIndex("attendance_session_histories", ["archived_at"]);
+    await queryInterface.addIndex("attendance_session_histories", ["attendance_type_id"]);
 }
 
 export async function down(queryInterface, Sequelize) {

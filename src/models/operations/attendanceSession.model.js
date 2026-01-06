@@ -70,6 +70,14 @@ export default (sequelize, DataTypes) => {
           key: 'id',
         },
       },
+      attendance_type_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'attendance_types',
+          key: 'id',
+        },
+      },
       notes: {
         type: DataTypes.TEXT,
       },
@@ -97,6 +105,7 @@ export default (sequelize, DataTypes) => {
         { fields: ['started_at'] },
         { fields: ['ended_at'] },
         { fields: ['status'] },
+        { fields: ['attendance_type_id'] },
       ],
       hooks: {
         beforeSave: (session) => {
@@ -295,6 +304,11 @@ export default (sequelize, DataTypes) => {
     AttendanceSession.belongsTo(models.Project, {
       foreignKey: 'project_id',
       as: 'project',
+    });
+
+    AttendanceSession.belongsTo(models.AttendanceType, {
+      foreignKey: 'attendance_type_id',
+      as: 'attendance_type',
     });
 
     AttendanceSession.belongsTo(models.Attendance, {

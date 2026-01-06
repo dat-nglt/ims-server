@@ -46,6 +46,10 @@ export default (sequelize, DataTypes) => {
       check_out_id: {
         type: DataTypes.INTEGER,
       },
+      attendance_type_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
       // Danh sách user IDs tham gia phiên (primary + co-technicians)
       attendee_user_ids: {
         type: DataTypes.JSONB,
@@ -87,6 +91,7 @@ export default (sequelize, DataTypes) => {
         { fields: ['work_id'] },
         { fields: ['project_id'] },
         { fields: ['archived_at'] },
+        { fields: ['attendance_type_id'] },
       ],
     }
   );

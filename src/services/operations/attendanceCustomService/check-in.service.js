@@ -7,14 +7,14 @@ import { getOpenSessionSummaryByUser } from "../attendance.service.js";
 
 /**
  * Check-in người dùng (hỗ trợ multi-technician)
- * @param {Object} checkInData - { user_id, work_id, project_id, latitude, longitude, ..., technicians: [id1, id2, ...], check_in_type_id }
+ * @param {Object} checkInPayload - { user_id, work_id, project_id, latitude, longitude, ..., technicians: [id1, id2, ...], check_in_type_id }
  */
 
-export const checkInService = async (checkInData) => {
+export const checkInService = async (checkInPayload) => {
   try {
-    validateInput(checkInData);
+    validateInput(checkInPayload);
 
-    const { user_id, work_id, project_id, attendance_type_id } = checkInData;
+    const { user_id, work_id, project_id, attendance_type_id } = checkInPayload;
 
     const user = await validateUser(user_id);
 
@@ -26,12 +26,12 @@ export const checkInService = async (checkInData) => {
 
     const attendanceType = await validateAttendanceType(attendance_type_id);
 
-    const existingSession = await checkExistingSession(user_id, work_id, HUB_WORK_IDS);
+    const existingSession = await checkExistingSession(user_id, attendance_type_id, work_id, HUB_WORK_IDS);
     if (existingSession) {
       return existingSession;
     }
 
-    const attendanceData = prepareAttendanceData(checkInData, user, attendanceType, HUB_WORK_IDS);
+    const attendanceData = prepareAttendanceData(checkInPayload, user, attendanceType, HUB_WORK_IDS);
 
     const attendance = await createAttendanceRecord(attendanceData);
 
@@ -52,8 +52,8 @@ export const checkInService = async (checkInData) => {
 };
 
 // Helper functions for checkInService optimization
-const validateInput = (checkInData) => {
-  const { user_id, latitude, longitude } = checkInData || {};
+const validateInput = (checkInPayload) => {
+  const { user_id, latitude, longitude } = checkInPayload || {};
   if (!user_id) throw new Error("Không tìm thấy hồ sơ làm việc của kỹ thuật viên");
   if (latitude == null || longitude == null || isNaN(Number(latitude)) || isNaN(Number(longitude))) {
     throw new Error("Thiếu tọa độ hợp lệ cho bản ghi chấm công");
@@ -81,8 +81,6 @@ const validateWork = async (work_id, user_id, HUB_WORK_IDS) => {
         throw new Error("Công việc không được yêu cầu thực hiện trong ngày hôm nay");
       }
     }
-  } else if (HUB_WORK_IDS.includes(work_id)) {
-    logger.info(`checkInService: user ${user_id} performing hub check-in (work_id=${work_id})`);
   }
 };
 
@@ -102,7 +100,7 @@ const validateAttendanceType = async (attendance_type_id) => {
   return null;
 };
 
-const checkExistingSession = async (user_id, work_id, HUB_WORK_IDS) => {
+const checkExistingSession = async (user_id, attendance_type_id, work_id, HUB_WORK_IDS) => {
   // First check if the user has any open session started today (regardless of work)
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -112,6 +110,7 @@ const checkExistingSession = async (user_id, work_id, HUB_WORK_IDS) => {
   const anySession = await db.AttendanceSession.findOne({
     where: {
       user_id,
+      attendance_type_id,
       status: "open",
       started_at: { [Op.between]: [todayStart, todayEnd] },
     },
@@ -176,7 +175,7 @@ const checkExistingSession = async (user_id, work_id, HUB_WORK_IDS) => {
   return null;
 };
 
-const prepareAttendanceData = (checkInData, user, attendanceType, HUB_WORK_IDS) => {
+const prepareAttendanceData = (checkInPayload, user, attendanceType, HUB_WORK_IDS) => {
   let {
     user_id,
     work_id = null,
@@ -192,7 +191,7 @@ const prepareAttendanceData = (checkInData, user, attendanceType, HUB_WORK_IDS) 
     attendance_type_id = null,
     distance_from_work = null,
     technicians = [],
-  } = checkInData;
+  } = checkInPayload;
 
   const photoUrlNormalized = photo_url ? String(photo_url).trim() : null;
 
@@ -252,7 +251,7 @@ const prepareAttendanceData = (checkInData, user, attendanceType, HUB_WORK_IDS) 
     work_id: createWorkId,
     project_id: pid,
     check_in_time: new Date(),
-    check_in_time_on_local: checkInData.check_in_time_on_local || null,
+    check_in_time_on_local: checkInPayload.check_in_time_on_local || null,
     latitude: parseFloat(latitude),
     longitude: parseFloat(longitude),
     location_name,

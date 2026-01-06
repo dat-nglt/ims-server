@@ -63,6 +63,14 @@ export async function up(queryInterface, Sequelize) {
             type: Sequelize.INTEGER,
             allowNull: true,
         },
+        attendance_type_id: {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+            references: {
+                model: "attendance_types",
+                key: "id",
+            },
+        },
         notes: {
             type: Sequelize.TEXT,
         },
@@ -94,6 +102,7 @@ export async function up(queryInterface, Sequelize) {
     await queryInterface.addIndex("attendance_sessions", ["started_at"]);
     await queryInterface.addIndex("attendance_sessions", ["ended_at"]);
     await queryInterface.addIndex("attendance_sessions", ["status"]);
+    await queryInterface.addIndex("attendance_sessions", ["attendance_type_id"]);
 }
 
 export async function down(queryInterface, Sequelize) {
