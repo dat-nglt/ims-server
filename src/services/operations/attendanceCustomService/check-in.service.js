@@ -14,7 +14,7 @@ export const checkInService = async (checkInPayload) => {
   try {
     validateInput(checkInPayload);
 
-    const { user_id, work_id, project_id, attendance_type_id } = checkInPayload;
+    let { user_id, work_id, project_id, attendance_type_id } = checkInPayload;
 
     const user = await validateUser(user_id);
 
