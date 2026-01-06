@@ -26,7 +26,7 @@ export const checkInService = async (checkInPayload) => {
 
     work_id = HUB_WORK_IDS.includes(work_id) ? null : work_id;
 
-    const existingSession = await checkExistingSession(user_id, attendance_type_id, work_id);
+    const existingSession = await checkExistingSession(user_id, attendance_type_id);
     if (existingSession) {
       return existingSession;
     }
@@ -148,6 +148,37 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
     };
   } else {
     logger.info("Người dùng chưa có phiên chấm công mở nào trong ngày hôm nay.");
+  }
+
+  // Nếu caller truyền work_id (không phải hub), kiểm tra xem user đã từng chấm xong (checked-out) công việc này trong ngày hôm nay chưa
+  if (work_id != null) {
+    const completed = await db.Attendance.findOne({
+      where: {
+        user_id,
+        work_id,
+        attendance_type_id,
+        check_in_time: { [Op.between]: [todayStart, todayEnd] },
+        check_out_time: { [Op.ne]: null },
+      },
+      order: [["check_in_time", "DESC"]],
+      attributes: ["id", "check_in_time", "check_out_time"],
+    });
+
+    if (completed) {
+      const checkedOutAt = completed.check_out_time ? toVietnamTimeISO(completed.check_out_time) : null;
+      return {
+        success: false,
+        alreadyCheckedOut: true,
+        message: checkedOutAt
+          ? `Người dùng đã chấm công xong công việc này lúc ${checkedOutAt.split("T")[1].substring(0, 5)}`
+          : `Người dùng đã hoàn tất chấm công cho công việc này trong ngày hôm nay`,
+        attendance: {
+          id: completed.id,
+          check_in_time: completed.check_in_time,
+          check_out_time: completed.check_out_time,
+        },
+      };
+    }
   }
 
   return null;
