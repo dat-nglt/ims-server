@@ -109,14 +109,21 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
   const todayEnd = new Date(todayStart);
   todayEnd.setDate(todayEnd.getDate() + 1);
 
+  const whereCondition = {
+    user_id,
+    status: "open",
+    attendance_type_id,
+    started_at: { [Op.between]: [todayStart, todayEnd] },
+  };
+
+  if (work_id) {
+    whereCondition["work_id"] = work_id;
+  }
+
+  logger.info(whereCondition);  
+
   const anySession = await db.AttendanceSession.findOne({
-    where: {
-      user_id,
-      work_id,
-      attendance_type_id,
-      status: "open",
-      started_at: { [Op.between]: [todayStart, todayEnd] },
-    },
+    where: whereCondition,
     include: [{ model: db.Work, as: "work" }],
     order: [["started_at", "DESC"]],
   });
@@ -146,6 +153,8 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
         check_in_id: latestAttendance ? latestAttendance.id : null,
       },
     };
+  } else {
+    logger.info("Người dùng chưa có phiên chấm công mở nào trong ngày hôm nay.");
   }
 
   return null;
