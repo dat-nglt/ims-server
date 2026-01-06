@@ -26,7 +26,7 @@ export const checkInService = async (checkInPayload) => {
 
     work_id = HUB_WORK_IDS.includes(work_id) ? null : work_id;
 
-    const existingSession = await checkExistingSession(user_id, attendance_type_id);
+    const existingSession = await checkExistingSession(user_id, attendance_type_id, work_id);
     if (existingSession) {
       return existingSession;
     }
@@ -113,11 +113,7 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
     attendance_type_id,
     started_at: { [Op.between]: [todayStart, todayEnd] },
   };
-
-  // if (work_id) {
-  //   whereCondition["work_id"] = work_id;
-  // }
-
+  // Kiểm tra phiên chấm công vào gần đây nhất, nếu có sẽ trả về thông tin phiên đó
   const anySession = await db.AttendanceSession.findOne({
     where: whereCondition,
     include: [{ model: db.Work, as: "work" }],
@@ -146,8 +142,6 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
         check_in_id: latestAttendance ? latestAttendance.id : null,
       },
     };
-  } else {
-    logger.info("Người dùng chưa có phiên chấm công mở nào trong ngày hôm nay.");
   }
 
   // Nếu caller truyền work_id (không phải hub), kiểm tra xem user đã từng chấm xong (checked-out) công việc này trong ngày hôm nay chưa

@@ -272,8 +272,17 @@ const updateWorkStatus = async (work_id) => {
 };
 
 const updateSession = async (checkOutPayLoad) => {
-  const hubSessionSummary = await getAlreadyOpenSession(checkOutPayLoad.user_id, null);
+  // Look up hub session for the same attendance_type so we can attach the work_id when checking out
+  const hubSessionSummary = await getAlreadySession(
+    checkOutPayLoad.user_id,
+    checkOutPayLoad.attendance_type_id,
+    null
+  );
+
   if (hubSessionSummary?.session && hubSessionSummary.session.work_id === null && checkOutPayLoad.work_id) {
     await hubSessionSummary.session.update({ work_id: checkOutPayLoad.work_id });
+    logger.info(`Attached work_id=${checkOutPayLoad.work_id} to hub session id=${hubSessionSummary.session.id}`);
+  } else {
+    logger.info(`No hub session to attach for user=${checkOutPayLoad.user_id} attendance_type=${checkOutPayLoad.attendance_type_id}`);
   }
 };
