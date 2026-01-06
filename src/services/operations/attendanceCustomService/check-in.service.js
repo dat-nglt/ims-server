@@ -26,7 +26,7 @@ export const checkInService = async (checkInPayload) => {
 
     const attendanceType = await validateAttendanceType(attendance_type_id);
 
-    work_id = HUB_WORK_IDS.includes(work_id) ? work_id : null;
+    work_id = HUB_WORK_IDS.includes(work_id) ? null : work_id;
 
     const existingSession = await checkExistingSession(user_id, attendance_type_id, work_id);
     if (existingSession) {
@@ -120,7 +120,7 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
     whereCondition["work_id"] = work_id;
   }
 
-  logger.info(whereCondition);  
+  logger.info(whereCondition);
 
   const anySession = await db.AttendanceSession.findOne({
     where: whereCondition,
