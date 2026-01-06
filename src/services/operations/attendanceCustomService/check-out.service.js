@@ -1,4 +1,4 @@
-import { getAlreadySession } from "../attendance.service.js";
+import { getAlreadyOpenSession } from "../attendance.service.js";
 import db from "../../../models/index.js";
 import logger from "../../../utils/logger.js";
 /**
@@ -72,11 +72,12 @@ const findAttendanceRecord = async (checkOutPayLoad) => {
   let attendance;
 
   // 1) Thử lấy phiên đang mở hôm nay cho người dùng & công việc
-  const sessionSummary = await getAlreadySession(
+  const sessionSummary = await getAlreadyOpenSession(
     checkOutPayLoad.user_id,
     checkOutPayLoad.attendance_type_id,
     checkOutPayLoad.work_id
   );
+
   if (sessionSummary?.session) {
     attendance = await db.Attendance.findOne({
       where: {
@@ -84,9 +85,15 @@ const findAttendanceRecord = async (checkOutPayLoad) => {
         user_id: checkOutPayLoad.user_id,
         work_id: checkOutPayLoad.work_id,
         attendance_type_id: checkOutPayLoad.attendance_type_id,
+        check_out_time: null,
       },
       order: [["check_in_time", "DESC"]],
     });
+
+    // If session exists but no open attendance found for this work/type, treat as already checked-out
+    if (!attendance) {
+      throw new Error("Bản ghi chấm công cho công việc này đã được chấm công ra hoặc không tồn tại");
+    }
   }
 
   if (!attendance) {
@@ -265,7 +272,7 @@ const updateWorkStatus = async (work_id) => {
 };
 
 const updateSession = async (checkOutPayLoad) => {
-  const hubSessionSummary = await getAlreadySession(checkOutPayLoad.user_id, null);
+  const hubSessionSummary = await getAlreadyOpenSession(checkOutPayLoad.user_id, null);
   if (hubSessionSummary?.session && hubSessionSummary.session.work_id === null && checkOutPayLoad.work_id) {
     await hubSessionSummary.session.update({ work_id: checkOutPayLoad.work_id });
   }

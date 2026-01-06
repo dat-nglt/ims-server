@@ -3,8 +3,6 @@ import { Op } from "sequelize";
 import logger from "../../../utils/logger.js";
 import { toVietnamTimeISO } from "../../../utils/helper.js";
 import { createNotificationService } from "../notification.service.js";
-import { getAlreadySession } from "../attendance.service.js";
-
 /**
  * Check-in người dùng (hỗ trợ multi-technician)
  * @param {Object} checkInPayload - { user_id, work_id, project_id, latitude, longitude, ..., technicians: [id1, id2, ...], check_in_type_id }
@@ -127,7 +125,6 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
   });
 
   if (anySession) {
-    console.log("Người dùng đã có phiên chấm công vào trước đó:", anySession.id);
     const latestAttendance = await db.Attendance.findOne({
       where: { attendance_session_id: anySession.id, user_id },
       order: [["check_in_time", "DESC"]],
@@ -140,9 +137,7 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
       success: false,
       alreadyCheckedIn: true,
       message: checkInAt
-        ? `Người dùng đã chấm công vào phiên hiện tại lúc ${checkInAt.split("T")[0]} ${checkInAt
-            .split("T")[1]
-            .substring(0, 5)}`
+        ? `Người dùng đã chấm công vào lúc ${checkInAt.split("T")[1].substring(0, 5)}`
         : `Người dùng đã có phiên chấm công hiện tại`,
       session: {
         id: anySession.id,

@@ -78,7 +78,7 @@ export const getAttendanceByIdService = async (id) => {
  *   check_in_id: (number|null)
  * } | null>}
  */
-export const getAlreadySession = async (userId, attendance_type_id, work_id) => {
+export const getAlreadyOpenSession = async (userId, attendance_type_id, work_id) => {
   try {
     // Only consider sessions that started today (local server date)
     const todayStart = new Date();
@@ -120,7 +120,7 @@ export const getAlreadySession = async (userId, attendance_type_id, work_id) => 
       check_in_id: latestAttendance ? latestAttendance.id : null,
     };
   } catch (error) {
-    logger.warn("Error in getAlreadySession:" + error.message);
+    logger.warn("Error in getAlreadyOpenSession:" + error.message);
     throw error;
   }
 };
