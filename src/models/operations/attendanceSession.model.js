@@ -140,7 +140,7 @@ export default (sequelize, DataTypes) => {
 
           if (existingSession) {
             throw new Error(
-              `Cannot check-in: User ${session.user_id} is already checked-in to work ${session.work_id}. Session ID: ${existingSession.id}`
+              `Không thể chấm công: Người dùng ${session.user_id} đã chấm công vào công việc lúc ${session.started_at}. Session ID: ${existingSession.id}`
             );
           }
         },

@@ -72,7 +72,11 @@ const findAttendanceRecord = async (checkOutPayLoad) => {
   let attendance;
 
   // 1) Thử lấy phiên đang mở hôm nay cho người dùng & công việc
-  const sessionSummary = await getOpenSessionSummaryByUser(checkOutPayLoad.user_id, checkOutPayLoad.work_id);
+  const sessionSummary = await getOpenSessionSummaryByUser(
+    checkOutPayLoad.user_id,
+    checkOutPayLoad.attendance_type_id,
+    checkOutPayLoad.work_id
+  );
   if (sessionSummary?.session) {
     attendance = await db.Attendance.findOne({
       where: {

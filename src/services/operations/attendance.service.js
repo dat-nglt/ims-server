@@ -88,6 +88,7 @@ export const getOpenSessionSummaryByUser = async (userId, attendance_type_id, wo
 
     const where = {
       user_id: userId,
+      status: "open",
       attendance_type_id: attendance_type_id,
       started_at: { [Op.between]: [todayStart, todayEnd] },
     };
