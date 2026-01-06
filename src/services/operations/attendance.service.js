@@ -252,7 +252,7 @@ export const getDailyCheckInRangeByUser = async (userId, attendance_type_id, dat
       where,
       attributes: ["id", "attendance_type_id", "check_in_time", "check_out_time"],
       include: [
-        { model: db.AttendanceType, as: "attendanceType", attributes: ["id", "name", "code"] },
+        { model: db.AttendanceType, as: "attendanceType", attributes: ["id", "name", "code", "default_duration_minutes"] },
       ],
       order: [["check_in_time", "ASC"]],
     });
@@ -266,6 +266,7 @@ export const getDailyCheckInRangeByUser = async (userId, attendance_type_id, dat
           attendance_type_id: r.attendance_type_id,
           attendance_type_name: r.attendanceType ? r.attendanceType.name : null,
           attendance_type_code: r.attendanceType ? r.attendanceType.code : null,
+          default_duration_minutes: r.attendanceType ? r.attendanceType.default_duration_minutes : null,
           earliest: r.check_in_time || null,
           earliestAttendanceId: r.id || null,
           latestCheckIn: r.check_in_time || null,
@@ -305,6 +306,16 @@ export const getDailyCheckInRangeByUser = async (userId, attendance_type_id, dat
         duration = `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m`;
       }
 
+      // Calculate required duration and check if sufficient
+      const requiredDurationMinutes = entry.default_duration_minutes || null;
+      let requiredDuration = null;
+      if (requiredDurationMinutes != null) {
+        requiredDuration = `${Math.floor(requiredDurationMinutes / 60)}h ${requiredDurationMinutes % 60}m`;
+      }
+      const isDurationSufficient = durationMinutes != null && requiredDurationMinutes != null 
+        ? durationMinutes >= requiredDurationMinutes 
+        : null;
+
       resultArray.push({
         attendance_type_id: entry.attendance_type_id,
         attendance_type_name: entry.attendance_type_name || null,
@@ -312,6 +323,8 @@ export const getDailyCheckInRangeByUser = async (userId, attendance_type_id, dat
         earliest: entry.earliest || null,
         latestCheckOut: entry.latestCheckOut || null,
         duration,
+        requiredDuration,
+        isDurationSufficient,
       });
     }
 
