@@ -78,6 +78,14 @@ export default (sequelize, DataTypes) => {
         allowNull: true,
         defaultValue: {},
       },
+      latitude: {
+        type: DataTypes.DECIMAL(10, 8),
+        allowNull: true,
+      },
+      longitude: {
+        type: DataTypes.DECIMAL(11, 8),
+        allowNull: true,
+      },
     },
     {
       tableName: 'attendance_sessions',
@@ -147,6 +155,8 @@ export default (sequelize, DataTypes) => {
             attendee_user_ids: [session.user_id], // Bắt đầu với primary user
             notes: session.notes,
             metadata: session.metadata,
+            latitude: session.latitude,
+            longitude: session.longitude,
             archived_at: new Date(),
             archived_by: options && options.userId ? options.userId : null,
           }, { transaction: options.transaction });
@@ -191,6 +201,8 @@ export default (sequelize, DataTypes) => {
                   attendee_user_ids: attendeeUserIds, // Ghi nhận tất cả attendees
                   notes: session.notes,
                   metadata: session.metadata,
+                  latitude: session.latitude,
+                  longitude: session.longitude,
                   archived_at: new Date(),
                   archived_by: options && options.userId ? options.userId : null,
                 };
@@ -258,6 +270,8 @@ export default (sequelize, DataTypes) => {
               check_out_id: session.check_out_id,
               notes: session.notes,
               metadata: session.metadata,
+              latitude: session.latitude,
+              longitude: session.longitude,
               archived_at: new Date(),
               archived_by: options && options.userId ? options.userId : null,
             }, { transaction: options.transaction });

@@ -83,6 +83,14 @@ export async function up(queryInterface, Sequelize) {
                 key: "id",
             },
         },
+        latitude: {
+            type: Sequelize.DECIMAL(10, 8),
+            allowNull: true,
+        },
+        longitude: {
+            type: Sequelize.DECIMAL(11, 8),
+            allowNull: true,
+        },
         created_at: {
             type: Sequelize.DATE,
             defaultValue: Sequelize.NOW,
