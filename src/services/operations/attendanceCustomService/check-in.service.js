@@ -116,11 +116,9 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
     started_at: { [Op.between]: [todayStart, todayEnd] },
   };
 
-  if (work_id) {
-    whereCondition["work_id"] = work_id;
-  }
-
-  logger.info(whereCondition);
+  // if (work_id) {
+  //   whereCondition["work_id"] = work_id;
+  // }
 
   const anySession = await db.AttendanceSession.findOne({
     where: whereCondition,
