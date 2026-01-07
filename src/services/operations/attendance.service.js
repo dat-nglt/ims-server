@@ -442,11 +442,20 @@ export const getAllUsersAttendanceRangeService = async (
               model: db.EmployeeProfile,
               as: "profile",
               attributes: ["department_id"],
-              required: false,
+              required: !!departmentId,
+              ...(departmentId && { where: { department_id: departmentId } }),
+              include: [
+                {
+                  model: db.Department,
+                  as: "departmentInfo",
+                  attributes: ["id", "name"],
+                  required: false,
+                },
+              ],
             },
           ],
-          ...(departmentId && { where: { department_id: departmentId } }),
         },
+
         {
           model: db.AttendanceType,
           as: "attendanceType",
@@ -474,8 +483,8 @@ export const getAllUsersAttendanceRangeService = async (
           user_id: userId,
           user_name: user.name,
           position_id: user.position_id || null,
-          department_id: user.department || (user.profile ? user.profile.department_id : null),
-          department: user.department || (user.profile ? "dept:" + user.profile.department_id : "N/A"),
+          department_id: (user.profile && user.profile.department_id) || null,
+          department_name: (user.profile && user.profile.departmentInfo && user.profile.departmentInfo.name) || null,
           attendanceTypeMap: new Map(),
         });
       }
@@ -589,7 +598,7 @@ export const getAllUsersAttendanceRangeService = async (
         user_name: userEntry.user_name,
         position_id: userEntry.position_id || null,
         department_id: userEntry.department_id || null,
-        department: userEntry.department,
+        department_name: userEntry.department_name || null,
         attendanceTypeRecords,
       });
     }
