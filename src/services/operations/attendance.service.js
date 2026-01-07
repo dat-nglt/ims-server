@@ -365,9 +365,9 @@ export const getDailyCheckInRangeByUser = async (
 
 /**
  * Lấy thời điểm chấm công sớm nhất và trễ nhất của TẤT CẢ người dùng theo attendance_type trong khoảng thời gian
- * Nhóm theo user_id và ngày
- * @param {Date|string} [startDate] - Ngày bắt đầu
- * @param {Date|string} [endDate] - Ngày kết thúc
+ * Nhóm theo user_id và ngày - Mặc định lấy tháng hiện tại
+ * @param {Date|string} [startDate] - Ngày bắt đầu (tuỳ chọn, mặc định: ngày 1 tháng hiện tại)
+ * @param {Date|string} [endDate] - Ngày kết thúc (tuỳ chọn, mặc định: ngày cuối tháng hiện tại)
  * @param {number|null} [attendance_type_id] - Lọc theo loại chấm công (tuỳ chọn)
  * @param {number|null} [departmentId] - Lọc theo phòng ban (tuỳ chọn)
  * @returns {{
@@ -393,15 +393,24 @@ export const getDailyCheckInRangeByUser = async (
  * }}
  */
 export const getAllUsersAttendanceRangeService = async (
-  startDate,
-  endDate,
+  startDate = null,
+  endDate = null,
   attendance_type_id = null,
   departmentId = null
 ) => {
   try {
-    // Validate date objects
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    // Xác định khoảng thời gian mặc định là tháng hiện tại
+    let start, end;
+
+    if (startDate && endDate) {
+      start = new Date(startDate);
+      end = new Date(endDate);
+    } else {
+      // Mặc định: tháng hiện tại
+      const now = new Date();
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    }
 
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       throw new Error("Invalid date parameters");

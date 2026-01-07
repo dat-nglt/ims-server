@@ -30,6 +30,8 @@ import {
   getCurrentDayAttendanceHistoryByUserIdController,
   getCurrentMonthAttendanceHistoryByUserIdController,
   getDailyCheckInRangeByUserController,
+  // All Users Attendance Range
+  getAllUsersAttendanceRangeController,
 } from "../../controllers/operations/attendance.controller.js";
 
 const router = express.Router();
@@ -303,5 +305,18 @@ router.get("/reports/statistics", getAttendanceStatisticsController);
 // GET /reports/daily-range/user/:userId
 // Query params: attendance_type_id (optional), date (ISO string, optional)
 router.get("/reports/daily-range/user/:userId", getDailyCheckInRangeByUserController);
+
+/**
+ * GET /reports/daily-range/all-users
+ * Mô tả: Lấy thời điểm chấm công sớm nhất và trễ nhất của TẤT CẢ người dùng trong tháng hiện tại (hoặc khoảng thời gian chỉ định).
+ * Query params:
+ *  - start_date (ISO date string, optional): ngày bắt đầu (mặc định: ngày 1 tháng hiện tại)
+ *  - end_date (ISO date string, optional): ngày kết thúc (mặc định: ngày cuối tháng hiện tại)
+ *  - attendance_type_id (number, optional): lọc theo loại chấm công
+ *  - department_id (number, optional): lọc theo phòng ban
+ * Response: 200 OK -> { status: "success", data: [ { user_id, user_name, department, dailyRecords } ] }
+ * Controller: getAllUsersAttendanceRangeController
+ */
+router.get("/reports/daily-range/all-users", getAllUsersAttendanceRangeController);
 
 export default router;

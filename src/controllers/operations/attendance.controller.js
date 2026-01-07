@@ -581,3 +581,41 @@ export const deleteAttendanceTypeController = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+// ==================== ALL USERS ATTENDANCE RANGE CONTROLLER ====================
+
+/**
+ * Lấy thời điểm chấm công sớm nhất và trễ nhất của TẤT CẢ người dùng trong tháng hiện tại
+ */
+export const getAllUsersAttendanceRangeController = async (req, res) => {
+  try {
+    const { start_date, end_date, attendance_type_id, department_id } = req.query;
+
+    // Parse dates
+    const parseDate = (dateStr) => {
+      if (!dateStr) return null;
+      const parsed = new Date(dateStr);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    const startDate = parseDate(start_date);
+    const endDate = parseDate(end_date);
+    const parsedTypeId = attendance_type_id ? parseInt(attendance_type_id, 10) : null;
+    const parsedDeptId = department_id ? parseInt(department_id, 10) : null;
+
+    const result = await attendanceService.getAllUsersAttendanceRangeService(
+      startDate,
+      endDate,
+      parsedTypeId,
+      parsedDeptId
+    );
+
+    res.json({
+      status: "success",
+      data: result.data,
+      message: "Lấy thời điểm chấm công của tất cả người dùng thành công",
+    });
+  } catch (error) {
+    logger.error(`[${req.id}] Error in getAllUsersAttendanceRangeController:`, error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
