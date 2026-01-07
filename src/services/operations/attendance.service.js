@@ -225,22 +225,39 @@ export const getAttendanceHistoryByUserIdService = async (userId, type = "day", 
 };
 
 /**
- * Lấy thời điểm chấm công sớm nhất và trễ nhất của một người theo attendance_type trong 1 ngày
+ * Lấy thời điểm chấm công sớm nhất và trễ nhất của một người theo attendance_type trong 1 ngày hoặc 1 tháng
  * @param {number} userId
  * @param {number|null} attendance_type_id
- * @param {Date|string} [date] - Ngày cần kiểm tra (theo timezone server)
+ * @param {Date|string} [currentDate] - Ngày/tháng cần kiểm tra (theo timezone server)
+ * @param {string} [type='day'] - Loại dữ liệu: 'day' hoặc 'month'
  * @returns {{ earliest: Date|null, earliestAttendanceId: number|null, latest: Date|null, latestAttendanceId: number|null }}
  */
-export const getDailyCheckInRangeByUser = async (userId, attendance_type_id, date = new Date()) => {
+export const getDailyCheckInRangeByUser = async (
+  userId,
+  attendance_type_id,
+  currentDate = new Date(),
+  type = "month"
+) => {
   try {
-    const day = new Date(date);
-    day.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(day);
-    dayEnd.setDate(dayEnd.getDate() + 1);
+    let rangeStart, rangeEnd;
+    const date = new Date(currentDate);
+
+    // Xác định khoảng thời gian dựa trên type
+    if (type === "month") {
+      // Lấy toàn bộ tháng
+      rangeStart = new Date(date.getFullYear(), date.getMonth(), 1);
+      rangeEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+    } else {
+      // Mặc định: lấy theo ngày
+      rangeStart = new Date(date);
+      rangeStart.setHours(0, 0, 0, 0);
+      rangeEnd = new Date(rangeStart);
+      rangeEnd.setDate(rangeEnd.getDate() + 1);
+    }
 
     const where = {
       user_id: userId,
-      check_in_time: { [Op.between]: [day, dayEnd] },
+      check_in_time: { [Op.between]: [rangeStart, rangeEnd] },
     };
 
     if (attendance_type_id != null) {
