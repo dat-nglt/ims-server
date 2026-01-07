@@ -365,7 +365,7 @@ export const getDailyCheckInRangeByUser = async (
 
 /**
  * Lấy thời điểm chấm công sớm nhất và trễ nhất của TẤT CẢ người dùng theo attendance_type trong khoảng thời gian
- * Nhóm theo user_id và ngày - Mặc định lấy tháng hiện tại
+ * Nhóm theo user_id -> attendance_type -> ngày - Mặc định lấy tháng hiện tại
  * @param {Date|string} [startDate] - Ngày bắt đầu (tuỳ chọn, mặc định: ngày 1 tháng hiện tại)
  * @param {Date|string} [endDate] - Ngày kết thúc (tuỳ chọn, mặc định: ngày cuối tháng hiện tại)
  * @param {number|null} [attendance_type_id] - Lọc theo loại chấm công (tuỳ chọn)
@@ -376,17 +376,18 @@ export const getDailyCheckInRangeByUser = async (
  *     user_id: number,
  *     user_name: string,
  *     department: string,
- *     dailyRecords: Array<{
- *       date: string (YYYY-MM-DD),
- *       attendance_records: Array<{
- *         attendance_type_id,
- *         attendance_type_name,
- *         attendance_type_code,
- *         earliest,
- *         latestCheckOut,
- *         duration,
- *         requiredDuration,
- *         isDurationSufficient
+ *     attendanceTypeRecords: Array<{
+ *       attendance_type_id,
+ *       attendance_type_name,
+ *       attendance_type_code,
+ *       default_duration_minutes,
+ *       dailyRecords: Array<{
+ *         date: string (YYYY-MM-DD),
+ *         earliest: Date,
+ *         latestCheckOut: Date,
+ *         duration: string,
+ *         requiredDuration: string,
+ *         isDurationSufficient: boolean|null
  *       }>
  *     }>
  *   }>
@@ -450,13 +451,14 @@ export const getAllUsersAttendanceRangeService = async (
       ],
     });
 
-    // Group by user_id -> date -> attendance_type_id
+    // Group by user_id -> attendance_type_id -> date
     const userMap = new Map();
 
     records.forEach((record) => {
       const userId = record.user_id;
       const user = record.user;
       const dateStr = record.check_in_time.toISOString().split("T")[0]; // YYYY-MM-DD
+      const typeKey = record.attendance_type_id == null ? "__null" : String(record.attendance_type_id);
 
       // Initialize user entry if not exists
       if (!userMap.has(userId)) {
@@ -464,27 +466,29 @@ export const getAllUsersAttendanceRangeService = async (
           user_id: userId,
           user_name: user.name,
           department: user.department || "N/A",
-          dailyRecords: {},
+          attendanceTypeMap: new Map(),
         });
       }
 
       const userEntry = userMap.get(userId);
 
-      // Initialize date entry if not exists
-      if (!userEntry.dailyRecords[dateStr]) {
-        userEntry.dailyRecords[dateStr] = new Map(); // Map by attendance_type_id
-      }
-
-      const dateMap = userEntry.dailyRecords[dateStr];
-      const key = record.attendance_type_id == null ? "__null" : String(record.attendance_type_id);
-
       // Initialize attendance_type entry if not exists
-      if (!dateMap.has(key)) {
-        dateMap.set(key, {
+      if (!userEntry.attendanceTypeMap.has(typeKey)) {
+        userEntry.attendanceTypeMap.set(typeKey, {
           attendance_type_id: record.attendance_type_id,
           attendance_type_name: record.attendanceType ? record.attendanceType.name : null,
           attendance_type_code: record.attendanceType ? record.attendanceType.code : null,
           default_duration_minutes: record.attendanceType ? record.attendanceType.default_duration_minutes : null,
+          dailyMap: new Map(),
+        });
+      }
+
+      const typeEntry = userEntry.attendanceTypeMap.get(typeKey);
+
+      // Initialize date entry if not exists
+      if (!typeEntry.dailyMap.has(dateStr)) {
+        typeEntry.dailyMap.set(dateStr, {
+          date: dateStr,
           earliest: record.check_in_time || null,
           latestCheckIn: record.check_in_time || null,
           latestCheckOut: record.check_out_time || null,
@@ -492,21 +496,21 @@ export const getAllUsersAttendanceRangeService = async (
         return;
       }
 
-      const entry = dateMap.get(key);
+      const dateEntry = typeEntry.dailyMap.get(dateStr);
 
       // Update earliest check-in
-      if (record.check_in_time && (!entry.earliest || record.check_in_time < entry.earliest)) {
-        entry.earliest = record.check_in_time;
+      if (record.check_in_time && (!dateEntry.earliest || record.check_in_time < dateEntry.earliest)) {
+        dateEntry.earliest = record.check_in_time;
       }
 
       // Update latest check-in
-      if (record.check_in_time && (!entry.latestCheckIn || record.check_in_time > entry.latestCheckIn)) {
-        entry.latestCheckIn = record.check_in_time;
+      if (record.check_in_time && (!dateEntry.latestCheckIn || record.check_in_time > dateEntry.latestCheckIn)) {
+        dateEntry.latestCheckIn = record.check_in_time;
       }
 
       // Update latest check-out
-      if (record.check_out_time && (!entry.latestCheckOut || record.check_out_time > entry.latestCheckOut)) {
-        entry.latestCheckOut = record.check_out_time;
+      if (record.check_out_time && (!dateEntry.latestCheckOut || record.check_out_time > dateEntry.latestCheckOut)) {
+        dateEntry.latestCheckOut = record.check_out_time;
       }
     });
 
@@ -514,22 +518,22 @@ export const getAllUsersAttendanceRangeService = async (
     const resultArray = [];
 
     for (const [userId, userEntry] of userMap.entries()) {
-      const dailyRecords = [];
+      const attendanceTypeRecords = [];
 
-      for (const [dateStr, dateMap] of Object.entries(userEntry.dailyRecords)) {
-        const attendance_records = [];
+      for (const [, typeEntry] of userEntry.attendanceTypeMap.entries()) {
+        const dailyRecords = [];
 
-        for (const [, entry] of dateMap.entries()) {
+        for (const [, dateEntry] of typeEntry.dailyMap.entries()) {
           let durationMinutes = null;
           let duration = null;
 
-          if (entry.earliest && entry.latestCheckOut) {
-            durationMinutes = Math.round((new Date(entry.latestCheckOut) - new Date(entry.earliest)) / 60000);
+          if (dateEntry.earliest && dateEntry.latestCheckOut) {
+            durationMinutes = Math.round((new Date(dateEntry.latestCheckOut) - new Date(dateEntry.earliest)) / 60000);
             duration = `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m`;
           }
 
           // Calculate required duration
-          const requiredDurationMinutes = entry.default_duration_minutes || null;
+          const requiredDurationMinutes = typeEntry.default_duration_minutes || null;
           let requiredDuration = null;
           if (requiredDurationMinutes != null) {
             requiredDuration = `${Math.floor(requiredDurationMinutes / 60)}h ${requiredDurationMinutes % 60}m`;
@@ -540,40 +544,41 @@ export const getAllUsersAttendanceRangeService = async (
               ? durationMinutes >= requiredDurationMinutes
               : null;
 
-          attendance_records.push({
-            attendance_type_id: entry.attendance_type_id,
-            attendance_type_name: entry.attendance_type_name,
-            attendance_type_code: entry.attendance_type_code,
-            earliest: entry.earliest,
-            latestCheckOut: entry.latestCheckOut,
+          dailyRecords.push({
+            date: dateEntry.date,
+            earliest: dateEntry.earliest,
+            latestCheckOut: dateEntry.latestCheckOut,
             duration,
             requiredDuration,
             isDurationSufficient,
           });
         }
 
-        // Sort by attendance_type_id
-        attendance_records.sort((a, b) => {
-          if (a.attendance_type_id == null && b.attendance_type_id == null) return 0;
-          if (a.attendance_type_id == null) return 1;
-          if (b.attendance_type_id == null) return -1;
-          return a.attendance_type_id - b.attendance_type_id;
-        });
+        // Sort daily records by date ascending
+        dailyRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        dailyRecords.push({
-          date: dateStr,
-          attendance_records,
+        attendanceTypeRecords.push({
+          attendance_type_id: typeEntry.attendance_type_id,
+          attendance_type_name: typeEntry.attendance_type_name,
+          attendance_type_code: typeEntry.attendance_type_code,
+          default_duration_minutes: typeEntry.default_duration_minutes,
+          dailyRecords,
         });
       }
 
-      // Sort daily records by date ascending
-      dailyRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
+      // Sort by attendance_type_id (nulls last)
+      attendanceTypeRecords.sort((a, b) => {
+        if (a.attendance_type_id == null && b.attendance_type_id == null) return 0;
+        if (a.attendance_type_id == null) return 1;
+        if (b.attendance_type_id == null) return -1;
+        return a.attendance_type_id - b.attendance_type_id;
+      });
 
       resultArray.push({
         user_id: userId,
         user_name: userEntry.user_name,
         department: userEntry.department,
-        dailyRecords,
+        attendanceTypeRecords,
       });
     }
 
