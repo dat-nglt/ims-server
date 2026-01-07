@@ -436,7 +436,15 @@ export const getAllUsersAttendanceRangeService = async (
         {
           model: db.User,
           as: "user",
-          attributes: ["id", "name"],
+          attributes: ["id", "name", "position_id"],
+          include: [
+            {
+              model: db.EmployeeProfile,
+              as: "profile",
+              attributes: ["department_id"],
+              required: false,
+            },
+          ],
           ...(departmentId && { where: { department_id: departmentId } }),
         },
         {
@@ -465,7 +473,9 @@ export const getAllUsersAttendanceRangeService = async (
         userMap.set(userId, {
           user_id: userId,
           user_name: user.name,
-          department: user.department || "N/A",
+          position_id: user.position_id || null,
+          department_id: user.department || (user.profile ? user.profile.department_id : null),
+          department: user.department || (user.profile ? "dept:" + user.profile.department_id : "N/A"),
           attendanceTypeMap: new Map(),
         });
       }
@@ -577,6 +587,8 @@ export const getAllUsersAttendanceRangeService = async (
       resultArray.push({
         user_id: userId,
         user_name: userEntry.user_name,
+        position_id: userEntry.position_id || null,
+        department_id: userEntry.department_id || null,
         department: userEntry.department,
         attendanceTypeRecords,
       });
