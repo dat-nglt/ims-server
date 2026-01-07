@@ -31,11 +31,12 @@ import {
  */
 export const getAllDepartmentsController = async (req, res) => {
     try {
-        const { includeRoles = false, includeInactive = false } = req.query;
+        const { includeRoles = false, includeInactive = false, isSelection = false } = req.query;
 
         const result = await getAllDepartmentsService({
             includeRoles: includeRoles === "true",
             includeInactive: includeInactive === "true",
+            isSelection: isSelection === "true",
         });
 
         if (!result.success) {

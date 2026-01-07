@@ -6,7 +6,8 @@ import * as attendanceService from "../../services/operations/attendance-type.se
  */
 export const getAllAttendanceTypesController = async (req, res) => {
   try {
-    const result = await attendanceService.getAllAttendanceTypesService();
+    const { isSelection = false } = req.query;
+    const result = await attendanceService.getAllAttendanceTypesService({ isSelection: isSelection === 'true' });
     res.json(result);
   } catch (error) {
     logger.error(`[${req.id}] Error in getAllAttendanceController:`, error.message);

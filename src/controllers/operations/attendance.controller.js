@@ -609,11 +609,7 @@ export const getAllUsersAttendanceRangeController = async (req, res) => {
       parsedDeptId
     );
 
-    res.json({
-      status: "success",
-      data: result.data,
-      message: "Lấy thời điểm chấm công của tất cả người dùng thành công",
-    });
+    res.json(result);
   } catch (error) {
     logger.error(`[${req.id}] Error in getAllUsersAttendanceRangeController:`, error.message);
     res.status(500).json({ error: error.message });
