@@ -4,8 +4,7 @@ import logger from "../../../utils/logger.js";
 import { toVietnamTimeISO } from "../../../utils/helper.js";
 import { createNotificationService } from "../notification.service.js";
 /**
- * Check-in người dùng (hỗ trợ multi-technician)
- * @param {Object} checkInPayload - { user_id, work_id, project_id, latitude, longitude, ..., technicians: [id1, id2, ...], check_in_type_id }
+ * @param {Object} checkInPayload
  */
 
 export const checkInService = async (checkInPayload) => {
@@ -14,30 +13,37 @@ export const checkInService = async (checkInPayload) => {
 
     let { user_id, work_id, project_id, attendance_type_id } = checkInPayload;
 
-    const user = await validateUser(user_id);
+    const user = await validateUser(user_id); // kiểm tra người dùng tồn tại trong hệ thống
 
-    const HUB_WORK_IDS = [-1, -2];
+    const HUB_WORK_IDS = [-1, -2]; // -1: warehouse, -2: office để phân biệt chấm công hub và công việc cụ thể
 
-    await validateWork(work_id, user_id, HUB_WORK_IDS);
+    const workForAttendance = await validateWork(work_id, user_id, HUB_WORK_IDS);
 
     await validateProject(project_id);
 
+    // Trả về thông tin ca chấm công nếu được cung cấp
     const attendanceType = await validateAttendanceType(attendance_type_id);
 
+    // Hệ thống ghi nhận work_id là null nếu là chấm công hub
     work_id = HUB_WORK_IDS.includes(work_id) ? null : work_id;
 
     const existingSession = await checkExistingSession(user_id, attendance_type_id, work_id);
+
+    // Nếu tồn tại phiên chấm công mở hoặc đã chấm công xong công việc với ca chấm công trong ngày hôm nay, trả về thông tin phiên/chấm công đó và không tạo mới
     if (existingSession) {
       return existingSession;
     }
 
-    const attendanceData = prepareAttendanceData(checkInPayload, user, attendanceType, HUB_WORK_IDS);
+    // Chuẩn bị dữ liệu chấm công và tạo bản ghi chấm công
+    const attendanceData = prepareAttendanceData(checkInPayload, attendanceType, HUB_WORK_IDS);
 
     const attendance = await createAttendanceRecord(attendanceData);
 
+    // Khi thực hiện chấm công vào, cập nhật trạng thái công việc sang "in_progress" nghĩa là đang thực hiện công việc
     await updateWorkStatus(work_id);
 
-    await createCheckInNotification(user, work_id);
+    // Tạo thông báo hệ thống về việc chấm công vào công việc
+    await createCheckInNotification(user, workForAttendance);
 
     return {
       success: true,
@@ -62,11 +68,12 @@ const validateInput = (checkInPayload) => {
 
 const validateUser = async (user_id) => {
   const user = await db.User.findByPk(user_id);
-  if (!user) throw new Error("Không tìm thấy hồ sơ người dùng của kỹ thuật viên");
+  if (!user) throw new Error("Không tìm thấy hồ sơ người dùng tương ứng");
   return user;
 };
 
 const validateWork = async (work_id, user_id, HUB_WORK_IDS) => {
+  //Trường hợp work_id không phải hub, kiểm tra công việc và phân bổ công việc
   if (work_id && !HUB_WORK_IDS.includes(work_id)) {
     const work = await db.Work.findByPk(work_id);
     if (!work) throw new Error("Không tìm thấy công việc tương ứng");
@@ -78,9 +85,11 @@ const validateWork = async (work_id, user_id, HUB_WORK_IDS) => {
       const today = new Date();
       const workRequiredDate = new Date(work.required_date);
       if (workRequiredDate.toDateString() !== today.toDateString()) {
-        throw new Error("Công việc không được yêu cầu thực hiện trong ngày hôm nay");
+        throw new Error("Công việc không được thực hiện trong ngày hôm nay");
       }
     }
+
+    return work;
   }
 };
 
@@ -94,7 +103,7 @@ const validateProject = async (project_id) => {
 const validateAttendanceType = async (attendance_type_id) => {
   if (attendance_type_id) {
     const attendanceType = await db.AttendanceType.findByPk(attendance_type_id);
-    if (!attendanceType) throw new Error("Loại chấm công không tồn tại");
+    if (!attendanceType) throw new Error("Ca chấm không hợp lệ");
     return attendanceType;
   }
   return null;
@@ -102,24 +111,26 @@ const validateAttendanceType = async (attendance_type_id) => {
 
 const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
   // Kiểm tra nếu người dùng có bất kì phiên chấm công mở nào trong ngày hôm nay
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayEnd = new Date(todayStart);
-  todayEnd.setDate(todayEnd.getDate() + 1);
+  const startOfCurrentDay = new Date();
+  startOfCurrentDay.setHours(0, 0, 0, 0);
+  const endOfCurrentDay = new Date(startOfCurrentDay);
+  endOfCurrentDay.setDate(endOfCurrentDay.getDate() + 1);
 
+  // Kiển tra các phiên chấm công mở trong ngày hôm nay cho từng CA CHẤM CÔNG thuộc từng NGƯỜI DÙNG
   const whereCondition = {
     user_id,
     status: "open",
     attendance_type_id,
-    started_at: { [Op.between]: [todayStart, todayEnd] },
+    started_at: { [Op.between]: [startOfCurrentDay, endOfCurrentDay] },
   };
-  // Kiểm tra phiên chấm công vào gần đây nhất, nếu có sẽ trả về thông tin phiên đó
+
   const anySession = await db.AttendanceSession.findOne({
     where: whereCondition,
     include: [{ model: db.Work, as: "work" }],
     order: [["started_at", "DESC"]],
   });
 
+  // Nếu tồn tại phiên chấm công mở trên CA CHẤM CÔNG thuộc NGƯỜI DÙNG, trả về thông tin phiên chấm công đó và không cho phép chấm công mới
   if (anySession) {
     const latestAttendance = await db.Attendance.findOne({
       where: { attendance_session_id: anySession.id, user_id },
@@ -127,6 +138,7 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
       attributes: ["id", "check_in_time"],
     });
 
+    // Định dạng lại thời gian check-in theo múi giờ Việt Nam
     const checkInAt = latestAttendance ? toVietnamTimeISO(latestAttendance.check_in_time) : null;
 
     return {
@@ -144,22 +156,25 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
     };
   }
 
-  // Nếu caller truyền work_id (không phải hub), kiểm tra xem user đã từng chấm xong (checked-out) công việc này trong ngày hôm nay chưa
+  // Trường hợp không tồn tại phiên chấm công mở
+  // Kiểm tra nếu NGƯỜI DÙNG đã chấm công vào công việc cụ thể với CA CHẤM CÔNG trong ngày hôm nay
   if (work_id != null) {
-    const completed = await db.Attendance.findOne({
+    const alreadyCheckInAttendance = await db.Attendance.findOne({
       where: {
         user_id,
         work_id,
         attendance_type_id,
-        check_in_time: { [Op.between]: [todayStart, todayEnd] },
+        check_in_time: { [Op.between]: [startOfCurrentDay, endOfCurrentDay] },
         check_out_time: { [Op.ne]: null },
       },
       order: [["check_in_time", "DESC"]],
       attributes: ["id", "check_in_time", "check_out_time"],
     });
 
-    if (completed) {
-      const checkedOutAt = completed.check_out_time ? toVietnamTimeISO(completed.check_out_time) : null;
+    if (alreadyCheckInAttendance) {
+      const checkedOutAt = alreadyCheckInAttendance.check_out_time
+        ? toVietnamTimeISO(alreadyCheckInAttendance.check_out_time)
+        : null;
       return {
         success: false,
         alreadyCheckedOut: true,
@@ -167,9 +182,9 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
           ? `Người dùng đã chấm công xong công việc này lúc ${checkedOutAt.split("T")[1].substring(0, 5)}`
           : `Người dùng đã hoàn tất chấm công cho công việc này trong ngày hôm nay`,
         attendance: {
-          id: completed.id,
-          check_in_time: completed.check_in_time,
-          check_out_time: completed.check_out_time,
+          id: alreadyCheckInAttendance.id,
+          check_in_time: alreadyCheckInAttendance.check_in_time,
+          check_out_time: alreadyCheckInAttendance.check_out_time,
         },
       };
     }
@@ -178,7 +193,7 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
   return null;
 };
 
-const prepareAttendanceData = (checkInPayload, user, attendanceType, HUB_WORK_IDS) => {
+const prepareAttendanceData = (checkInPayload, attendanceType, HUB_WORK_IDS) => {
   let {
     user_id,
     work_id = null,
@@ -199,16 +214,18 @@ const prepareAttendanceData = (checkInPayload, user, attendanceType, HUB_WORK_ID
   const photoUrlNormalized = photo_url ? String(photo_url).trim() : null;
 
   if (HUB_WORK_IDS.includes(work_id) && !location_name) {
-    location_name = work_id === -1 ? "warehouse" : "office";
+    location_name = work_id === -1 ? "Kho Vật Tư" : "Văn phòng Proshop";
   }
 
+  // Xử lý danh sách kỹ thuật viên tham gia chấm công
   const techArr = Array.isArray(technicians)
     ? technicians.map((t) => (typeof t === "string" ? parseInt(t, 10) : t))
     : technicians
     ? [typeof technicians === "string" ? parseInt(technicians, 10) : technicians]
     : [user_id];
 
-  const parseId = (v) => (v != null && Number.isFinite(Number(v)) ? parseInt(v, 10) : v);
+  const parseId = (ID) => (ID != null && Number.isFinite(Number(ID)) ? parseInt(ID, 10) : ID);
+
   const uid = parseId(user_id);
   const wid = parseId(work_id);
   const pid = parseId(project_id);
@@ -223,7 +240,7 @@ const prepareAttendanceData = (checkInPayload, user, attendanceType, HUB_WORK_ID
     return (parts[0] || 0) * 60 + (parts[1] || 0);
   };
 
-  // Check if check-in time is after attendance type start_time
+  // Kiểm tra nếu thời gian chấm công hiện tại đã sau thời gian bắt đầu của ca chấm công
   let isAfterStartTime = false;
   if (attendanceType && attendanceType.start_time) {
     try {
@@ -236,13 +253,15 @@ const prepareAttendanceData = (checkInPayload, user, attendanceType, HUB_WORK_ID
     }
   }
 
-  // Calculate violation_distance if distance_from_work > 150
-  let calculatedViolationDistance = null;
+  // Tính toán khoảng cách vi phạm nếu có
+  let calculatedViolationDistance = null; // Khoảng cách vi phạm
   if (distance_from_work && distance_from_work > 150) {
     calculatedViolationDistance = distance_from_work - 150;
   }
 
-  const isWithinAtCheckIn = distance_from_work <= 150 ? true : distance_from_work > 150 ? false : null;
+  // Xác định người dùng có chấm công trong phạm vi cho phép hay không
+  const isWithinAtCheckIn = calculatedViolationDistance == null;
+  // Thời gian không hợp lệ nếu chấm công sau thời gian bắt đầu ca chấm công
   let isValidTimeCheckIn = !isAfterStartTime;
 
   const isHubCheckin = HUB_WORK_IDS.includes(wid);
@@ -284,22 +303,25 @@ const updateWorkStatus = async (wid) => {
   }
 };
 
-const createCheckInNotification = async (user, work_id) => {
+// Cập nhật tối ưu lại hàm tạo thông báo chấm công vào công việc
+const createCheckInNotification = async (user, workForAttendance) => {
   try {
     await createNotificationService({
       title: `Chấm công vào công việc`,
-      message: `Người dùng ${user.name} đã chấm công vào công việc "${work_id}".`,
+      message: `Người dùng ${user.name} đã chấm công vào công việc "${workForAttendance.title}".`,
       type: "check_in",
-      related_work_id: work_id,
+      related_work_id: workForAttendance.id,
       priority: "medium",
       broadcast: false,
       systemNotification: {
         title: `Chấm công vào công việc`,
-        message: `Người dùng ${user.name} đã chấm công vào công việc "${work_id}".`,
+        message: `Người dùng ${user.name} đã chấm công vào công việc "${workForAttendance.title}".`,
         broadcast: false,
       },
     });
-    logger.info("Tạo thông báo hệ thống cho việc tạo chấm công vào công việc với id công việc: " + work_id);
+    logger.info(
+      "Tạo thông báo hệ thống cho việc tạo chấm công vào công việc với id công việc: " + workForAttendance.id
+    );
   } catch (err) {
     logger.error("Lỗi khi tạo thông báo hệ thống cho việc tạo chấm công vào công việc: " + err.message);
   }
