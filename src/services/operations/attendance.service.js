@@ -435,7 +435,7 @@ export const getAllUsersAttendanceRangeService = async (
         {
           model: db.User,
           as: "user",
-          attributes: ["id", "name", "department_id"],
+          attributes: ["id", "name"],
           ...(departmentId && { where: { department_id: departmentId } }),
         },
         {
@@ -444,7 +444,10 @@ export const getAllUsersAttendanceRangeService = async (
           attributes: ["id", "name", "code", "default_duration_minutes"],
         },
       ],
-      order: [["user_id", "ASC"], ["check_in_time", "ASC"]],
+      order: [
+        ["user_id", "ASC"],
+        ["check_in_time", "ASC"],
+      ],
     });
 
     // Group by user_id -> date -> attendance_type_id
