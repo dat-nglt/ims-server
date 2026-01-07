@@ -363,6 +363,218 @@ export const getDailyCheckInRangeByUser = async (
   }
 };
 
+/**
+ * Lấy thời điểm chấm công sớm nhất và trễ nhất của TẤT CẢ người dùng theo attendance_type trong khoảng thời gian
+ * Nhóm theo user_id và ngày
+ * @param {Date|string} [startDate] - Ngày bắt đầu
+ * @param {Date|string} [endDate] - Ngày kết thúc
+ * @param {number|null} [attendance_type_id] - Lọc theo loại chấm công (tuỳ chọn)
+ * @param {number|null} [departmentId] - Lọc theo phòng ban (tuỳ chọn)
+ * @returns {{
+ *   success: boolean,
+ *   data: Array<{
+ *     user_id: number,
+ *     user_name: string,
+ *     department: string,
+ *     dailyRecords: Array<{
+ *       date: string (YYYY-MM-DD),
+ *       attendance_records: Array<{
+ *         attendance_type_id,
+ *         attendance_type_name,
+ *         attendance_type_code,
+ *         earliest,
+ *         latestCheckOut,
+ *         duration,
+ *         requiredDuration,
+ *         isDurationSufficient
+ *       }>
+ *     }>
+ *   }>
+ * }}
+ */
+export const getAllUsersAttendanceRangeService = async (
+  startDate,
+  endDate,
+  attendance_type_id = null,
+  departmentId = null
+) => {
+  try {
+    // Validate date objects
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      throw new Error("Invalid date parameters");
+    }
+
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+
+    const where = {
+      check_in_time: { [Op.between]: [start, end] },
+    };
+
+    if (attendance_type_id != null) {
+      where.attendance_type_id = attendance_type_id;
+    }
+
+    // Fetch all attendances trong khoảng thời gian
+    const records = await db.Attendance.findAll({
+      where,
+      attributes: ["id", "user_id", "attendance_type_id", "check_in_time", "check_out_time"],
+      include: [
+        {
+          model: db.User,
+          as: "user",
+          attributes: ["id", "name", "department_id"],
+          ...(departmentId && { where: { department_id: departmentId } }),
+        },
+        {
+          model: db.AttendanceType,
+          as: "attendanceType",
+          attributes: ["id", "name", "code", "default_duration_minutes"],
+        },
+      ],
+      order: [["user_id", "ASC"], ["check_in_time", "ASC"]],
+    });
+
+    // Group by user_id -> date -> attendance_type_id
+    const userMap = new Map();
+
+    records.forEach((record) => {
+      const userId = record.user_id;
+      const user = record.user;
+      const dateStr = record.check_in_time.toISOString().split("T")[0]; // YYYY-MM-DD
+
+      // Initialize user entry if not exists
+      if (!userMap.has(userId)) {
+        userMap.set(userId, {
+          user_id: userId,
+          user_name: user.name,
+          department: user.department || "N/A",
+          dailyRecords: {},
+        });
+      }
+
+      const userEntry = userMap.get(userId);
+
+      // Initialize date entry if not exists
+      if (!userEntry.dailyRecords[dateStr]) {
+        userEntry.dailyRecords[dateStr] = new Map(); // Map by attendance_type_id
+      }
+
+      const dateMap = userEntry.dailyRecords[dateStr];
+      const key = record.attendance_type_id == null ? "__null" : String(record.attendance_type_id);
+
+      // Initialize attendance_type entry if not exists
+      if (!dateMap.has(key)) {
+        dateMap.set(key, {
+          attendance_type_id: record.attendance_type_id,
+          attendance_type_name: record.attendanceType ? record.attendanceType.name : null,
+          attendance_type_code: record.attendanceType ? record.attendanceType.code : null,
+          default_duration_minutes: record.attendanceType ? record.attendanceType.default_duration_minutes : null,
+          earliest: record.check_in_time || null,
+          latestCheckIn: record.check_in_time || null,
+          latestCheckOut: record.check_out_time || null,
+        });
+        return;
+      }
+
+      const entry = dateMap.get(key);
+
+      // Update earliest check-in
+      if (record.check_in_time && (!entry.earliest || record.check_in_time < entry.earliest)) {
+        entry.earliest = record.check_in_time;
+      }
+
+      // Update latest check-in
+      if (record.check_in_time && (!entry.latestCheckIn || record.check_in_time > entry.latestCheckIn)) {
+        entry.latestCheckIn = record.check_in_time;
+      }
+
+      // Update latest check-out
+      if (record.check_out_time && (!entry.latestCheckOut || record.check_out_time > entry.latestCheckOut)) {
+        entry.latestCheckOut = record.check_out_time;
+      }
+    });
+
+    // Convert to final format
+    const resultArray = [];
+
+    for (const [userId, userEntry] of userMap.entries()) {
+      const dailyRecords = [];
+
+      for (const [dateStr, dateMap] of Object.entries(userEntry.dailyRecords)) {
+        const attendance_records = [];
+
+        for (const [, entry] of dateMap.entries()) {
+          let durationMinutes = null;
+          let duration = null;
+
+          if (entry.earliest && entry.latestCheckOut) {
+            durationMinutes = Math.round((new Date(entry.latestCheckOut) - new Date(entry.earliest)) / 60000);
+            duration = `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m`;
+          }
+
+          // Calculate required duration
+          const requiredDurationMinutes = entry.default_duration_minutes || null;
+          let requiredDuration = null;
+          if (requiredDurationMinutes != null) {
+            requiredDuration = `${Math.floor(requiredDurationMinutes / 60)}h ${requiredDurationMinutes % 60}m`;
+          }
+
+          const isDurationSufficient =
+            durationMinutes != null && requiredDurationMinutes != null
+              ? durationMinutes >= requiredDurationMinutes
+              : null;
+
+          attendance_records.push({
+            attendance_type_id: entry.attendance_type_id,
+            attendance_type_name: entry.attendance_type_name,
+            attendance_type_code: entry.attendance_type_code,
+            earliest: entry.earliest,
+            latestCheckOut: entry.latestCheckOut,
+            duration,
+            requiredDuration,
+            isDurationSufficient,
+          });
+        }
+
+        // Sort by attendance_type_id
+        attendance_records.sort((a, b) => {
+          if (a.attendance_type_id == null && b.attendance_type_id == null) return 0;
+          if (a.attendance_type_id == null) return 1;
+          if (b.attendance_type_id == null) return -1;
+          return a.attendance_type_id - b.attendance_type_id;
+        });
+
+        dailyRecords.push({
+          date: dateStr,
+          attendance_records,
+        });
+      }
+
+      // Sort daily records by date ascending
+      dailyRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      resultArray.push({
+        user_id: userId,
+        user_name: userEntry.user_name,
+        department: userEntry.department,
+        dailyRecords,
+      });
+    }
+
+    // Sort by user_id
+    resultArray.sort((a, b) => a.user_id - b.user_id);
+
+    return { success: true, data: resultArray };
+  } catch (error) {
+    logger.warn(`Error in getAllUsersAttendanceRangeService: ${error.message}`);
+    throw error;
+  }
+};
+
 // ==================== LOCATION SERVICES ====================
 
 /**
