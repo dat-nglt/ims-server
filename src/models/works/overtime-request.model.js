@@ -26,57 +26,47 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: { model: "users", key: "id" },
-        comment: "Người yêu cầu tăng ca",
       },
       work_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: { model: "works", key: "id" },
-        comment: "Công việc liên quan (nếu có)",
       },
       requested_date: {
         type: DataTypes.DATEONLY,
         allowNull: false,
-        comment: "Ngày tăng ca",
       },
       start_time: {
         type: DataTypes.TIME,
         allowNull: true,
-        comment: "Giờ bắt đầu tăng ca (HH:MM:SS)",
       },
       end_time: {
         type: DataTypes.TIME,
         allowNull: true,
-        comment: "Giờ kết thúc tăng ca (HH:MM:SS)",
       },
       duration_minutes: {
         type: DataTypes.INTEGER,
         allowNull: true,
-        comment: "Số phút tăng ca",
       },
       reason: {
         type: DataTypes.TEXT,
         allowNull: true,
-        comment: "Lý do yêu cầu tăng ca",
       },
       // Loại tăng ca mặc định: lunch=trưa, night=tối, other=khác
       overtime_type: {
         type: DataTypes.ENUM("lunch", "night", "other"),
         allowNull: false,
         defaultValue: "lunch",
-        comment: "Loại tăng ca (lunch=trưa, night=tối, other=khác)",
       },
       status: {
         type: DataTypes.ENUM("pending", "approved", "rejected", "cancelled"),
         allowNull: false,
         defaultValue: "pending",
-        comment: "Trạng thái yêu cầu",
       },
       approver_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: { model: "users", key: "id" },
-        comment: "Người phê duyệt",
       },
       approved_at: {
         type: DataTypes.DATE,
@@ -86,7 +76,6 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false,
-        comment: "Đánh dấu nếu ca tăng ca được trả công",
       },
       notes: {
         type: DataTypes.TEXT,
