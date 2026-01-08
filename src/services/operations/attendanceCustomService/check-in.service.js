@@ -24,6 +24,14 @@ export const checkInService = async (checkInPayload) => {
     // Trả về thông tin ca chấm công nếu được cung cấp
     const attendanceType = await validateAttendanceType(attendance_type_id);
 
+    // Kiểm tra ca làm việc (theo attendance type) và quyền chấm tăng ca của phân công
+    if (attendanceType && (attendanceType.code == "overtime_lunch" || attendanceType.code == "overtime_night")) {
+      const allowOvertime = workForAttendance?.workAssignment?.allow_overtime === true;
+      if (!allowOvertime) {
+        throw new Error("Người dùng không có quyền chấm công tăng ca cho công việc này");
+      }
+    }
+
     // Hệ thống ghi nhận work_id là null nếu là chấm công hub
     work_id = HUB_WORK_IDS.includes(work_id) ? null : work_id;
 
@@ -43,7 +51,7 @@ export const checkInService = async (checkInPayload) => {
     await updateWorkStatus(work_id);
 
     // Tạo thông báo hệ thống về việc chấm công vào công việc
-    await createCheckInNotification(user, workForAttendance);
+    await createCheckInNotification(user, work_id, workForAttendance);
 
     return {
       success: true,
@@ -79,6 +87,9 @@ const validateWork = async (work_id, user_id, HUB_WORK_IDS) => {
     if (!work) throw new Error("Không tìm thấy công việc tương ứng");
     const workAssignment = await db.WorkAssignment.findOne({ where: { work_id, technician_id: user_id } });
     if (!workAssignment) throw new Error("Người dùng không được phân bổ cho công việc này");
+
+    // Gắn thông tin phân công vào kết quả trả về để các bước sau có thể kiểm tra allow_overtime
+    work.workAssignment = workAssignment;
 
     // Kiểm tra ngày yêu cầu công việc có phải trong hôm nay hay không
     if (work.required_date) {
@@ -303,26 +314,45 @@ const updateWorkStatus = async (wid) => {
   }
 };
 
-// Cập nhật tối ưu lại hàm tạo thông báo chấm công vào công việc
-const createCheckInNotification = async (user, workForAttendance) => {
+// Cập nhật tối ưu lại hàm tạo thông báo chấm công
+const createCheckInNotification = async (user, workId, workForAttendance) => {
   try {
+    let title = `Chấm công vào công việc`;
+    let message = `Người dùng ${user.name} đã chấm công.`;
+    let related_work_id = null;
+
+    // Nếu là công việc cụ thể (không phải hub), dùng thông tin công việc; ngược lại ghi thông báo hub
+    if (workId != null && workId !== -1 && workId !== -2 && workForAttendance) {
+      message = `Người dùng ${user.name} đã chấm công vào công việc "${workForAttendance.title}".`;
+      related_work_id = workForAttendance.id;
+    } else if (workId === -1) {
+      title = `Chấm công tại kho`;
+      message = `Người dùng ${user.name} đã chấm công tại Kho Vật Tư.`;
+    } else if (workId === -2) {
+      title = `Chấm công tại văn phòng`;
+      message = `Người dùng ${user.name} đã chấm công tại Văn phòng Proshop.`;
+    }
+
     await createNotificationService({
-      title: `Chấm công vào công việc`,
-      message: `Người dùng ${user.name} đã chấm công vào công việc "${workForAttendance.title}".`,
+      title,
+      message,
       type: "check_in",
-      related_work_id: workForAttendance.id,
+      related_work_id,
       priority: "medium",
       broadcast: false,
       systemNotification: {
-        title: `Chấm công vào công việc`,
-        message: `Người dùng ${user.name} đã chấm công vào công việc "${workForAttendance.title}".`,
+        title,
+        message,
         broadcast: false,
       },
     });
+
     logger.info(
-      "Tạo thông báo hệ thống cho việc tạo chấm công vào công việc với id công việc: " + workForAttendance.id
+      related_work_id
+        ? `Tạo thông báo hệ thống cho việc tạo chấm công vào công việc với id công việc: ${related_work_id}`
+        : `Tạo thông báo hệ thống cho việc chấm công tại hub: ${workId}`
     );
   } catch (err) {
-    logger.error("Lỗi khi tạo thông báo hệ thống cho việc tạo chấm công vào công việc: " + err.message);
+    logger.error("Lỗi khi tạo thông báo hệ thống cho việc tạo chấm công: " + err.message);
   }
 };

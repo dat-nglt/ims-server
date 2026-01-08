@@ -14,7 +14,7 @@ export const checkAuth = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-      logger.warn(`[${req.id}] Missing authorization header`);
+      logger.warn(`[${req.id}] Không có dữ liệu xác thực đính kèm trong yêu cầu`);
       return res.status(401).json({
         success: false,
         message: "Yêu cầu xác thực tài khoản",
@@ -23,7 +23,7 @@ export const checkAuth = async (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
     if (!token) {
-      logger.warn(`[${req.id}] Invalid authorization header format`);
+      logger.warn(`[${req.id}] Định dạng yêu cầu xác thực không hợp lệ`);
       return res.status(401).json({
         success: false,
         message: "Yêu cầu xác thực tài khoản",
@@ -77,14 +77,11 @@ export const checkAuth = async (req, res, next) => {
       roles: roleIds.length ? roleIds : [9999],
       permissions: permIds,
       roleNames,
-      // permissionNames, //Tuỳ chọn giữ tên permission
       role: roleNames.length ? roleNames[0] : null,
       avatarUrl: user.avatar_url,
       department: user.profile && user.profile.department ? user.profile.department : user.department,
       position: user.position,
     };
-
-    logger.warn(JSON.stringify(reqUser));
 
     req.user = reqUser;
     next();

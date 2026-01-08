@@ -86,6 +86,12 @@ export default (sequelize, DataTypes) => {
       notes: {
         type: DataTypes.TEXT,
       },
+      // Cho phép chấm công tăng ca (nếu true, kỹ thuật viên được phép chấm công ngoài giờ)
+      allow_overtime: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
       created_at: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
