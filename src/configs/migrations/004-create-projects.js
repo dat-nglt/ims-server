@@ -144,38 +144,8 @@ export async function up(queryInterface, Sequelize) {
     await queryInterface.addIndex("projects", ["pending_reports"]);
     await queryInterface.addIndex("projects", ["planned_manpower"]);
     await queryInterface.addIndex("projects", ["consumed_manpower"]);
-
-    // Create project_team_members table
-    await queryInterface.createTable("project_team_members", {
-        id: {
-            type: Sequelize.INTEGER,
-            primaryKey: true,
-            autoIncrement: true,
-        },
-        project_id: {
-            type: Sequelize.INTEGER,
-            allowNull: false,
-            references: { model: "projects", key: "id" },
-            onDelete: "CASCADE",
-        },
-        user_id: {
-            type: Sequelize.INTEGER,
-            references: { model: "users", key: "id" },
-            onDelete: "SET NULL",
-        },
-        name: { type: Sequelize.STRING(255) },
-        role: { type: Sequelize.STRING(100) },
-        days_worked: { type: Sequelize.INTEGER, defaultValue: 0 },
-        allocation_percent: { type: Sequelize.DECIMAL(5, 2), defaultValue: 0 },
-        created_at: { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
-        updated_at: { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
-    });
-
-    await queryInterface.addIndex("project_team_members", ["project_id"]);
-    await queryInterface.addIndex("project_team_members", ["user_id"]);
 }
 
 export async function down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("project_team_members");
     await queryInterface.dropTable("projects");
 }

@@ -1,9 +1,9 @@
 "use strict";
 
 /**
- * Migration 005: Tạo bảng Project Team Members (Thành viên dự án)
+ * Migration 005: Tạo bảng Project Members (Thành viên dự án)
  *
- * Lưu trữ thông tin thành viên tham gia dự án:
+ * Lưu trữ thông tin thành viên tham gia dự án (many-to-many với User):
  * - Liên kết với dự án và người dùng
  * - Vai trò trong dự án
  * - Số ngày công đã làm
@@ -11,7 +11,7 @@
  */
 
 export async function up(queryInterface, Sequelize) {
-  await queryInterface.createTable("project_team_members", {
+    await queryInterface.createTable("project_members", {
     id: {
       type: Sequelize.INTEGER,
       primaryKey: true,
@@ -66,9 +66,11 @@ export async function up(queryInterface, Sequelize) {
     },
   });
 
-  await queryInterface.addIndex("project_team_members", ["role"]);
+  await queryInterface.addIndex("project_members", ["project_id"]);
+  await queryInterface.addIndex("project_members", ["user_id"]);
+  await queryInterface.addIndex("project_members", ["role"]);
 }
 
 export async function down(queryInterface, Sequelize) {
-  await queryInterface.dropTable("project_team_members");
+  await queryInterface.dropTable("project_members");
 }
