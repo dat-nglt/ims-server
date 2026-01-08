@@ -145,12 +145,12 @@ export const getOvertimeRequestsByUserService = async (userId, filters = {}) => 
 
 /**
  * Service: Lấy danh sách yêu cầu tăng ca chờ duyệt
- * @param {Object} filters - Bộ lọc (department, startDate, endDate)
+ * @param {Object} filters - Bộ lọc (startDate, endDate, limit, offset)
  * @returns {Object} - Kết quả thực thi
  */
 export const getPendingOvertimeRequestsService = async (filters = {}) => {
   try {
-    const { department, startDate, endDate, limit = 100, offset = 0 } = filters;
+    const { startDate, endDate, limit = 100, offset = 0 } = filters;
 
     const whereCondition = { status: "pending" };
 
@@ -171,15 +171,6 @@ export const getPendingOvertimeRequestsService = async (filters = {}) => {
           model: db.User,
           as: "user",
           attributes: ["id", "name", "email", "phone"],
-          include: [
-            {
-              model: db.EmployeeProfile,
-              as: "profile",
-              attributes: ["id", "department_id"],
-              // Filter by department if provided
-              ...(department && { where: { department_id: department } }),
-            },
-          ],
         },
         { model: db.Work, as: "work", attributes: ["id", "title", "location"] },
       ],
