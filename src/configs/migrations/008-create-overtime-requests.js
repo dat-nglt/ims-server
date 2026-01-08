@@ -1,7 +1,7 @@
-'use strict';
+"use strict";
 
 export async function up(queryInterface, Sequelize) {
-  await queryInterface.createTable('overtime_requests', {
+  await queryInterface.createTable("overtime_requests", {
     id: {
       type: Sequelize.INTEGER,
       primaryKey: true,
@@ -10,12 +10,12 @@ export async function up(queryInterface, Sequelize) {
     user_id: {
       type: Sequelize.INTEGER,
       allowNull: false,
-      references: { model: 'users', key: 'id' },
+      references: { model: "users", key: "id" },
     },
     work_id: {
       type: Sequelize.INTEGER,
       allowNull: true,
-      references: { model: 'works', key: 'id' },
+      references: { model: "works", key: "id" },
     },
     requested_date: {
       type: Sequelize.DATEONLY,
@@ -38,20 +38,20 @@ export async function up(queryInterface, Sequelize) {
       allowNull: true,
     },
     overtime_type: {
-      type: Sequelize.ENUM('lunch', 'night', 'other'),
+      type: Sequelize.ENUM("overtime_lunch", "overtime_night", "other"),
       allowNull: false,
-      defaultValue: 'lunch',
-      comment: "Loại tăng ca: lunch=trưa, night=tối, other=khác",
+      defaultValue: "overtime_lunch", 
+      comment: "Loại tăng ca: overtime_lunch=trưa, overtime_night=tối, other=khác",
     },
     status: {
-      type: Sequelize.ENUM('pending', 'approved', 'rejected', 'cancelled'),
+      type: Sequelize.ENUM("pending", "approved", "rejected", "cancelled"),
       allowNull: false,
-      defaultValue: 'pending',
+      defaultValue: "pending",
     },
     approver_id: {
       type: Sequelize.INTEGER,
       allowNull: true,
-      references: { model: 'users', key: 'id' },
+      references: { model: "users", key: "id" },
     },
     approved_at: {
       type: Sequelize.DATE,
@@ -76,12 +76,12 @@ export async function up(queryInterface, Sequelize) {
     },
   });
 
-  await queryInterface.addIndex('overtime_requests', ['user_id']);
-  await queryInterface.addIndex('overtime_requests', ['work_id']);
-  await queryInterface.addIndex('overtime_requests', ['status']);
-  await queryInterface.addIndex('overtime_requests', ['requested_date']);
+  await queryInterface.addIndex("overtime_requests", ["user_id"]);
+  await queryInterface.addIndex("overtime_requests", ["work_id"]);
+  await queryInterface.addIndex("overtime_requests", ["status"]);
+  await queryInterface.addIndex("overtime_requests", ["requested_date"]);
 }
 
 export async function down(queryInterface, Sequelize) {
-  await queryInterface.dropTable('overtime_requests');
+  await queryInterface.dropTable("overtime_requests");
 }
