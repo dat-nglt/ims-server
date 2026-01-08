@@ -16,8 +16,8 @@ export const checkAuth = async (req, res, next) => {
     if (!authHeader) {
       logger.warn(`[${req.id}] Missing authorization header`);
       return res.status(401).json({
-        status: "error",
-        message: "Xác thực thất bại: Yêu cầu cần có token.",
+        success: false,
+        message: "Yêu cầu xác thực tài khoản",
       });
     }
 
@@ -25,8 +25,8 @@ export const checkAuth = async (req, res, next) => {
     if (!token) {
       logger.warn(`[${req.id}] Invalid authorization header format`);
       return res.status(401).json({
-        status: "error",
-        message: "Xác thực thất bại: Định dạng token không hợp lệ.",
+        success: false,
+        message: "Yêu cầu xác thực tài khoản",
       });
     }
 
