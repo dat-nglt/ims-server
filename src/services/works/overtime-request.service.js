@@ -274,6 +274,10 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
       notes,
     });
 
+    console.log("Updated Overtime Request:", updatedRequest.toJSON());
+
+    console.log("Associated Work ID:", overtimeRequest.work_id);
+
     // Cập nhật trạng thái chấp nhận tăng ca cho các kỹ thuật viên liên quan trong WorkAssignment
     if (overtimeRequest.work_id) {
       const technicianZaloIds = overtimeRequest.technician_ids ? JSON.parse(overtimeRequest.technician_ids) : [];
@@ -284,10 +288,10 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
           where: {
             zalo_id: { [Op.in]: technicianZaloIds },
           },
-          attributes: ['id'],
+          attributes: ["id"],
         });
 
-        const technicianIds = technicians.map(tech => tech.id);
+        const technicianIds = technicians.map((tech) => tech.id);
 
         if (technicianIds.length > 0) {
           // Update WorkAssignment records to allow overtime
