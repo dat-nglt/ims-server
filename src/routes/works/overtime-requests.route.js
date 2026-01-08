@@ -34,13 +34,13 @@ router.get("/pending/list", getPendingOvertimeRequestsController);
 // Method: PATCH
 // Params: id (request id)
 // Body: { approver_id, is_paid?, notes? }
-router.patch("/:id/approve", approveOvertimeRequestController);
+router.put("/:id/approve", approveOvertimeRequestController);
 
 // VN: Từ chối yêu cầu tăng ca
-// Method: PATCH
+// Method: put
 // Params: id (request id)
 // Body: { approver_id, reject_reason }
-router.patch("/:id/reject", rejectOvertimeRequestController);
+router.put("/:id/reject", rejectOvertimeRequestController);
 // VN: Lấy thống kê tăng ca
 // Method: GET
 // Query: ?user_id=1&department=1&startDate=2024-01-01&endDate=2024-12-31&status=approved
