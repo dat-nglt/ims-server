@@ -174,7 +174,7 @@ export const getPendingOvertimeRequestsService = async (filters = {}) => {
           include: [
             {
               model: db.EmployeeProfile,
-              as: "employeeProfile",
+              as: "profile",
               attributes: ["id", "department_id"],
               // Filter by department if provided
               ...(department && { where: { department_id: department } }),
