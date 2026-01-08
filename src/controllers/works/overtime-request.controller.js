@@ -6,26 +6,49 @@ import * as overtimeRequestService from "../../services/works/overtime-request.s
  */
 export const createOvertimeRequestController = async (req, res) => {
   try {
-    const { user_id, work_id, requested_date, start_time, end_time, duration_minutes, reason, overtime_type } =
-      req.body;
+    const {
+      userRequestingId,
+      workId,
+      work,
+      type,
+      reason,
+      startTime,
+      endTime,
+      technicians,
+      requestedDate,
+    } = req.body;
 
     // Validate required fields
-    if (!user_id || !requested_date || !start_time || !end_time || !overtime_type) {
+    if (!userRequestingId || !type || !startTime || !endTime || !technicians || !Array.isArray(technicians)) {
       return res.status(400).json({
         success: false,
-        message: "Vui lòng cung cấp đầy đủ thông tin bắt buộc",
+        message: "Vui lòng cung cấp đầy đủ thông tin bắt buộc (userRequestingId, type, startTime, endTime, technicians)",
+      });
+    }
+
+    // Calculate duration in minutes
+    const start = new Date(`1970-01-01T${startTime}:00`);
+    const end = new Date(`1970-01-01T${endTime}:00`);
+    const durationMinutes = Math.round((end - start) / (1000 * 60));
+
+    if (durationMinutes <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Thời gian kết thúc phải sau thời gian bắt đầu",
       });
     }
 
     const result = await overtimeRequestService.createOvertimeRequestService({
-      user_id,
-      work_id,
-      requested_date,
-      start_time,
-      end_time,
-      duration_minutes,
+      user_id: userRequestingId,
+      work_id: workId,
+      work_title: work,
+      requested_date: requestedDate || new Date().toISOString().split("T")[0],
+      start_time: startTime,
+      end_time: endTime,
+      duration_minutes: durationMinutes,
       reason,
-      overtime_type,
+      overtime_type: type,
+      technician_ids: technicians,
     });
 
     if (result.success) {
@@ -136,17 +159,17 @@ export const getOvertimeRequestDetailController = async (req, res) => {
 export const approveOvertimeRequestController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { approver_id, is_paid, notes } = req.body;
+    const { approverId, isPaid, notes } = req.body;
 
-    if (!id || !approver_id) {
+    if (!id || !approverId) {
       return res.status(400).json({
         success: false,
-        message: "Thiếu request ID hoặc approver_id",
+        message: "Thiếu request ID hoặc approverId",
       });
     }
 
-    const result = await overtimeRequestService.approveOvertimeRequestService(id, approver_id, {
-      is_paid,
+    const result = await overtimeRequestService.approveOvertimeRequestService(id, approverId, {
+      is_paid: isPaid,
       notes,
     });
 
@@ -170,16 +193,16 @@ export const approveOvertimeRequestController = async (req, res) => {
 export const rejectOvertimeRequestController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { approver_id, reject_reason } = req.body;
+    const { approverId, rejectReason } = req.body;
 
-    if (!id || !approver_id || !reject_reason) {
+    if (!id || !approverId || !rejectReason) {
       return res.status(400).json({
         success: false,
-        message: "Thiếu request ID, approver_id hoặc reject_reason",
+        message: "Thiếu request ID, approverId hoặc rejectReason",
       });
     }
 
-    const result = await overtimeRequestService.rejectOvertimeRequestService(id, approver_id, reject_reason);
+    const result = await overtimeRequestService.rejectOvertimeRequestService(id, approverId, rejectReason);
 
     if (result.success) {
       return res.json(result);
@@ -201,16 +224,16 @@ export const rejectOvertimeRequestController = async (req, res) => {
 export const cancelOvertimeRequestController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { user_id } = req.body;
+    const { userId } = req.body;
 
-    if (!id || !user_id) {
+    if (!id || !userId) {
       return res.status(400).json({
         success: false,
-        message: "Thiếu request ID hoặc user_id",
+        message: "Thiếu request ID hoặc userId",
       });
     }
 
-    const result = await overtimeRequestService.cancelOvertimeRequestService(id, user_id);
+    const result = await overtimeRequestService.cancelOvertimeRequestService(id, userId);
 
     if (result.success) {
       return res.json(result);  
@@ -232,22 +255,51 @@ export const cancelOvertimeRequestController = async (req, res) => {
 export const updateOvertimeRequestController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { user_id, start_time, end_time, duration_minutes, reason, overtime_type } = req.body;
+    const { userId, startTime, endTime, reason, type, technicians } = req.body;
 
-    if (!id || !user_id) {
+    if (!id || !userId) {
       return res.status(400).json({
         success: false,
-        message: "Thiếu request ID hoặc user_id",
+        message: "Thiếu request ID hoặc userId",
       });
     }
 
-    const result = await overtimeRequestService.updateOvertimeRequestService(id, user_id, {
-      start_time,
-      end_time,
-      duration_minutes,
+    // Build update data
+    const updateData = {
       reason,
-      overtime_type,
-    });
+      overtime_type: type,
+    };
+
+    // If time values are provided, calculate duration
+    if (startTime && endTime) {
+      const start = new Date(`1970-01-01T${startTime}:00`);
+      const end = new Date(`1970-01-01T${endTime}:00`);
+      const durationMinutes = Math.round((end - start) / (1000 * 60));
+
+      if (durationMinutes <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Thời gian kết thúc phải sau thời gian bắt đầu",
+        });
+      }
+
+      updateData.start_time = startTime;
+      updateData.end_time = endTime;
+      updateData.duration_minutes = durationMinutes;
+    }
+
+    // Handle technicians array
+    if (technicians && Array.isArray(technicians)) {
+      if (technicians.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Vui lòng chọn ít nhất một kỹ thuật viên",
+        });
+      }
+      updateData.technician_ids = technicians;
+    }
+
+    const result = await overtimeRequestService.updateOvertimeRequestService(id, userId, updateData);
 
     if (result.success) {
       return res.json(result);

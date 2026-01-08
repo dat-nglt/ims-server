@@ -12,20 +12,22 @@ export const createOvertimeRequestService = async (data) => {
     const {
       user_id,
       work_id,
+      work_title,
       requested_date,
       start_time,
       end_time,
       duration_minutes,
       reason,
       overtime_type,
+      technician_ids = [],
     } = data;
 
     // Validate required fields
-    if (!user_id || !requested_date || !start_time || !end_time || !overtime_type) {
+    if (!user_id || !requested_date || !start_time || !end_time || !overtime_type || technician_ids.length === 0) {
       return {
         success: false,
         data: null,
-        message: "Vui lòng cung cấp đầy đủ thông tin (user_id, requested_date, start_time, end_time, overtime_type)",
+        message: "Vui lòng cung cấp đầy đủ thông tin (user_id, requested_date, start_time, end_time, overtime_type, technician_ids)",
       };
     }
 
@@ -55,12 +57,14 @@ export const createOvertimeRequestService = async (data) => {
     const overtimeRequest = await db.OvertimeRequest.create({
       user_id,
       work_id,
+      work_title,
       requested_date,
       start_time,
       end_time,
       duration_minutes,
       reason,
       overtime_type,
+      technician_ids: JSON.stringify(technician_ids), // Store as JSON array string
       status: "pending",
     });
 
@@ -72,7 +76,12 @@ export const createOvertimeRequestService = async (data) => {
       ],
     });
 
-    logger.info(`Overtime request created: ${result.id} by user ${user_id}`);
+    // Parse technician_ids back to array
+    if (result && result.technician_ids) {
+      result.dataValues.technician_ids = JSON.parse(result.technician_ids);
+    }
+
+    logger.info(`Overtime request created: ${result.id} by user ${user_id} for technicians: ${technician_ids.join(", ")}`);
 
     return {
       success: true,
@@ -127,9 +136,18 @@ export const getOvertimeRequestsByUserService = async (userId, filters = {}) => 
       offset: parseInt(offset),
     });
 
+    // Parse technician_ids for each record
+    const processedRows = rows.map((row) => {
+      const data = row.toJSON();
+      if (data.technician_ids && typeof data.technician_ids === "string") {
+        data.technician_ids = JSON.parse(data.technician_ids);
+      }
+      return data;
+    });
+
     return {
       success: true,
-      data: rows,
+      data: processedRows,
       total: count,
       message: "Lấy danh sách yêu cầu tăng ca thành công",
     };
@@ -179,9 +197,18 @@ export const getPendingOvertimeRequestsService = async (filters = {}) => {
       offset: parseInt(offset),
     });
 
+    // Parse technician_ids for each record
+    const processedRows = rows.map((row) => {
+      const data = row.toJSON();
+      if (data.technician_ids && typeof data.technician_ids === "string") {
+        data.technician_ids = JSON.parse(data.technician_ids);
+      }
+      return data;
+    });
+
     return {
       success: true,
-      data: rows,
+      data: processedRows,
       total: count,
       message: "Lấy danh sách yêu cầu tăng ca chờ duyệt thành công",
     };
@@ -218,9 +245,15 @@ export const getOvertimeRequestDetailService = async (requestId) => {
       };
     }
 
+    // Parse technician_ids
+    const data = overtimeRequest.toJSON();
+    if (data.technician_ids && typeof data.technician_ids === "string") {
+      data.technician_ids = JSON.parse(data.technician_ids);
+    }
+
     return {
       success: true,
-      data: overtimeRequest,
+      data,
       message: "Lấy chi tiết yêu cầu tăng ca thành công",
     };
   } catch (error) {
@@ -290,11 +323,17 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
       ],
     });
 
+    // Parse technician_ids
+    const data = result.toJSON();
+    if (data.technician_ids && typeof data.technician_ids === "string") {
+      data.technician_ids = JSON.parse(data.technician_ids);
+    }
+
     logger.info(`Overtime request ${requestId} approved by user ${approverId}`);
 
     return {
       success: true,
-      data: result,
+      data,
       message: "Yêu cầu tăng ca đã được duyệt thành công",
     };
   } catch (error) {
@@ -361,11 +400,17 @@ export const rejectOvertimeRequestService = async (requestId, approverId, reject
       ],
     });
 
+    // Parse technician_ids
+    const data = result.toJSON();
+    if (data.technician_ids && typeof data.technician_ids === "string") {
+      data.technician_ids = JSON.parse(data.technician_ids);
+    }
+
     logger.info(`Overtime request ${requestId} rejected by user ${approverId}`);
 
     return {
       success: true,
-      data: result,
+      data,
       message: "Yêu cầu tăng ca đã bị từ chối",
     };
   } catch (error) {
@@ -419,11 +464,18 @@ export const cancelOvertimeRequestService = async (requestId, userId) => {
       status: "cancelled",
     });
 
+    // Fetch updated record with technician_ids parsing
+    const result = await db.OvertimeRequest.findByPk(updatedRequest.id);
+    const data = result.toJSON();
+    if (data.technician_ids && typeof data.technician_ids === "string") {
+      data.technician_ids = JSON.parse(data.technician_ids);
+    }
+
     logger.info(`Overtime request ${requestId} cancelled by user ${userId}`);
 
     return {
       success: true,
-      data: updatedRequest,
+      data,
       message: "Yêu cầu tăng ca đã được hủy",
     };
   } catch (error) {
@@ -474,12 +526,17 @@ export const updateOvertimeRequestService = async (requestId, userId, updateData
     }
 
     // Update only allowed fields
-    const allowedFields = ["start_time", "end_time", "duration_minutes", "reason", "overtime_type"];
+    const allowedFields = ["start_time", "end_time", "duration_minutes", "reason", "overtime_type", "technician_ids"];
     const dataToUpdate = {};
 
     for (const field of allowedFields) {
       if (updateData.hasOwnProperty(field)) {
-        dataToUpdate[field] = updateData[field];
+        // Handle technician_ids array -> JSON string
+        if (field === "technician_ids" && Array.isArray(updateData[field])) {
+          dataToUpdate[field] = JSON.stringify(updateData[field]);
+        } else {
+          dataToUpdate[field] = updateData[field];
+        }
       }
     }
 
@@ -492,11 +549,17 @@ export const updateOvertimeRequestService = async (requestId, userId, updateData
       ],
     });
 
+    // Parse technician_ids
+    const data = result.toJSON();
+    if (data.technician_ids && typeof data.technician_ids === "string") {
+      data.technician_ids = JSON.parse(data.technician_ids);
+    }
+
     logger.info(`Overtime request ${requestId} updated by user ${userId}`);
 
     return {
       success: true,
-      data: result,
+      data,
       message: "Yêu cầu tăng ca đã được cập nhật thành công",
     };
   } catch (error) {
