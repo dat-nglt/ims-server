@@ -141,7 +141,7 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
     order: [["started_at", "DESC"]],
   });
 
-  // Nếu tồn tại phiên chấm công mở trên CA CHẤM CÔNG thuộc NGƯỜI DÙNG, trả về thông tin phiên chấm công đó và không cho phép chấm công mới
+  // Nếu tồn tại phiên chấm công mở trên CA CHẤM CÔNG thuộc NGƯỜI DÙNG
   if (anySession) {
     const latestAttendance = await db.Attendance.findOne({
       where: { attendance_session_id: anySession.id, user_id },
@@ -152,6 +152,41 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
     // Định dạng lại thời gian check-in theo múi giờ Việt Nam
     const checkInAt = latestAttendance ? toVietnamTimeISO(latestAttendance.check_in_time) : null;
 
+    // Nếu phiên chấm công hiện tại không có work_id cụ thể (chấm công hub)
+    // Và chấm công hiện tại có work_id cụ thể, thì cập nhật phiên và bản ghi chấm công
+    if (anySession.work_id == null && work_id != null) {
+      try {
+        // Cập nhật phiên chấm công với work_id mới
+        await anySession.update({ work_id });
+
+        // Cập nhật bản ghi chấm công với work_id mới (giữ check_in_time không đổi)
+        if (latestAttendance) {
+          await latestAttendance.update({ work_id });
+        }
+
+        logger.info(`Cập nhật phiên chấm công ${anySession.id} với work_id: ${work_id}`);
+
+        // Trả về thông tin phiên đã cập nhật
+        return {
+          success: false,
+          alreadyCheckedIn: true,
+          message: checkInAt
+            ? `Người dùng đã chấm công vào lúc ${checkInAt.split("T")[1].substring(0, 5)}`
+            : `Người dùng đã có phiên chấm công hiện tại`,
+          session: {
+            id: anySession.id,
+            work: { id: work_id, title: "Công việc được cập nhật" },
+            check_in_time: checkInAt,
+            check_in_id: latestAttendance ? latestAttendance.id : null,
+          },
+        };
+      } catch (updateErr) {
+        logger.error(`Lỗi khi cập nhật phiên chấm công: ${updateErr.message}`);
+        // Nếu cập nhật thất bại, vẫn trả về thông tin phiên cũ
+      }
+    }
+
+    // Trường hợp thông thường: phiên chấm công đã tồn tại, không cho phép chấm công mới
     return {
       success: false,
       alreadyCheckedIn: true,
