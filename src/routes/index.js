@@ -13,7 +13,7 @@ import {
 } from "./users/index.js";
 import { routeForProject } from "./projects/index.js";
 import { routeForCustomers } from "./customers/index.js";
-import { routeForWorks, routeForWorkCategories, routeForWorkAssignments, routeForWorkReports } from "./works/index.js";
+import { routeForWorks, routeForWorkCategories, routeForWorkAssignments, routeForWorkReports, routeForOvertimeRequests } from "./works/index.js";
 import {
   routeForAttachments,
   routeForNotifications,
@@ -58,6 +58,7 @@ const mainRouter = (server) => {
   server.use("/api/v1/ims/work-categories", routeForWorkCategories);
   server.use("/api/v1/ims/work-assignments", routeForWorkAssignments);
   server.use("/api/v1/ims/work-reports", routeForWorkReports);
+  server.use("/api/v1/ims/overtime-requests", routeForOvertimeRequests);
 
   // Operations
   server.use("/api/v1/ims/attendance", routeForAttendance);

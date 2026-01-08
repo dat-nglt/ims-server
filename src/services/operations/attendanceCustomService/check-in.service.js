@@ -60,7 +60,7 @@ export const checkInService = async (checkInPayload) => {
       message: "Chấm công vào thành công",
     };
   } catch (error) {
-    logger.warn("Error in attendanceService:" + error.message);
+    logger.warn("Error in attendanceService:" + error.messFage);
     return { success: false, message: error.message || "Chấm công vào thất bại", data: null };
   }
 };

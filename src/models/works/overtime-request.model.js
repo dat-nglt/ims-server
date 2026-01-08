@@ -1,0 +1,124 @@
+"use strict";
+
+/**
+ * Model OvertimeRequest
+ * - user_id: who requests overtime (FK users)
+ * - work_id: optional work related to the overtime (FK works)
+ * - requested_date: date of overtime
+ * - start_time, end_time: times (HH:MM:SS) or DateTime depending on usage
+ * - duration_minutes: integer
+ * - reason: text
+ * - status: enum (pending, approved, rejected, cancelled)
+ * - approver_id: FK users
+ * - approved_at: datetime
+ * - is_paid: boolean
+ */
+export default (sequelize, DataTypes) => {
+  const OvertimeRequest = sequelize.define(
+    "OvertimeRequest",
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: { model: "users", key: "id" },
+        comment: "Người yêu cầu tăng ca",
+      },
+      work_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: { model: "works", key: "id" },
+        comment: "Công việc liên quan (nếu có)",
+      },
+      requested_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: false,
+        comment: "Ngày tăng ca",
+      },
+      start_time: {
+        type: DataTypes.TIME,
+        allowNull: true,
+        comment: "Giờ bắt đầu tăng ca (HH:MM:SS)",
+      },
+      end_time: {
+        type: DataTypes.TIME,
+        allowNull: true,
+        comment: "Giờ kết thúc tăng ca (HH:MM:SS)",
+      },
+      duration_minutes: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        comment: "Số phút tăng ca",
+      },
+      reason: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        comment: "Lý do yêu cầu tăng ca",
+      },
+      // Loại tăng ca mặc định: lunch=trưa, night=tối, other=khác
+      overtime_type: {
+        type: DataTypes.ENUM("lunch", "night", "other"),
+        allowNull: false,
+        defaultValue: "lunch",
+        comment: "Loại tăng ca (lunch=trưa, night=tối, other=khác)",
+      },
+      status: {
+        type: DataTypes.ENUM("pending", "approved", "rejected", "cancelled"),
+        allowNull: false,
+        defaultValue: "pending",
+        comment: "Trạng thái yêu cầu",
+      },
+      approver_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: { model: "users", key: "id" },
+        comment: "Người phê duyệt",
+      },
+      approved_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      is_paid: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+        comment: "Đánh dấu nếu ca tăng ca được trả công",
+      },
+      notes: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      created_at: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
+      updated_at: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
+    },
+    {
+      tableName: "overtime_requests",
+      timestamps: false,
+      underscored: true,
+      indexes: [
+        { fields: ["user_id"] },
+        { fields: ["work_id"] },
+        { fields: ["status"] },
+        { fields: ["requested_date"] },
+      ],
+    }
+  );
+
+  OvertimeRequest.associate = (models) => {
+    OvertimeRequest.belongsTo(models.User, { foreignKey: "user_id", as: "user" });
+    OvertimeRequest.belongsTo(models.User, { foreignKey: "approver_id", as: "approver" });
+    OvertimeRequest.belongsTo(models.Work, { foreignKey: "work_id", as: "work" });
+  };
+
+  return OvertimeRequest;
+};
