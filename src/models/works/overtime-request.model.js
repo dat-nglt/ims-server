@@ -52,11 +52,11 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
-      // Loại tăng ca mặc định: lunch=trưa, night=tối, other=khác
+      // Loại tăng ca mặc định: overtime_lunch=trưa, overtime_night=tối, other=khác
       overtime_type: {
-        type: DataTypes.ENUM("lunch", "night", "other"),
+        type: DataTypes.ENUM("overtime_lunch", "overtime_night", "other"),
         allowNull: false,
-        defaultValue: "lunch",
+        defaultValue: "overtime_lunch",
       },
       status: {
         type: DataTypes.ENUM("pending", "approved", "rejected", "cancelled"),

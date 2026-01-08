@@ -28,7 +28,7 @@ export const checkInService = async (checkInPayload) => {
     if (attendanceType && (attendanceType.code == "overtime_lunch" || attendanceType.code == "overtime_night")) {
       const allowOvertime = workForAttendance?.workAssignment?.allow_overtime === true;
       if (!allowOvertime) {
-        throw new Error("Người dùng không có quyền chấm công tăng ca cho công việc này");
+        throw new Error("Người dùng không được yêu cầu chấm công tăng ca cho công việc này");
       }
     }
 
