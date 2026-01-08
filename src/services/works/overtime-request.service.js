@@ -27,12 +27,13 @@ export const createOvertimeRequestService = async (data) => {
       return {
         success: false,
         data: null,
-        message: "Vui lòng cung cấp đầy đủ thông tin (user_id, requested_date, start_time, end_time, overtime_type, technician_ids)",
+        message:
+          "Vui lòng cung cấp đầy đủ thông tin (user_id, requested_date, start_time, end_time, overtime_type, technician_ids)",
       };
     }
 
     // Check if user exists
-    const user = await db.User.findByPk(user_id);
+    const user = await db.User.findOne({ where: { zalo_id: user_id } });
     if (!user) {
       return {
         success: false,
@@ -81,7 +82,9 @@ export const createOvertimeRequestService = async (data) => {
       result.dataValues.technician_ids = JSON.parse(result.technician_ids);
     }
 
-    logger.info(`Overtime request created: ${result.id} by user ${user_id} for technicians: ${technician_ids.join(", ")}`);
+    logger.info(
+      `Overtime request created: ${result.id} by user ${user_id} for technicians: ${technician_ids.join(", ")}`
+    );
 
     return {
       success: true,
@@ -544,9 +547,7 @@ export const updateOvertimeRequestService = async (requestId, userId, updateData
 
     // Fetch with relations
     const result = await db.OvertimeRequest.findByPk(updatedRequest.id, {
-      include: [
-        { model: db.Work, as: "work", attributes: ["id", "title"] },
-      ],
+      include: [{ model: db.Work, as: "work", attributes: ["id", "title"] }],
     });
 
     // Parse technician_ids
@@ -618,9 +619,7 @@ export const getOvertimeStatisticsService = async (filters = {}) => {
 
     // Calculate total hours (sum of duration_minutes and convert to hours)
     const result = await db.OvertimeRequest.findAll({
-      attributes: [
-        [db.sequelize.fn("SUM", db.sequelize.col("duration_minutes")), "totalMinutes"],
-      ],
+      attributes: [[db.sequelize.fn("SUM", db.sequelize.col("duration_minutes")), "totalMinutes"]],
       where: whereCondition,
       raw: true,
     });
