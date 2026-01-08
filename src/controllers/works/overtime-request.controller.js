@@ -140,7 +140,7 @@ export const approveOvertimeRequestController = async (req, res) => {
       return res.status(400).json(result);
     }
   } catch (error) {
-    logger.error(`[${req.id}] Error in approveOvertimeRequestController:`, error.message);
+    logger.error(`[${req.id}] Error in approveOvertimeRequestController:` + error.message);
     res.status(500).json({
       success: false,
       message: "Lỗi máy chủ khi duyệt yêu cầu tăng ca",
