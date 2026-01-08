@@ -56,7 +56,7 @@ export const createOvertimeRequestService = async (data) => {
 
     // Create overtime request
     const overtimeRequest = await db.OvertimeRequest.create({
-      user_id,
+      user_id: user.id,
       work_id,
       work_title,
       requested_date,
