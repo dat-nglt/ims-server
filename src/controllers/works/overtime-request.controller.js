@@ -6,23 +6,14 @@ import * as overtimeRequestService from "../../services/works/overtime-request.s
  */
 export const createOvertimeRequestController = async (req, res) => {
   try {
-    const {
-      userRequestingId,
-      workId,
-      work,
-      type,
-      reason,
-      startTime,
-      endTime,
-      technicians,
-      requestedDate,
-    } = req.body;
+    const { userRequestingId, workId, work, type, reason, startTime, endTime, technicians, requestedDate } = req.body;
 
     // Validate required fields
     if (!userRequestingId || !type || !startTime || !endTime || !technicians || !Array.isArray(technicians)) {
       return res.status(400).json({
         success: false,
-        message: "Vui lòng cung cấp đầy đủ thông tin bắt buộc (userRequestingId, type, startTime, endTime, technicians)",
+        message:
+          "Vui lòng cung cấp đầy đủ thông tin bắt buộc (userRequestingId, type, startTime, endTime, technicians)",
       });
     }
 
@@ -124,36 +115,6 @@ export const getPendingOvertimeRequestsController = async (req, res) => {
 };
 
 /**
- * Controller: Lấy chi tiết yêu cầu tăng ca
- */
-export const getOvertimeRequestDetailController = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        message: "Thiếu request ID",
-      });
-    }
-
-    const result = await overtimeRequestService.getOvertimeRequestDetailService(id);
-
-    if (result.success) {
-      return res.json(result);
-    } else {
-      return res.status(404).json(result);
-    }
-  } catch (error) {
-    logger.error(`[${req.id}] Error in getOvertimeRequestDetailController:`, error.message);
-    res.status(500).json({
-      success: false,
-      message: "Lỗi máy chủ khi lấy chi tiết yêu cầu tăng ca",
-    });
-  }
-};
-
-/**
  * Controller: Duyệt yêu cầu tăng ca
  */
 export const approveOvertimeRequestController = async (req, res) => {
@@ -214,103 +175,6 @@ export const rejectOvertimeRequestController = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Lỗi máy chủ khi từ chối yêu cầu tăng ca",
-    });
-  }
-};
-
-/**
- * Controller: Hủy yêu cầu tăng ca
- */
-export const cancelOvertimeRequestController = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { userId } = req.body;
-
-    if (!id || !userId) {
-      return res.status(400).json({
-        success: false,
-        message: "Thiếu request ID hoặc userId",
-      });
-    }
-
-    const result = await overtimeRequestService.cancelOvertimeRequestService(id, userId);
-
-    if (result.success) {
-      return res.json(result);  
-    } else {
-      return res.status(400).json(result);
-    }
-  } catch (error) {
-    logger.error(`[${req.id}] Error in cancelOvertimeRequestController:`, error.message);
-    res.status(500).json({
-      success: false,
-      message: "Lỗi máy chủ khi hủy yêu cầu tăng ca",
-    });
-  }
-};
-
-/**
- * Controller: Cập nhật yêu cầu tăng ca
- */
-export const updateOvertimeRequestController = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { userId, startTime, endTime, reason, type, technicians } = req.body;
-
-    if (!id || !userId) {
-      return res.status(400).json({
-        success: false,
-        message: "Thiếu request ID hoặc userId",
-      });
-    }
-
-    // Build update data
-    const updateData = {
-      reason,
-      overtime_type: type,
-    };
-
-    // If time values are provided, calculate duration
-    if (startTime && endTime) {
-      const start = new Date(`1970-01-01T${startTime}:00`);
-      const end = new Date(`1970-01-01T${endTime}:00`);
-      const durationMinutes = Math.round((end - start) / (1000 * 60));
-
-      if (durationMinutes <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: "Thời gian kết thúc phải sau thời gian bắt đầu",
-        });
-      }
-
-      updateData.start_time = startTime;
-      updateData.end_time = endTime;
-      updateData.duration_minutes = durationMinutes;
-    }
-
-    // Handle technicians array
-    if (technicians && Array.isArray(technicians)) {
-      if (technicians.length === 0) {
-        return res.status(400).json({
-          success: false,
-          message: "Vui lòng chọn ít nhất một kỹ thuật viên",
-        });
-      }
-      updateData.technician_ids = technicians;
-    }
-
-    const result = await overtimeRequestService.updateOvertimeRequestService(id, userId, updateData);
-
-    if (result.success) {
-      return res.json(result);
-    } else {
-      return res.status(400).json(result);
-    }
-  } catch (error) {
-    logger.error(`[${req.id}] Error in updateOvertimeRequestController:`, error.message);
-    res.status(500).json({
-      success: false,
-      message: "Lỗi máy chủ khi cập nhật yêu cầu tăng ca",
     });
   }
 };

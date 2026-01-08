@@ -226,50 +226,6 @@ export const getPendingOvertimeRequestsService = async (filters = {}) => {
 };
 
 /**
- * Service: Lấy chi tiết yêu cầu tăng ca
- * @param {number} requestId - ID yêu cầu tăng ca
- * @returns {Object} - Kết quả thực thi
- */
-export const getOvertimeRequestDetailService = async (requestId) => {
-  try {
-    const overtimeRequest = await db.OvertimeRequest.findByPk(requestId, {
-      include: [
-        { model: db.User, as: "user", attributes: ["id", "name", "email", "phone"] },
-        { model: db.Work, as: "work", attributes: ["id", "title", "location", "status"] },
-        { model: db.User, as: "approver", attributes: ["id", "name"] },
-      ],
-    });
-
-    if (!overtimeRequest) {
-      return {
-        success: false,
-        data: null,
-        message: "Yêu cầu tăng ca không tồn tại",
-      };
-    }
-
-    // Parse technician_ids
-    const data = overtimeRequest.toJSON();
-    if (data.technician_ids && typeof data.technician_ids === "string") {
-      data.technician_ids = JSON.parse(data.technician_ids);
-    }
-
-    return {
-      success: true,
-      data,
-      message: "Lấy chi tiết yêu cầu tăng ca thành công",
-    };
-  } catch (error) {
-    logger.error("Error in getOvertimeRequestDetailService: " + error.message);
-    return {
-      success: false,
-      data: null,
-      message: "Lỗi khi lấy chi tiết yêu cầu tăng ca: " + error.message,
-    };
-  }
-};
-
-/**
  * Service: Duyệt yêu cầu tăng ca
  * @param {number} requestId - ID yêu cầu tăng ca
  * @param {number} approverId - ID người duyệt
@@ -286,7 +242,7 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
       return {
         success: false,
         data: null,
-        message: "Yêu cầu tăng ca không tồn tại",
+        message: "Không có yêu cầu tăng ca nào cho công việc hiện tại",
       };
     }
 
@@ -296,7 +252,7 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
       return {
         success: false,
         data: null,
-        message: "Người duyệt không tồn tại",
+        message: "Bạn không thể phê duyệt yêu cầu tăng ca này",
       };
     }
 
@@ -317,6 +273,40 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
       is_paid,
       notes,
     });
+
+    // Cập nhật trạng thái chấp nhận tăng ca cho các kỹ thuật viên liên quan trong WorkAssignment
+    if (overtimeRequest.work_id) {
+      const technicianZaloIds = overtimeRequest.technician_ids ? JSON.parse(overtimeRequest.technician_ids) : [];
+
+      if (technicianZaloIds.length > 0) {
+        // Tìm các user.id tương ứng với zalo_id
+        const technicians = await db.User.findAll({
+          where: {
+            zalo_id: { [Op.in]: technicianZaloIds },
+          },
+          attributes: ['id'],
+        });
+
+        const technicianIds = technicians.map(tech => tech.id);
+
+        if (technicianIds.length > 0) {
+          // Update WorkAssignment records to allow overtime
+          await db.WorkAssignment.update(
+            { allow_overtime: true },
+            {
+              where: {
+                work_id: overtimeRequest.work_id,
+                technician_id: { [Op.in]: technicianIds },
+              },
+            }
+          );
+
+          logger.info(
+            `Updated allow_overtime for work ${overtimeRequest.work_id} with technicians: ${technicianIds.join(", ")}`
+          );
+        }
+      }
+    }
 
     // Fetch with relations
     const result = await db.OvertimeRequest.findByPk(updatedRequest.id, {
@@ -422,153 +412,6 @@ export const rejectOvertimeRequestService = async (requestId, approverId, reject
       success: false,
       data: null,
       message: "Lỗi khi từ chối yêu cầu tăng ca: " + error.message,
-    };
-  }
-};
-
-/**
- * Service: Hủy yêu cầu tăng ca
- * @param {number} requestId - ID yêu cầu tăng ca
- * @param {number} userId - ID người hủy (thường là người tạo)
- * @returns {Object} - Kết quả thực thi
- */
-export const cancelOvertimeRequestService = async (requestId, userId) => {
-  try {
-    // Check if request exists
-    const overtimeRequest = await db.OvertimeRequest.findByPk(requestId);
-    if (!overtimeRequest) {
-      return {
-        success: false,
-        data: null,
-        message: "Yêu cầu tăng ca không tồn tại",
-      };
-    }
-
-    // Check if user is owner (optional - có thể cho phép manager hủy)
-    if (overtimeRequest.user_id !== userId) {
-      return {
-        success: false,
-        data: null,
-        message: "Bạn không có quyền hủy yêu cầu này",
-      };
-    }
-
-    // Check if status is pending
-    if (overtimeRequest.status !== "pending") {
-      return {
-        success: false,
-        data: null,
-        message: `Không thể hủy yêu cầu có trạng thái: ${overtimeRequest.status}`,
-      };
-    }
-
-    // Update overtime request
-    const updatedRequest = await overtimeRequest.update({
-      status: "cancelled",
-    });
-
-    // Fetch updated record with technician_ids parsing
-    const result = await db.OvertimeRequest.findByPk(updatedRequest.id);
-    const data = result.toJSON();
-    if (data.technician_ids && typeof data.technician_ids === "string") {
-      data.technician_ids = JSON.parse(data.technician_ids);
-    }
-
-    logger.info(`Overtime request ${requestId} cancelled by user ${userId}`);
-
-    return {
-      success: true,
-      data,
-      message: "Yêu cầu tăng ca đã được hủy",
-    };
-  } catch (error) {
-    logger.error("Error in cancelOvertimeRequestService: " + error.message);
-    return {
-      success: false,
-      data: null,
-      message: "Lỗi khi hủy yêu cầu tăng ca: " + error.message,
-    };
-  }
-};
-
-/**
- * Service: Cập nhật yêu cầu tăng ca (cho pending request)
- * @param {number} requestId - ID yêu cầu tăng ca
- * @param {number} userId - ID người cập nhật (phải là owner)
- * @param {Object} updateData - Dữ liệu cập nhật
- * @returns {Object} - Kết quả thực thi
- */
-export const updateOvertimeRequestService = async (requestId, userId, updateData) => {
-  try {
-    // Check if request exists
-    const overtimeRequest = await db.OvertimeRequest.findByPk(requestId);
-    if (!overtimeRequest) {
-      return {
-        success: false,
-        data: null,
-        message: "Yêu cầu tăng ca không tồn tại",
-      };
-    }
-
-    // Check if user is owner
-    if (overtimeRequest.user_id !== userId) {
-      return {
-        success: false,
-        data: null,
-        message: "Bạn không có quyền cập nhật yêu cầu này",
-      };
-    }
-
-    // Check if status is pending
-    if (overtimeRequest.status !== "pending") {
-      return {
-        success: false,
-        data: null,
-        message: `Không thể cập nhật yêu cầu có trạng thái: ${overtimeRequest.status}`,
-      };
-    }
-
-    // Update only allowed fields
-    const allowedFields = ["start_time", "end_time", "duration_minutes", "reason", "overtime_type", "technician_ids"];
-    const dataToUpdate = {};
-
-    for (const field of allowedFields) {
-      if (updateData.hasOwnProperty(field)) {
-        // Handle technician_ids array -> JSON string
-        if (field === "technician_ids" && Array.isArray(updateData[field])) {
-          dataToUpdate[field] = JSON.stringify(updateData[field]);
-        } else {
-          dataToUpdate[field] = updateData[field];
-        }
-      }
-    }
-
-    const updatedRequest = await overtimeRequest.update(dataToUpdate);
-
-    // Fetch with relations
-    const result = await db.OvertimeRequest.findByPk(updatedRequest.id, {
-      include: [{ model: db.Work, as: "work", attributes: ["id", "title"] }],
-    });
-
-    // Parse technician_ids
-    const data = result.toJSON();
-    if (data.technician_ids && typeof data.technician_ids === "string") {
-      data.technician_ids = JSON.parse(data.technician_ids);
-    }
-
-    logger.info(`Overtime request ${requestId} updated by user ${userId}`);
-
-    return {
-      success: true,
-      data,
-      message: "Yêu cầu tăng ca đã được cập nhật thành công",
-    };
-  } catch (error) {
-    logger.error("Error in updateOvertimeRequestService: " + error.message);
-    return {
-      success: false,
-      data: null,
-      message: "Lỗi khi cập nhật yêu cầu tăng ca: " + error.message,
     };
   }
 };
