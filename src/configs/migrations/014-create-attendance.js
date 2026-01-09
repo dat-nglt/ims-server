@@ -148,6 +148,20 @@ export async function up(queryInterface, Sequelize) {
       defaultValue: {},
       comment: "Additional metadata (e.g. hub: 'warehouse'|'office')",
     },
+    // Check-in metadata - lưu trữ metadata riêng cho check-in
+    check_in_metadata: {
+      type: Sequelize.JSONB,
+      allowNull: true,
+      defaultValue: {},
+      comment: "Metadata cho check-in (attendanceMode, isAtHub, locationType)",
+    },
+    // Check-out metadata - lưu trữ metadata riêng cho check-out
+    check_out_metadata: {
+      type: Sequelize.JSONB,
+      allowNull: true,
+      defaultValue: {},
+      comment: "Metadata cho check-out (attendanceMode, isAtHub, locationType)",
+    },
     // Thêm attendance_type_id: FK tới bảng attendance_type
     attendance_type_id: {
       type: Sequelize.INTEGER,

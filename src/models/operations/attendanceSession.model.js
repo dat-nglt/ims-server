@@ -81,11 +81,6 @@ export default (sequelize, DataTypes) => {
       notes: {
         type: DataTypes.TEXT,
       },
-      metadata: {
-        type: DataTypes.JSONB,
-        allowNull: true,
-        defaultValue: {},
-      },
       latitude: {
         type: DataTypes.DECIMAL(10, 8),
         allowNull: true,
@@ -166,7 +161,6 @@ export default (sequelize, DataTypes) => {
               check_out_id: session.check_out_id,
               attendee_user_ids: [session.user_id], // Bắt đầu với primary user
               notes: session.notes,
-              metadata: session.metadata,
               latitude: session.latitude,
               longitude: session.longitude,
               archived_at: new Date(),
@@ -215,7 +209,6 @@ export default (sequelize, DataTypes) => {
                   check_out_id: session.check_out_id,
                   attendee_user_ids: attendeeUserIds, // Ghi nhận tất cả attendees
                   notes: session.notes,
-                  metadata: session.metadata,
                   latitude: session.latitude,
                   longitude: session.longitude,
                   archived_at: new Date(),
@@ -285,7 +278,6 @@ export default (sequelize, DataTypes) => {
                 check_in_id: session.check_in_id,
                 check_out_id: session.check_out_id,
                 notes: session.notes,
-                metadata: session.metadata,
                 latitude: session.latitude,
                 longitude: session.longitude,
                 archived_at: new Date(),

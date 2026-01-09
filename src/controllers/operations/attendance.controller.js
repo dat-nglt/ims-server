@@ -62,6 +62,7 @@ export const checkInController = async (req, res) => {
       is_within_radius = null,
       violation_distance = null,
       metadata = null,
+      check_in_metadata = null,
     } = req.body || {};
 
     // Build normalized payload
@@ -84,6 +85,7 @@ export const checkInController = async (req, res) => {
       is_within_radius: is_within_radius !== null ? is_within_radius : undefined,
       violation_distance: violation_distance !== null ? violation_distance : undefined,
       metadata: metadata || undefined,
+      check_in_metadata: check_in_metadata || undefined,
     };
 
     if (!payload.user_id) {
@@ -109,12 +111,10 @@ export const checkInController = async (req, res) => {
 };
 
 /**
- * Check-out người dùng (by attendance id or by work_id + user_id)
+ * Check-out người dùng
  */
 export const checkOutController = async (req, res) => {
   try {
-    // Accept id in body: id | attendance_id | attendanceId (for backward compatibility)
-    // Or accept work_id and user_id for new approach
     const {
       work_id,
       user_id,
@@ -126,26 +126,46 @@ export const checkOutController = async (req, res) => {
       attendance_type_id,
       address_check_out = null,
       check_out_time_on_local = null,
+      is_within_radius_check_out = null,
+      violation_distance_check_out = null,
+      metadata = null,
+      check_out_metadata = null,
     } = req.body || {};
 
-    // If work_id and user_id are provided, use them; otherwise fall back to attendance id
-    if (work_id && user_id && photo_url_check_out && latitude_check_out && longitude_check_out) {
-      const result = await checkOutService({
-        work_id,
-        user_id,
-        photo_url_check_out,
-        latitude_check_out,
-        longitude_check_out,
-        location_name_check_out,
-        distance_from_work_check_out,
-        attendance_type_id,
-        address_check_out,
-        check_out_time_on_local,
-      });
-      return res.json(result);
+    // Build normalized payload
+    const payload = {
+      work_id: work_id || null,
+      user_id: user_id || null,
+      photo_url_check_out: photo_url_check_out ? String(photo_url_check_out).trim() : null,
+      latitude_check_out: latitude_check_out || null,
+      longitude_check_out: longitude_check_out || null,
+      location_name_check_out: location_name_check_out ? String(location_name_check_out).trim() : null,
+      distance_from_work_check_out: distance_from_work_check_out || null,
+      attendance_type_id: attendance_type_id || null,
+      address_check_out: address_check_out || null,
+      check_out_time_on_local: check_out_time_on_local || null,
+      device_info: req.headers["user-agent"] || null,
+      ip_address: req.headers["x-forwarded-for"] || null,
+      is_within_radius_check_out: is_within_radius_check_out !== null ? is_within_radius_check_out : undefined,
+      violation_distance_check_out: violation_distance_check_out !== null ? violation_distance_check_out : undefined,
+      metadata: metadata || undefined,
+      check_out_metadata: check_out_metadata || undefined,
+    };
+
+    if (!payload.user_id) {
+      throw new Error("Không xác định được user_id (thiếu token hoặc user_id trong body)");
     }
 
-    throw new Error("Thiếu work_id và user_id để check-out");
+    if (payload.work_id == null) {
+      throw new Error("Thiếu work_id để check-out");
+    }
+
+    if (!payload.photo_url_check_out || !payload.latitude_check_out || !payload.longitude_check_out) {
+      throw new Error("Thiếu thông tin chấm công ra (photo_url_check_out, latitude_check_out, longitude_check_out)");
+    }
+
+    const result = await checkOutService(payload);
+    res.status(200).json(result);
   } catch (error) {
     logger.error(`[${req.id}] Error in checkOutController:` + error.message);
     res.status(200).json({ success: false, message: "Chấm công thất bại", data: null });

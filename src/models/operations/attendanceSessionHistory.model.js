@@ -1,3 +1,4 @@
+
 'use strict';
 
 /**
@@ -58,11 +59,6 @@ export default (sequelize, DataTypes) => {
       },
       notes: {
         type: DataTypes.TEXT,
-      },
-      metadata: {
-        type: DataTypes.JSONB,
-        allowNull: true,
-        defaultValue: {},
       },
       archived_at: {
         type: DataTypes.DATE,

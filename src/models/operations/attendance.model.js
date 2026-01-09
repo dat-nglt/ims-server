@@ -182,8 +182,14 @@ export default (sequelize, DataTypes) => {
       notes: {
         type: DataTypes.TEXT,
       },
-      // Metadata (JSON) - used for hub info and other metadata
-      metadata: {
+      // Check-in metadata - lưu trữ metadata riêng cho check-in
+      check_in_metadata: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+        defaultValue: {},
+      },
+      // Check-out metadata - lưu trữ metadata riêng cho check-out
+      check_out_metadata: {
         type: DataTypes.JSONB,
         allowNull: true,
         defaultValue: {},
@@ -311,7 +317,6 @@ export default (sequelize, DataTypes) => {
           const HUB_WORK_IDS = [-1, -2];
           const isHub = checkIn.work_id === null || HUB_WORK_IDS.includes(checkIn.work_id);
           const sessionWorkId = isHub ? null : checkIn.work_id;
-          const sessionMetadata = isHub ? { hub: checkIn.work_id === -1 ? "warehouse" : "office" } : {};
 
           if (checkIn.check_out_time) {
             const session = await AttendanceSession.create(
@@ -325,7 +330,6 @@ export default (sequelize, DataTypes) => {
                 status: "closed",
                 latitude: checkIn.latitude,
                 longitude: checkIn.longitude,
-                metadata: sessionMetadata,
               },
               { transaction: options.transaction }
             );
@@ -348,7 +352,6 @@ export default (sequelize, DataTypes) => {
                 status: "open",
                 latitude: checkIn.latitude,
                 longitude: checkIn.longitude,
-                metadata: sessionMetadata,
               },
               transaction: options.transaction,
             });

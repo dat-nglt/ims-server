@@ -223,6 +223,7 @@ const prepareAttendanceData = (checkInPayload, attendanceType, HUB_WORK_IDS) => 
     is_within_radius = undefined,
     violation_distance = undefined,
     metadata = undefined,
+    check_in_metadata = undefined,
   } = checkInPayload;
 
   const photoUrlNormalized = photo_url ? String(photo_url).trim() : null;
@@ -280,8 +281,8 @@ const prepareAttendanceData = (checkInPayload, attendanceType, HUB_WORK_IDS) => 
 
   const isHubCheckin = HUB_WORK_IDS.includes(wid);
   const createWorkId = isHubCheckin ? null : wid;
-  // Sử dụng metadata từ frontend nếu có, ngược lại sử dụng hub metadata
-  const attendanceMetadata = metadata !== undefined ? metadata : (isHubCheckin ? { hub: wid === -1 ? "warehouse" : "office" } : {});
+  // Sử dụng check_in_metadata từ frontend nếu có
+  const checkInMetadataValue = check_in_metadata !== undefined ? check_in_metadata : {};
 
   return {
     user_id: uid,
@@ -304,7 +305,7 @@ const prepareAttendanceData = (checkInPayload, attendanceType, HUB_WORK_IDS) => 
     technicians: techArr,
     is_valid_time_check_in: isValidTimeCheckIn,
     status: "checked_in",
-    metadata: attendanceMetadata,
+    check_in_metadata: checkInMetadataValue,
   };
 };
 
