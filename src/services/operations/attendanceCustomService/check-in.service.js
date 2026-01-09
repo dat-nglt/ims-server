@@ -220,6 +220,9 @@ const prepareAttendanceData = (checkInPayload, attendanceType, HUB_WORK_IDS) => 
     attendance_type_id = null,
     distance_from_work = null,
     technicians = [],
+    is_within_radius = undefined,
+    violation_distance = undefined,
+    metadata = undefined,
   } = checkInPayload;
 
   const photoUrlNormalized = photo_url ? String(photo_url).trim() : null;
@@ -264,20 +267,21 @@ const prepareAttendanceData = (checkInPayload, attendanceType, HUB_WORK_IDS) => 
     }
   }
 
-  // Tính toán khoảng cách vi phạm nếu có
-  let calculatedViolationDistance = null; // Khoảng cách vi phạm
-  if (distance_from_work && distance_from_work > 150) {
+  // Tính toán khoảng cách vi phạm nếu có (sử dụng giá trị từ frontend nếu có, ngược lại tính toán)
+  let calculatedViolationDistance = violation_distance !== undefined ? violation_distance : null;
+  if (calculatedViolationDistance === null && distance_from_work && distance_from_work > 150) {
     calculatedViolationDistance = distance_from_work - 150;
   }
 
-  // Xác định người dùng có chấm công trong phạm vi cho phép hay không
-  const isWithinAtCheckIn = calculatedViolationDistance == null;
+  // Xác định người dùng có chấm công trong phạm vi cho phép hay không (sử dụng giá trị từ frontend nếu có, ngược lại tính toán)
+  const isWithinAtCheckIn = is_within_radius !== undefined ? is_within_radius : (calculatedViolationDistance == null);
   // Thời gian không hợp lệ nếu chấm công sau thời gian bắt đầu ca chấm công
   let isValidTimeCheckIn = !isAfterStartTime;
 
   const isHubCheckin = HUB_WORK_IDS.includes(wid);
   const createWorkId = isHubCheckin ? null : wid;
-  const attendanceMetadata = isHubCheckin ? { hub: wid === -1 ? "warehouse" : "office" } : {};
+  // Sử dụng metadata từ frontend nếu có, ngược lại sử dụng hub metadata
+  const attendanceMetadata = metadata !== undefined ? metadata : (isHubCheckin ? { hub: wid === -1 ? "warehouse" : "office" } : {});
 
   return {
     user_id: uid,

@@ -59,6 +59,9 @@ export const checkInController = async (req, res) => {
       distance_from_work,
       technicians,
       check_in_time_on_local = null,
+      is_within_radius = null,
+      violation_distance = null,
+      metadata = null,
     } = req.body || {};
 
     // Build normalized payload
@@ -78,6 +81,9 @@ export const checkInController = async (req, res) => {
       distance_from_work: distance_from_work || null,
       technicians: Array.isArray(technicians) ? technicians : technicians ? [technicians] : [],
       check_in_time_on_local: check_in_time_on_local || null,
+      is_within_radius: is_within_radius !== null ? is_within_radius : undefined,
+      violation_distance: violation_distance !== null ? violation_distance : undefined,
+      metadata: metadata || undefined,
     };
 
     if (!payload.user_id) {
