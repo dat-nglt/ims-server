@@ -96,7 +96,7 @@ export const getPendingOvertimeRequestsController = async (req, res) => {
   try {
     const { department, startDate, endDate, limit, offset } = req.query;
 
-    const result = await overtimeRequestService.getPendingOvertimeRequestsService({
+    const result = await overtimeRequestService.getAllOvertimeRequestsService({
       department,
       startDate,
       endDate,

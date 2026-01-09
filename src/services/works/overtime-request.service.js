@@ -158,11 +158,12 @@ export const getOvertimeRequestsByUserService = async (userId, filters = {}) => 
  * @param {Object} filters - Bộ lọc (startDate, endDate, limit, offset)
  * @returns {Object} - Kết quả thực thi
  */
-export const getPendingOvertimeRequestsService = async (filters = {}) => {
+export const getAllOvertimeRequestsService = async (filters = {}) => {
   try {
     const { startDate, endDate, limit = 100, offset = 0 } = filters;
 
-    const whereCondition = { status: "pending" };
+    // Return all overtime requests; we'll order so that pending records come first
+    const whereCondition = {};
 
     if (startDate || endDate) {
       whereCondition.requested_date = {};
@@ -184,7 +185,11 @@ export const getPendingOvertimeRequestsService = async (filters = {}) => {
         },
         { model: db.Work, as: "work", attributes: ["id", "title", "location"] },
       ],
-      order: [["requested_date", "ASC"]],
+      // Put pending requests first, then sort by requested_date
+      order: [
+        [db.sequelize.literal("CASE WHEN status = 'pending' THEN 0 ELSE 1 END"), "ASC"],
+        ["requested_date", "ASC"],
+      ],
       limit: parseInt(limit),
       offset: parseInt(offset),
     });
@@ -199,7 +204,7 @@ export const getPendingOvertimeRequestsService = async (filters = {}) => {
       message: "Lấy danh sách yêu cầu tăng ca chờ duyệt thành công",
     };
   } catch (error) {
-    logger.error("Error in getPendingOvertimeRequestsService: " + error.message);
+    logger.error("Error in getAllOvertimeRequestsService: " + error.message);
     return {
       success: false,
       data: [],
