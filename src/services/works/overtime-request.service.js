@@ -186,15 +186,7 @@ export const getAllOvertimeRequestsService = async (filters = {}) => {
         { model: db.Work, as: "work", attributes: ["id", "title", "location"] },
       ],
       // Put pending requests first, then sort by requested_date
-      order: [
-        [
-          db.sequelize.literal(
-            'CASE WHEN "overtime_requests"."status" = \'pending\' THEN 0 ELSE 1 END'
-          ),
-          "ASC",
-        ],
-        ["requested_date", "ASC"],
-      ],
+      order: [["requested_date", "ASC"]],
       limit: parseInt(limit),
       offset: parseInt(offset),
     });
