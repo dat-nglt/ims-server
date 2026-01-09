@@ -15,9 +15,7 @@ export const checkInService = async (checkInPayload) => {
 
     const user = await validateUser(user_id); // kiểm tra người dùng tồn tại trong hệ thống
 
-    const HUB_WORK_IDS = [-1, -2]; // -1: warehouse, -2: office để phân biệt chấm công hub và công việc cụ thể
-
-    const workForAttendance = await validateWork(work_id, user_id, HUB_WORK_IDS);
+    const workForAttendance = await validateWork(work_id, user_id);
 
     await validateProject(project_id);
 
@@ -32,8 +30,7 @@ export const checkInService = async (checkInPayload) => {
       }
     }
 
-    // Hệ thống ghi nhận work_id là null nếu là chấm công hub
-    work_id = HUB_WORK_IDS.includes(work_id) ? null : work_id;
+    // work_id phải là công việc cụ thể (> 0)
 
     const existingSession = await checkExistingSession(user_id, attendance_type_id, work_id);
 
@@ -43,7 +40,7 @@ export const checkInService = async (checkInPayload) => {
     }
 
     // Chuẩn bị dữ liệu chấm công và tạo bản ghi chấm công
-    const attendanceData = prepareAttendanceData(checkInPayload, attendanceType, HUB_WORK_IDS);
+    const attendanceData = prepareAttendanceData(checkInPayload, attendanceType);
 
     const attendance = await createAttendanceRecord(attendanceData);
 
@@ -80,28 +77,31 @@ const validateUser = async (user_id) => {
   return user;
 };
 
-const validateWork = async (work_id, user_id, HUB_WORK_IDS) => {
-  //Trường hợp work_id không phải hub, kiểm tra công việc và phân bổ công việc
-  if (work_id && !HUB_WORK_IDS.includes(work_id)) {
-    const work = await db.Work.findByPk(work_id);
-    if (!work) throw new Error("Không tìm thấy công việc tương ứng");
-    const workAssignment = await db.WorkAssignment.findOne({ where: { work_id, technician_id: user_id } });
-    if (!workAssignment) throw new Error("Người dùng không được phân bổ cho công việc này");
-
-    // Gắn thông tin phân công vào kết quả trả về để các bước sau có thể kiểm tra allow_overtime
-    work.workAssignment = workAssignment;
-
-    // Kiểm tra ngày yêu cầu công việc có phải trong hôm nay hay không
-    if (work.required_date) {
-      const today = new Date();
-      const workRequiredDate = new Date(work.required_date);
-      if (workRequiredDate.toDateString() !== today.toDateString()) {
-        throw new Error("Công việc không được thực hiện trong ngày hôm nay");
-      }
-    }
-
-    return work;
+const validateWork = async (work_id, user_id) => {
+  // work_id phải được cung cấp và là công việc cụ thể
+  if (!work_id || work_id <= 0) {
+    throw new Error("Công việc không hợp lệ");
   }
+
+  const work = await db.Work.findByPk(work_id);
+  if (!work) throw new Error("Không tìm thấy công việc tương ứng");
+  
+  const workAssignment = await db.WorkAssignment.findOne({ where: { work_id, technician_id: user_id } });
+  if (!workAssignment) throw new Error("Người dùng không được phân bổ cho công việc này");
+
+  // Gắn thông tin phân công vào kết quả trả về để các bước sau có thể kiểm tra allow_overtime
+  work.workAssignment = workAssignment;
+
+  // Kiểm tra ngày yêu cầu công việc có phải trong hôm nay hay không
+  if (work.required_date) {
+    const today = new Date();
+    const workRequiredDate = new Date(work.required_date);
+    if (workRequiredDate.toDateString() !== today.toDateString()) {
+      throw new Error("Công việc không được thực hiện trong ngày hôm nay");
+    }
+  }
+
+  return work;
 };
 
 const validateProject = async (project_id) => {
@@ -204,10 +204,10 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
   return null;
 };
 
-const prepareAttendanceData = (checkInPayload, attendanceType, HUB_WORK_IDS) => {
+const prepareAttendanceData = (checkInPayload, attendanceType) => {
   let {
     user_id,
-    work_id = null,
+    work_id,
     project_id = null,
     latitude,
     longitude,
@@ -227,10 +227,6 @@ const prepareAttendanceData = (checkInPayload, attendanceType, HUB_WORK_IDS) => 
   } = checkInPayload;
 
   const photoUrlNormalized = photo_url ? String(photo_url).trim() : null;
-
-  if (HUB_WORK_IDS.includes(work_id) && !location_name) {
-    location_name = work_id === -1 ? "Kho Vật Tư" : "Văn phòng Proshop";
-  }
 
   // Xử lý danh sách kỹ thuật viên tham gia chấm công
   const techArr = Array.isArray(technicians)
@@ -279,14 +275,12 @@ const prepareAttendanceData = (checkInPayload, attendanceType, HUB_WORK_IDS) => 
   // Thời gian không hợp lệ nếu chấm công sau thời gian bắt đầu ca chấm công
   let isValidTimeCheckIn = !isAfterStartTime;
 
-  const isHubCheckin = HUB_WORK_IDS.includes(wid);
-  const createWorkId = isHubCheckin ? null : wid;
   // Sử dụng check_in_metadata từ frontend nếu có
   const checkInMetadataValue = check_in_metadata !== undefined ? check_in_metadata : {};
 
   return {
     user_id: uid,
-    work_id: createWorkId,
+    work_id: wid,
     project_id: pid,
     check_in_time: new Date(),
     check_in_time_on_local: checkInPayload.check_in_time_on_local || null,
@@ -319,24 +313,12 @@ const updateWorkStatus = async (wid) => {
   }
 };
 
-// Cập nhật tối ưu lại hàm tạo thông báo chấm công
+// Tạo thông báo chấm công vào công việc
 const createCheckInNotification = async (user, workId, workForAttendance) => {
   try {
-    let title = `Chấm công vào công việc`;
-    let message = `Người dùng ${user.name} đã chấm công.`;
-    let related_work_id = null;
-
-    // Nếu là công việc cụ thể (không phải hub), dùng thông tin công việc; ngược lại ghi thông báo hub
-    if (workId != null && workId !== -1 && workId !== -2 && workForAttendance) {
-      message = `Người dùng ${user.name} đã chấm công vào công việc "${workForAttendance.title}".`;
-      related_work_id = workForAttendance.id;
-    } else if (workId === -1) {
-      title = `Chấm công tại kho`;
-      message = `Người dùng ${user.name} đã chấm công tại Kho Vật Tư.`;
-    } else if (workId === -2) {
-      title = `Chấm công tại văn phòng`;
-      message = `Người dùng ${user.name} đã chấm công tại Văn phòng Proshop.`;
-    }
+    const title = `Chấm công vào công việc`;
+    const message = `Người dùng ${user.name} đã chấm công vào công việc "${workForAttendance.title}".`;
+    const related_work_id = workForAttendance.id;
 
     await createNotificationService({
       title,
@@ -352,11 +334,7 @@ const createCheckInNotification = async (user, workId, workForAttendance) => {
       },
     });
 
-    logger.info(
-      related_work_id
-        ? `Tạo thông báo hệ thống cho việc tạo chấm công vào công việc với id công việc: ${related_work_id}`
-        : `Tạo thông báo hệ thống cho việc chấm công tại hub: ${workId}`
-    );
+    logger.info(`Tạo thông báo hệ thống cho việc chấm công vào công việc với id: ${related_work_id}`);
   } catch (err) {
     logger.error("Lỗi khi tạo thông báo hệ thống cho việc tạo chấm công: " + err.message);
   }

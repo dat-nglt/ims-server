@@ -312,11 +312,8 @@ export default (sequelize, DataTypes) => {
           // If this check-in already belongs to a session, skip
           if (checkIn.attendance_session_id) return;
 
-          // If check_out_time exists we create a closed session, otherwise try to find or create an open session
-          // Helper: if work_id indicates a hub (warehouse/office), do not set FK on session.work_id
-          const HUB_WORK_IDS = [-1, -2];
-          const isHub = checkIn.work_id === null || HUB_WORK_IDS.includes(checkIn.work_id);
-          const sessionWorkId = isHub ? null : checkIn.work_id;
+          // work_id phải là công việc cụ thể (> 0), không hỗ trợ hub
+          const sessionWorkId = checkIn.work_id;
 
           if (checkIn.check_out_time) {
             const session = await AttendanceSession.create(

@@ -69,14 +69,12 @@ const validateWorkAssignment = async (payload) => {
 };
 
 const findAttendanceRecord = async (payload) => {
-  let attendance;
-
   // 1) Tìm bản ghi chấm công mở trong phiên chấm công tương ứng với work_id và attendance_type_id của người dùng
   const sessionSummary = await getAlreadyOpenSession(payload.user_id, payload.attendance_type_id, payload.work_id);
 
   // Nếu có phiên chấm công mở, tìm bản ghi chấm công mở tương ứng với công việc và loại chấm công
   if (sessionSummary?.session) {
-    attendance = await db.Attendance.findOne({
+    const attendance = await db.Attendance.findOne({
       where: {
         attendance_session_id: sessionSummary.session.id,
         user_id: payload.user_id,
@@ -88,38 +86,12 @@ const findAttendanceRecord = async (payload) => {
     });
 
     // If session exists but no open attendance found for this work/type, treat as already checked-out
-    if (!attendance) {
-      throw new Error("Công việc đã hoàn thành chấm công trước đó hoặc bản ghi chấm công không tồn tại");
+    if (attendance) {
+      return attendance;
     }
   }
 
-  if (!attendance) {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date(todayStart);
-    todayEnd.setDate(todayEnd.getDate() + 1);
-
-    const hubAttendance = await db.Attendance.findOne({
-      where: {
-        user_id: payload.user_id,
-        check_out_time: null,
-        check_in_time: { [db.Sequelize.Op.between]: [todayStart, todayEnd] },
-        [db.Sequelize.Op.or]: [
-          { work_id: { [db.Sequelize.Op.in]: [-1, -2] } },
-          db.sequelize.where(db.sequelize.json("metadata.hub"), { [db.Sequelize.Op.in]: ["warehouse", "office"] }),
-        ],
-      },
-      order: [["check_in_time", "ASC"]],
-    });
-    if (hubAttendance) {
-      attendance = hubAttendance;
-      const hubName = attendance.metadata && attendance.metadata.hub ? attendance.metadata.hub : attendance.work_id;
-    } else {
-      throw new Error("Người dùng chưa chấm công vào cho công việc này");
-    }
-  }
-
-  return attendance;
+  throw new Error("Người dùng chưa chấm công vào cho công việc này hoặc bản ghi chấm công không tồn tại");
 };
 
 const validateCheckOutConditions = (attendance, payload) => {
@@ -256,19 +228,29 @@ const createEarlyCompletionNotification = async (attendance, payload) => {
 };
 
 const updateWorkStatus = async (work_id) => {
-  if (work_id) {
+  if (work_id && work_id > 0) {
     await db.Work.update({ status: "completed" }, { where: { id: work_id } });
   }
 };
 
 const updateSession = async (payload) => {
-  // Look up hub session for the same attendance_type so we can attach the work_id when checking out
-  const hubSessionSummary = await getAlreadyOpenSession(payload.user_id, payload.attendance_type_id, null);
+  // Cập nhật phiên chấm công với thông tin checkout
+  if (payload.work_id && payload.work_id > 0) {
+    const session = await db.AttendanceSession.findOne({
+      where: {
+        user_id: payload.user_id,
+        work_id: payload.work_id,
+        attendance_type_id: payload.attendance_type_id,
+        ended_at: null,
+      },
+    });
 
-  if (hubSessionSummary?.session && hubSessionSummary.session.work_id === null && payload.work_id) {
-    await hubSessionSummary.session.update({ work_id: payload.work_id });
-    logger.info(`Attached work_id=${payload.work_id} to hub session id=${hubSessionSummary.session.id}`);
-  } else {
-    logger.info(`No hub session to attach for user=${payload.user_id} attendance_type=${payload.attendance_type_id}`);
+    if (session) {
+      await session.update({
+        ended_at: new Date(),
+        status: "closed",
+      });
+      logger.info(`Closed session id=${session.id} for user=${payload.user_id} work=${payload.work_id}`);
+    }
   }
 };
