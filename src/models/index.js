@@ -20,7 +20,7 @@ import { SalesReportDaily } from "./reports/index.js";
 import { SystemConfig, AttendanceLocation, AttendanceType } from "./system/index.js";
 import { Permission, Role, User, RolePermissions, UserRoles } from "./users/index.js";
 import { ProjectHistory, Project, ProjectTeamMember } from "./projects/index.js";
-import { Work, WorkAssignment, WorkCategory, WorkHistory, WorkReport } from "./works/index.js";
+import { Work, WorkAssignment, WorkCategory, WorkHistory, WorkReport, OvertimeRequest } from "./works/index.js";
 import { Material, MaterialUsage, WorkMaterial } from "./materials/index.js";
 import { Customer } from "./customers/index.js";
 
@@ -82,6 +82,7 @@ const models = [
   MaterialUsage,
   WorkMaterial,
   Customer,
+  OvertimeRequest,
 ];
 
 // Register models

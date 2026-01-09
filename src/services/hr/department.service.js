@@ -66,11 +66,27 @@ export const getDepartmentWithRolesByIdService = async (departmentId) => {
  * @param {Object} options - Filter options: { includeInactive: false, includeRoles: false }
  * @returns {Array} Departments with positions and optional roles
  */
-export const getAllDepartmentsService = async (options = { includeInactive: false }) => {
+export const getAllDepartmentsService = async (options = { includeInactive: false, includeRoles: false, isSelection: false }) => {
     try {
+        const { includeInactive = false, includeRoles = false, isSelection = false } = options || {};
         const where = { is_deleted: false };
-        if (!options.includeInactive) {
+        if (!includeInactive) {
             where.status = "active";
+        }
+
+        // If caller only needs selection (id + name) for dropdowns, return minimal fields
+        if (isSelection) {
+            const departments = await db.Department.findAll({
+                where,
+                attributes: ["id", "name"],
+                order: [["name", "ASC"]],
+            });
+
+            return {
+                success: true,
+                message: "Lấy danh sách phòng ban (selection) thành công",
+                data: departments,
+            };
         }
 
         const include = [
@@ -98,6 +114,11 @@ export const getAllDepartmentsService = async (options = { includeInactive: fals
                 ],
             },
         ];
+
+        // Optionally include department-level roles if requested
+        if (includeRoles) {
+            include.push({ association: "departmentRoles", required: false });
+        }
 
         const departments = await db.Department.findAll({
             where,

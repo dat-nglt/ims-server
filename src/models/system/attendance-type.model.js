@@ -4,10 +4,12 @@
  * Model AttendanceType (Loại chấm công)
  *
  * Các trường:
- * - id
-
- * - name (string)
- * - default_duration_minutes (integer, optional)
+ * - id (integer, PK)
+ * - code (string) - Mã loại chấm công
+ * - name (string) - Tên loại chấm công
+ * - start_time (time) - Giờ bắt đầu (HH:MM:SS)
+ * - end_time (time) - Giờ kết thúc (HH:MM:SS)
+ * - default_duration_minutes (integer) - Thời lượng mặc định (phút)
  * - description (text)
  * - active (boolean)
  */
@@ -105,10 +107,22 @@ export default (sequelize, DataTypes) => {
   );
 
   AttendanceType.associate = (models) => {
-    // optional: will be referenced by CheckIn
+    // Relationship with Attendance records
     AttendanceType.hasMany(models.Attendance, {
       foreignKey: "attendance_type_id",
       as: "attendance",
+    });
+
+    // Relationship with Attendance Sessions
+    AttendanceType.hasMany(models.AttendanceSession, {
+      foreignKey: "attendance_type_id",
+      as: "attendance_sessions",
+    });
+
+    // Relationship with Attendance Session History
+    AttendanceType.hasMany(models.AttendanceSessionHistory, {
+      foreignKey: "attendance_type_id",
+      as: "attendance_session_histories",
     });
   };
 

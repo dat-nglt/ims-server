@@ -1,62 +1,62 @@
-import { getOpenSessionSummaryByUser } from "../attendance.service.js";
+import { getAlreadyOpenSession } from "../attendance.service.js";
 import db from "../../../models/index.js";
 import logger from "../../../utils/logger.js";
 /**
  * Check-out người dùng (từ phiên chấm công)
- * @param {Object} criteria - { work_id, user_id, attendance_type_id, photo_url_check_out, latitude_check_out, longitude_check_out, address_check_out, distance_from_work_check_out, early_completion_notes }
+ * @param {Object} checkOutPayLoad - { work_id, user_id, attendance_type_id, photo_url_check_out, latitude_check_out, longitude_check_out, address_check_out, distance_from_work_check_out, early_completion_notes }
  */
-export const checkOutService = async (criteria) => {
+export const checkOutService = async (checkOutPayLoad) => {
   try {
-    validateInput(criteria);
+    validateInput(checkOutPayLoad);
 
-    await validateWorkAssignment(criteria);
+    await validateWorkAssignment(checkOutPayLoad);
 
-    const attendance = await findAttendanceRecord(criteria);
+    const attendance = await findAttendanceRecord(checkOutPayLoad);
 
-    validateCheckOutConditions(attendance, criteria);
+    validateCheckOutConditions(attendance, checkOutPayLoad);
 
     const checkOutTime = new Date();
-    const updateData = prepareCheckOutData(attendance, criteria, checkOutTime);
+    const updateData = prepareCheckOutData(attendance, checkOutPayLoad, checkOutTime);
 
     await updateAttendanceRecord(attendance, updateData);
 
-    await computeValidityAndEarlyCompletion(attendance, criteria, checkOutTime);
+    await computeValidityAndEarlyCompletion(attendance, checkOutPayLoad, checkOutTime);
 
-    await updateWorkStatus(criteria.work_id);
+    await updateWorkStatus(checkOutPayLoad.work_id);
 
-    await updateSession(criteria);
+    await updateSession(checkOutPayLoad);
 
-    return { success: true, data: attendance, message: "Check-out thành công" };
+    return { success: true, data: attendance, message: "Chấm công ra thành công" };
   } catch (error) {
     logger.warn("Error in checkOutService:" + error.message);
-    throw error;
+    return { success: false, message: error.message || "Chấm công ra thất bại", data: null };
   }
 };
 
 // Helper functions for checkOutService
-const validateInput = (criteria) => {
-  if (!criteria || !criteria.work_id || !criteria.user_id || !criteria.attendance_type_id) {
+const validateInput = (checkOutPayLoad) => {
+  if (!checkOutPayLoad || !checkOutPayLoad.work_id || !checkOutPayLoad.user_id || !checkOutPayLoad.attendance_type_id) {
     throw new Error("Thiếu thông tin chấm công ra (work_id, user_id, attendance_type_id)");
   }
 };
 
-const validateWorkAssignment = async (criteria) => {
-  if (criteria.work_id) {
+const validateWorkAssignment = async (checkOutPayLoad) => {
+  if (checkOutPayLoad.work_id) {
     const workAssignment = await db.WorkAssignment.findOne({
       where: {
-        work_id: criteria.work_id,
-        technician_id: criteria.user_id,
+        work_id: checkOutPayLoad.work_id,
+        technician_id: checkOutPayLoad.user_id,
         assigned_status: { [db.Sequelize.Op.in]: ["pending", "accepted", "completed"] },
       },
     });
 
     if (!workAssignment) {
-      throw new Error("Người dùng không được gán cho công việc này hoặc phân công đã bị từ chối/hủy");
+      throw new Error("Hệ thống yêu cầu chỉ chấm công ra tại địa điểm công việc được phân bổ");
     }
 
     // Kiểm tra ngày yêu cầu công việc có phải trong hôm nay hay không (chỉ cho work_id > 0)
-    if (criteria.work_id > 0) {
-      const work = await db.Work.findByPk(criteria.work_id);
+    if (checkOutPayLoad.work_id > 0) {
+      const work = await db.Work.findByPk(checkOutPayLoad.work_id);
       if (work && work.required_date) {
         const today = new Date();
         const workRequiredDate = new Date(work.required_date);
@@ -68,25 +68,36 @@ const validateWorkAssignment = async (criteria) => {
   }
 };
 
-const findAttendanceRecord = async (criteria) => {
+const findAttendanceRecord = async (checkOutPayLoad) => {
   let attendance;
 
-  // 1) Thử lấy phiên đang mở hôm nay cho người dùng & công việc
-  const sessionSummary = await getOpenSessionSummaryByUser(criteria.user_id, criteria.work_id);
+  // 1) Tìm bản ghi chấm công mở trong phiên chấm công tương ứng với work_id và attendance_type_id của người dùng
+  const sessionSummary = await getAlreadyOpenSession(
+    checkOutPayLoad.user_id,
+    checkOutPayLoad.attendance_type_id,
+    checkOutPayLoad.work_id
+  );
+
+  // Nếu có phiên chấm công mở, tìm bản ghi chấm công mở tương ứng với công việc và loại chấm công
   if (sessionSummary?.session) {
     attendance = await db.Attendance.findOne({
       where: {
         attendance_session_id: sessionSummary.session.id,
-        user_id: criteria.user_id,
-        work_id: criteria.work_id,
-        attendance_type_id: criteria.attendance_type_id,
+        user_id: checkOutPayLoad.user_id,
+        work_id: checkOutPayLoad.work_id,
+        attendance_type_id: checkOutPayLoad.attendance_type_id,
+        check_out_time: null,
       },
       order: [["check_in_time", "DESC"]],
     });
+
+    // If session exists but no open attendance found for this work/type, treat as already checked-out
+    if (!attendance) {
+      throw new Error("Công việc đã hoàn thành chấm công trước đó hoặc bản ghi chấm công không tồn tại");
+    }
   }
 
   if (!attendance) {
-    // Fallback: match checkout with the earliest hub check-in that is still open
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const todayEnd = new Date(todayStart);
@@ -94,7 +105,7 @@ const findAttendanceRecord = async (criteria) => {
 
     const hubAttendance = await db.Attendance.findOne({
       where: {
-        user_id: criteria.user_id,
+        user_id: checkOutPayLoad.user_id,
         check_out_time: null,
         check_in_time: { [db.Sequelize.Op.between]: [todayStart, todayEnd] },
         [db.Sequelize.Op.or]: [
@@ -104,37 +115,41 @@ const findAttendanceRecord = async (criteria) => {
       },
       order: [["check_in_time", "ASC"]],
     });
-
     if (hubAttendance) {
       attendance = hubAttendance;
       const hubName = attendance.metadata && attendance.metadata.hub ? attendance.metadata.hub : attendance.work_id;
-      logger.info(
-        `checkOutService: matched hub check-in id=${attendance.id} hub=${hubName} to checkout for work_id=${criteria.work_id}`
-      );
     } else {
-      throw new Error("Người dùng chưa chấm công vào hoặc bản ghi chấm công không tồn tại");
+      throw new Error("Người dùng chưa chấm công vào cho công việc này");
     }
   }
 
   return attendance;
 };
 
-const validateCheckOutConditions = (attendance, criteria) => {
+const validateCheckOutConditions = (attendance, checkOutPayLoad) => {
   if (attendance.check_out_time) {
-    throw new Error("Người dùng đã thực hiện check-out trước đó");
+    throw new Error("Người dùng đã thực hiện chấm công ra trước đó");
   }
 
-  if (!criteria.latitude_check_out || !criteria.longitude_check_out) {
+  if (!checkOutPayLoad.latitude_check_out || !checkOutPayLoad.longitude_check_out) {
     throw new Error("Thiếu tọa độ chấm công ra");
   }
 };
 
-const prepareCheckOutData = (attendance, criteria, checkOutTime) => {
-  const photoUrlCheckOut = criteria.photo_url_check_out ? String(criteria.photo_url_check_out).trim() : null;
-  const latCheckOut = criteria.latitude_check_out || null;
-  const lngCheckOut = criteria.longitude_check_out || null;
-  const addressCheckOut = criteria.address_check_out || null;
-  const distanceFromWorkCheckOut = criteria.distance_from_work_check_out || null;
+const prepareCheckOutData = (attendance, checkOutPayLoad, checkOutTime) => {
+  const photoUrlCheckOut = checkOutPayLoad.photo_url_check_out
+    ? String(checkOutPayLoad.photo_url_check_out).trim()
+    : null;
+  const latCheckOut = checkOutPayLoad.latitude_check_out || null;
+  const lngCheckOut = checkOutPayLoad.longitude_check_out || null;
+  const locationNameCheckOut = checkOutPayLoad.location_name_check_out
+    ? String(checkOutPayLoad.location_name_check_out).trim()
+    : null;
+  const checkOutTimeOnLocal = checkOutPayLoad.check_out_time_on_local
+    ? new Date(checkOutPayLoad.check_out_time_on_local)
+    : null;
+  const addressCheckOut = checkOutPayLoad.address_check_out || null;
+  const distanceFromWorkCheckOut = checkOutPayLoad.distance_from_work_check_out || null;
   const durationMinutes = Math.round((checkOutTime - attendance.check_in_time) / 60000);
 
   let calculatedViolationDistanceCheckOut = null;
@@ -145,13 +160,15 @@ const prepareCheckOutData = (attendance, criteria, checkOutTime) => {
   const isWithinAtCheckOut = distanceFromWorkCheckOut != null ? (distanceFromWorkCheckOut <= 150 ? true : false) : null;
 
   return {
-    work_id: criteria.work_id,
+    work_id: checkOutPayLoad.work_id,
     check_out_time: checkOutTime,
+    check_out_time_on_local: checkOutTimeOnLocal,
     duration_minutes: durationMinutes,
     photo_url_check_out: photoUrlCheckOut,
     address_check_out: addressCheckOut,
     latitude_check_out: latCheckOut ? parseFloat(latCheckOut) : null,
     longitude_check_out: lngCheckOut ? parseFloat(lngCheckOut) : null,
+    location_name_check_out: locationNameCheckOut,
     distance_from_work_check_out: distanceFromWorkCheckOut,
     is_within_radius_check_out: isWithinAtCheckOut,
     violation_distance_check_out: calculatedViolationDistanceCheckOut,
@@ -163,7 +180,7 @@ const updateAttendanceRecord = async (attendance, updateData) => {
   await attendance.update(updateData);
 };
 
-const computeValidityAndEarlyCompletion = async (attendance, criteria, checkOutTime) => {
+const computeValidityAndEarlyCompletion = async (attendance, checkOutPayLoad, checkOutTime) => {
   try {
     const fullAttendance = await db.Attendance.findByPk(attendance.id, {
       include: [
@@ -196,16 +213,16 @@ const computeValidityAndEarlyCompletion = async (attendance, criteria, checkOutT
     if (isEarlyCompletion) {
       const otherAssignmentCount = await db.WorkAssignment.count({
         where: {
-          technician_id: criteria.user_id,
+          technician_id: checkOutPayLoad.user_id,
           assigned_status: { [db.Sequelize.Op.in]: ["pending", "accepted"] },
-          work_id: { [db.Sequelize.Op.ne]: criteria.work_id },
+          work_id: { [db.Sequelize.Op.ne]: checkOutPayLoad.work_id },
         },
       });
 
       if (otherAssignmentCount === 0) {
         updateData.early_completion_flag = true;
         updateData.early_completion_time = checkOutTime;
-        updateData.early_completion_notes = criteria.early_completion_notes || "Hoàn thành sớm";
+        updateData.early_completion_notes = checkOutPayLoad.early_completion_notes || "Hoàn thành sớm";
         updateData.early_completion_reviewed = null;
         updateData.is_valid_time_check_out = false;
       } else {
@@ -216,17 +233,17 @@ const computeValidityAndEarlyCompletion = async (attendance, criteria, checkOutT
     await attendance.update(updateData);
 
     if (updateData.early_completion_flag) {
-      await createEarlyCompletionNotification(attendance, criteria);
+      await createEarlyCompletionNotification(attendance, checkOutPayLoad);
     }
   } catch (err) {
     logger.warn("Failed to compute attendance validity: " + err.message);
   }
 };
 
-const createEarlyCompletionNotification = async (attendance, criteria) => {
+const createEarlyCompletionNotification = async (attendance, checkOutPayLoad) => {
   try {
-    const user = await db.User.findByPk(criteria.user_id);
-    const work = await db.Work.findByPk(criteria.work_id);
+    const user = await db.User.findByPk(checkOutPayLoad.user_id);
+    const work = await db.Work.findByPk(checkOutPayLoad.work_id);
 
     if (work && user) {
       await db.Notification.create({
@@ -250,9 +267,20 @@ const updateWorkStatus = async (work_id) => {
   }
 };
 
-const updateSession = async (criteria) => {
-  const hubSessionSummary = await getOpenSessionSummaryByUser(criteria.user_id, null);
-  if (hubSessionSummary?.session && hubSessionSummary.session.work_id === null && criteria.work_id) {
-    await hubSessionSummary.session.update({ work_id: criteria.work_id });
+const updateSession = async (checkOutPayLoad) => {
+  // Look up hub session for the same attendance_type so we can attach the work_id when checking out
+  const hubSessionSummary = await getAlreadyOpenSession(
+    checkOutPayLoad.user_id,
+    checkOutPayLoad.attendance_type_id,
+    null
+  );
+
+  if (hubSessionSummary?.session && hubSessionSummary.session.work_id === null && checkOutPayLoad.work_id) {
+    await hubSessionSummary.session.update({ work_id: checkOutPayLoad.work_id });
+    logger.info(`Attached work_id=${checkOutPayLoad.work_id} to hub session id=${hubSessionSummary.session.id}`);
+  } else {
+    logger.info(
+      `No hub session to attach for user=${checkOutPayLoad.user_id} attendance_type=${checkOutPayLoad.attendance_type_id}`
+    );
   }
 };

@@ -70,6 +70,16 @@ export default (sequelize, DataTypes) => {
       check_out_time: {
         type: DataTypes.DATE,
       },
+      // Thời gian check-in theo múi giờ địa phương (không chuyển đổi UTC)
+      check_in_time_on_local: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      // Thời gian check-out theo múi giờ địa phương (không chuyển đổi UTC)
+      check_out_time_on_local: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
       // Vĩ độ check-in với validation (-90 to 90)
       latitude: {
         type: DataTypes.DECIMAL(10, 8),
@@ -109,6 +119,9 @@ export default (sequelize, DataTypes) => {
       },
       // Tên địa điểm
       location_name: {
+        type: DataTypes.STRING(255),
+      },
+      location_name_check_out: {
         type: DataTypes.STRING(255),
       },
       // Địa chỉ đầy đủ
@@ -296,7 +309,7 @@ export default (sequelize, DataTypes) => {
           // If check_out_time exists we create a closed session, otherwise try to find or create an open session
           // Helper: if work_id indicates a hub (warehouse/office), do not set FK on session.work_id
           const HUB_WORK_IDS = [-1, -2];
-          const isHub = HUB_WORK_IDS.includes(checkIn.work_id);
+          const isHub = checkIn.work_id === null || HUB_WORK_IDS.includes(checkIn.work_id);
           const sessionWorkId = isHub ? null : checkIn.work_id;
           const sessionMetadata = isHub ? { hub: checkIn.work_id === -1 ? "warehouse" : "office" } : {};
 
@@ -306,9 +319,12 @@ export default (sequelize, DataTypes) => {
                 user_id: checkIn.user_id,
                 work_id: sessionWorkId,
                 project_id: checkIn.project_id,
+                attendance_type_id: checkIn.attendance_type_id,
                 started_at: checkIn.check_in_time || null,
                 ended_at: checkIn.check_out_time,
                 status: "closed",
+                latitude: checkIn.latitude,
+                longitude: checkIn.longitude,
                 metadata: sessionMetadata,
               },
               { transaction: options.transaction }
@@ -319,6 +335,7 @@ export default (sequelize, DataTypes) => {
             const [session] = await AttendanceSession.findOrCreate({
               where: {
                 user_id: checkIn.user_id,
+                attendance_type_id: checkIn.attendance_type_id,
                 work_id: sessionWorkId,
                 ended_at: null,
               },
@@ -326,8 +343,11 @@ export default (sequelize, DataTypes) => {
                 user_id: checkIn.user_id,
                 work_id: sessionWorkId,
                 project_id: checkIn.project_id,
+                attendance_type_id: checkIn.attendance_type_id,
                 started_at: checkIn.check_in_time || new Date(),
                 status: "open",
+                latitude: checkIn.latitude,
+                longitude: checkIn.longitude,
                 metadata: sessionMetadata,
               },
               transaction: options.transaction,
@@ -356,7 +376,12 @@ export default (sequelize, DataTypes) => {
             // If this record includes a check_out, close the session and set check_out_id
             if (checkIn.check_out_time) {
               await session.update(
-                { ended_at: checkIn.check_out_time, status: "closed", check_out_id: checkIn.id },
+                {
+                  ended_at: checkIn.check_out_time,
+                  status: "closed",
+                  check_out_id: checkIn.id,
+                  attendance_type_id: checkIn.attendance_type_id,
+                },
                 { transaction: options.transaction }
               );
             }
@@ -376,7 +401,14 @@ export default (sequelize, DataTypes) => {
             // If attendance_session_id exists, update it
             if (checkIn.attendance_session_id && checkIn.check_out_time) {
               await AttendanceSession.update(
-                { ended_at: checkIn.check_out_time, status: "closed", check_out_id: checkIn.id },
+                {
+                  ended_at: checkIn.check_out_time,
+                  status: "closed",
+                  check_out_id: checkIn.id,
+                  attendance_type_id: checkIn.attendance_type_id,
+                  latitude: checkIn.latitude,
+                  longitude: checkIn.longitude,
+                },
                 { where: { id: checkIn.attendance_session_id }, transaction: options.transaction }
               );
               return;
@@ -390,7 +422,14 @@ export default (sequelize, DataTypes) => {
               });
               if (session) {
                 await session.update(
-                  { ended_at: checkIn.check_out_time, status: "closed", check_out_id: checkIn.id },
+                  {
+                    ended_at: checkIn.check_out_time,
+                    status: "closed",
+                    check_out_id: checkIn.id,
+                    attendance_type_id: checkIn.attendance_type_id,
+                    latitude: checkIn.latitude,
+                    longitude: checkIn.longitude,
+                  },
                   { transaction: options.transaction }
                 );
                 // also link the check-in to the session if not already linked

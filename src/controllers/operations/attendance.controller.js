@@ -46,19 +46,19 @@ export const getAttendanceByIdController = async (req, res) => {
 export const checkInController = async (req, res) => {
   try {
     const {
-      user_id, // ok
-      work_id, // ok
-      project_id = null, // ok
-      latitude, // ok
-      longitude, // ok
-      location_name, // ok
-      address, // ok
-      attendance_type_id, // Support từ client
-      photo_url, // ok
-      photo_public_id, // không gửi lên
+      user_id,
+      work_id,
+      project_id = null,
+      latitude,
+      longitude,
+      location_name,
+      address,
+      attendance_type_id,
+      photo_url,
       notes,
       distance_from_work,
       technicians,
+      check_in_time_on_local = null,
     } = req.body || {};
 
     // Build normalized payload
@@ -71,13 +71,13 @@ export const checkInController = async (req, res) => {
       location_name: location_name || null,
       address: address || null,
       photo_url: photo_url || null,
-      photo_public_id: photo_public_id || null,
       notes: notes || null,
       device_info: req.headers["user-agent"] || null, // Lấy thông tin thiết bị từ header
       ip_address: req.headers["x-forwarded-for"] || null, // Lấy IP từ header (nếu có)
       attendance_type_id: attendance_type_id || null,
       distance_from_work: distance_from_work || null,
       technicians: Array.isArray(technicians) ? technicians : technicians ? [technicians] : [],
+      check_in_time_on_local: check_in_time_on_local || null,
     };
 
     if (!payload.user_id) {
@@ -98,7 +98,7 @@ export const checkInController = async (req, res) => {
     res.status(201).json(result);
   } catch (error) {
     logger.error(`[${req.id}] Error in attendanceController:` + error.message);
-    res.status(200).json({ success: false, message: error.message });
+    res.status(200).json({ success: false, message: "Chấm công thất bại", data: null });
   }
 };
 
@@ -115,9 +115,11 @@ export const checkOutController = async (req, res) => {
       photo_url_check_out = null,
       latitude_check_out = null,
       longitude_check_out = null,
+      location_name_check_out = null,
       distance_from_work_check_out = null,
       attendance_type_id,
       address_check_out = null,
+      check_out_time_on_local = null,
     } = req.body || {};
 
     // If work_id and user_id are provided, use them; otherwise fall back to attendance id
@@ -128,9 +130,11 @@ export const checkOutController = async (req, res) => {
         photo_url_check_out,
         latitude_check_out,
         longitude_check_out,
+        location_name_check_out,
         distance_from_work_check_out,
         attendance_type_id,
         address_check_out,
+        check_out_time_on_local,
       });
       return res.json(result);
     }
@@ -138,7 +142,7 @@ export const checkOutController = async (req, res) => {
     throw new Error("Thiếu work_id và user_id để check-out");
   } catch (error) {
     logger.error(`[${req.id}] Error in checkOutController:` + error.message);
-    res.status(200).json({ success: false, message: error.message });
+    res.status(200).json({ success: false, message: "Chấm công thất bại", data: null });
   }
 };
 
@@ -149,6 +153,18 @@ export const getAttendanceHistoryByUserIdController = async (req, res) => {
   try {
     const { userId } = req.params;
     const result = await attendanceService.getAttendanceHistoryByUserIdService(userId);
+
+    res.json(result);
+  } catch (error) {
+    logger.error(`[${req.id}] Error in getAttendanceHistoryByUserIdController:`, error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getCurrentDayAttendanceHistoryByUserIdController = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await attendanceService.getAttendanceHistoryByUserIdService(userId, "today");
 
     res.json({
       status: "success",
@@ -161,18 +177,40 @@ export const getAttendanceHistoryByUserIdController = async (req, res) => {
   }
 };
 
-export const getTodayAttendanceHistoryByUserIdController = async (req, res) => {
+export const getCurrentMonthAttendanceHistoryByUserIdController = async (req, res) => {
   try {
     const { userId } = req.params;
-    const result = await attendanceService.getTodayAttendanceHistoryByUserIdService(userId);
+    const result = await attendanceService.getAttendanceHistoryByUserIdService(userId, "month");
+
+    res.json(result);
+  } catch (error) {
+    logger.error(`[${req.id}] Error in getAttendanceHistoryByUserIdController:`, error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Lấy thời điểm chấm công sớm nhất - trễ nhất trong ngày cho 1 user
+export const getDailyCheckInRangeByUserController = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { attendance_type_id, date } = req.query;
+    const parsedTypeId = attendance_type_id != null ? parseInt(attendance_type_id, 10) : null;
+    const parsedDate = date ? new Date(date) : new Date();
+
+    const result = await attendanceService.getDailyCheckInRangeByUser(
+      parseInt(userId, 10),
+      parsedTypeId,
+      parsedDate,
+      "month"
+    );
 
     res.json({
       status: "success",
       data: result.data,
-      message: "Lấy lịch sử attendance thành công",
+      message: "Lấy thời điểm chấm công sớm nhất và trễ nhất thành công",
     });
   } catch (error) {
-    logger.error(`[${req.id}] Error in getAttendanceHistoryByUserIdController:`, error.message);
+    logger.error(`[${req.id}] Error in getDailyCheckInRangeByUserController:`, error.message);
     res.status(500).json({ error: error.message });
   }
 };
@@ -541,5 +579,39 @@ export const deleteAttendanceTypeController = async (req, res) => {
   } catch (error) {
     logger.error(`[${req.id}] Error in deleteAttendanceTypeController:`, error.message);
     res.status(400).json({ error: error.message });
+  }
+};
+// ==================== ALL USERS ATTENDANCE RANGE CONTROLLER ====================
+
+/**
+ * Lấy thời điểm chấm công sớm nhất và trễ nhất của TẤT CẢ người dùng trong tháng hiện tại
+ */
+export const getAllUsersAttendanceRangeController = async (req, res) => {
+  try {
+    const { start_date, end_date, attendance_type_id, department_id } = req.query;
+
+    // Parse dates
+    const parseDate = (dateStr) => {
+      if (!dateStr) return null;
+      const parsed = new Date(dateStr);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    const startDate = parseDate(start_date);
+    const endDate = parseDate(end_date);
+    const parsedTypeId = attendance_type_id ? parseInt(attendance_type_id, 10) : null;
+    const parsedDeptId = department_id ? parseInt(department_id, 10) : null;
+
+    const result = await attendanceService.getAllUsersAttendanceRangeService(
+      startDate,
+      endDate,
+      parsedTypeId,
+      parsedDeptId
+    );
+
+    res.json(result);
+  } catch (error) {
+    logger.error(`[${req.id}] Error in getAllUsersAttendanceRangeController:`, error.message);
+    res.status(500).json({ error: error.message });
   }
 };
