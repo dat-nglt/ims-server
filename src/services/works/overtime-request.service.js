@@ -187,7 +187,12 @@ export const getAllOvertimeRequestsService = async (filters = {}) => {
       ],
       // Put pending requests first, then sort by requested_date
       order: [
-        [db.sequelize.literal("CASE WHEN status = 'pending' THEN 0 ELSE 1 END"), "ASC"],
+        [
+          db.sequelize.literal(
+            'CASE WHEN "overtime_requests"."status" = \'pending\' THEN 0 ELSE 1 END'
+          ),
+          "ASC",
+        ],
         ["requested_date", "ASC"],
       ],
       limit: parseInt(limit),
@@ -201,7 +206,7 @@ export const getAllOvertimeRequestsService = async (filters = {}) => {
       success: true,
       data: processedRows,
       total: count,
-      message: "Lấy danh sách yêu cầu tăng ca chờ duyệt thành công",
+      message: "Lấy danh sách yêu cầu tăng ca thành công",
     };
   } catch (error) {
     logger.error("Error in getAllOvertimeRequestsService: " + error.message);
