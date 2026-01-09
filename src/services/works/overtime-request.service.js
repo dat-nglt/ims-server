@@ -33,7 +33,7 @@ export const createOvertimeRequestService = async (data) => {
     }
 
     // Check if user exists
-    const user = await db.User.findOne({ where: { zalo_id: user_id } });
+    const user = await db.User.findByPk(user_id);
     if (!user) {
       return {
         success: false,
@@ -263,35 +263,23 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
 
     // Cập nhật trạng thái chấp nhận tăng ca cho các kỹ thuật viên liên quan trong WorkAssignment
     if (overtimeRequest.work_id) {
-      const technicianZaloIds = Array.isArray(overtimeRequest.technician_ids) ? overtimeRequest.technician_ids : [];
+      const technicianIds = Array.isArray(overtimeRequest.technician_ids) ? overtimeRequest.technician_ids : [];
 
-      if (technicianZaloIds.length > 0) {
-        // Tìm các user.id tương ứng với zalo_id
-        const technicians = await db.User.findAll({
-          where: {
-            zalo_id: { [Op.in]: technicianZaloIds },
-          },
-          attributes: ["id"],
-        });
+      if (technicianIds.length > 0) {
+        // Update WorkAssignment records to allow overtime
+        await db.WorkAssignment.update(
+          { allow_overtime: true },
+          {
+            where: {
+              work_id: overtimeRequest.work_id,
+              technician_id: { [Op.in]: technicianIds },
+            },
+          }
+        );
 
-        const technicianIds = technicians.map((tech) => tech.id);
-
-        if (technicianIds.length > 0) {
-          // Update WorkAssignment records to allow overtime
-          await db.WorkAssignment.update(
-            { allow_overtime: true },
-            {
-              where: {
-                work_id: overtimeRequest.work_id,
-                technician_id: { [Op.in]: technicianIds },
-              },
-            }
-          );
-
-          logger.info(
-            `Updated allow_overtime for work ${overtimeRequest.work_id} with technicians: ${technicianIds.join(", ")}`
-          );
-        }
+        logger.info(
+          `Updated allow_overtime for work ${overtimeRequest.work_id} with technicians: ${technicianIds.join(", ")}`
+        );
       }
     }
 
