@@ -92,6 +92,7 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: false,
       },
+      // Thời gian tạo bản ghi
       created_at: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,

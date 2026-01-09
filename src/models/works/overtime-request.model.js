@@ -81,11 +81,6 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
-      technician_ids: {
-        type: DataTypes.ARRAY(DataTypes.INTEGER),
-        allowNull: true,
-        comment: "Danh sách ID của các kỹ thuật viên liên quan đến yêu cầu tăng ca",
-      },
       created_at: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
@@ -112,6 +107,10 @@ export default (sequelize, DataTypes) => {
     OvertimeRequest.belongsTo(models.User, { foreignKey: "user_id", as: "user" });
     OvertimeRequest.belongsTo(models.User, { foreignKey: "approver_id", as: "approver" });
     OvertimeRequest.belongsTo(models.Work, { foreignKey: "work_id", as: "work" });
+    OvertimeRequest.hasMany(models.OvertimeRequestTechnician, {
+      foreignKey: "overtime_request_id",
+      as: "requestTechnicians",
+    });
   };
 
   return OvertimeRequest;

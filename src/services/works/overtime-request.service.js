@@ -65,34 +65,36 @@ export const createOvertimeRequestService = async (data) => {
       duration_minutes,
       reason,
       overtime_type,
-      technician_ids,
       status: "pending",
     });
+
+    // Create overtime request technician records
+    if (Array.isArray(technician_ids) && technician_ids.length > 0) {
+      const technicianRecords = technician_ids.map((tech_id) => ({
+        overtime_request_id: overtimeRequest.id,
+        technician_id: tech_id,
+        status: "pending",
+      }));
+      await db.OvertimeRequestTechnician.bulkCreate(technicianRecords);
+    }
 
     // Fetch with relations
     const result = await db.OvertimeRequest.findByPk(overtimeRequest.id, {
       include: [
         { model: db.User, as: "user", attributes: ["id", "name", "email", "phone"] },
         { model: db.Work, as: "work", attributes: ["id", "title", "location"] },
+        {
+          model: db.OvertimeRequestTechnician,
+          as: "requestTechnicians",
+          include: [{ model: db.User, as: "technician", attributes: ["id", "name", "email", "phone"] }],
+        },
       ],
     });
 
-    // Attach technician details
     const resultJson = result.toJSON();
-    if (Array.isArray(resultJson.technician_ids) && resultJson.technician_ids.length > 0) {
-      const technicians = await db.User.findAll({
-        where: { id: { [Op.in]: resultJson.technician_ids } },
-        attributes: ["id", "name", "email", "phone"],
-        raw: true,
-      });
-      const techById = Object.fromEntries(technicians.map((t) => [t.id, t]));
-      resultJson.technicians = resultJson.technician_ids.map((id) => techById[id]).filter(Boolean);
-    } else {
-      resultJson.technicians = [];
-    }
 
     logger.info(
-      `Overtime request created: ${resultJson.id} by user ${user_id} for technicians: ${resultJson.technician_ids?.join(", ")}`
+      `Overtime request created: ${resultJson.id} by user ${user_id} for technicians: ${technician_ids.join(", ")}`
     );
 
     return {
@@ -142,6 +144,11 @@ export const getOvertimeRequestsByUserService = async (userId, filters = {}) => 
       include: [
         { model: db.Work, as: "work", attributes: ["id", "title", "location"] },
         { model: db.User, as: "approver", attributes: ["id", "name"] },
+        {
+          model: db.OvertimeRequestTechnician,
+          as: "requestTechnicians",
+          include: [{ model: db.User, as: "technician", attributes: ["id", "name", "email", "phone"] }],
+        },
       ],
       order: [["requested_date", "DESC"]],
       limit: parseInt(limit),
@@ -150,22 +157,6 @@ export const getOvertimeRequestsByUserService = async (userId, filters = {}) => 
 
     // Convert to JSON format
     const processedRows = rows.map((row) => row.toJSON());
-
-    // Populate technician details for each request
-    const allTechnicianIds = processedRows.flatMap((r) => r.technician_ids || []);
-    const uniqueTechnicianIds = [...new Set(allTechnicianIds)].filter(Boolean);
-    let techById = {};
-    if (uniqueTechnicianIds.length > 0) {
-      const technicians = await db.User.findAll({
-        where: { id: { [Op.in]: uniqueTechnicianIds } },
-        attributes: ["id", "name", "email", "phone"],
-        raw: true,
-      });
-      techById = Object.fromEntries(technicians.map((t) => [t.id, t]));
-    }
-    processedRows.forEach((r) => {
-      r.technicians = (r.technician_ids || []).map((id) => techById[id]).filter(Boolean);
-    });
 
     return {
       success: true,
@@ -214,6 +205,11 @@ export const getAllOvertimeRequestsService = async (filters = {}) => {
           attributes: ["id", "name", "email", "phone"],
         },
         { model: db.Work, as: "work", attributes: ["id", "title", "location"] },
+        {
+          model: db.OvertimeRequestTechnician,
+          as: "requestTechnicians",
+          include: [{ model: db.User, as: "technician", attributes: ["id", "name", "email", "phone"] }],
+        },
       ],
       // Put pending requests first (use Sequelize model alias), then sort by requested_date
       order: [
@@ -226,22 +222,6 @@ export const getAllOvertimeRequestsService = async (filters = {}) => {
 
     // Convert to JSON format
     const processedRows = rows.map((row) => row.toJSON());
-
-    // Populate technician details for each request
-    const allTechnicianIds = processedRows.flatMap((r) => r.technician_ids || []);
-    const uniqueTechnicianIds = [...new Set(allTechnicianIds)].filter(Boolean);
-    let techById = {};
-    if (uniqueTechnicianIds.length > 0) {
-      const technicians = await db.User.findAll({
-        where: { id: { [Op.in]: uniqueTechnicianIds } },
-        attributes: ["id", "name", "email", "phone"],
-        raw: true,
-      });
-      techById = Object.fromEntries(technicians.map((t) => [t.id, t]));
-    }
-    processedRows.forEach((r) => {
-      r.technicians = (r.technician_ids || []).map((id) => techById[id]).filter(Boolean);
-    });
 
     return {
       success: true,
@@ -299,62 +279,48 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
       };
     }
 
-    // Update overtime request
+    // Update overtime request status to approved
     const updatedRequest = await overtimeRequest.update({
       status: "approved",
       approver_id: approverId,
       approved_at: new Date(),
-      is_paid,
-      notes,
     });
 
-    console.log("Updated Overtime Request:", updatedRequest.toJSON());
-
-    console.log("Associated Work ID:", overtimeRequest.work_id);
-
-    // Cập nhật trạng thái chấp nhận tăng ca cho các kỹ thuật viên liên quan trong WorkAssignment
-    if (overtimeRequest.work_id) {
-      const technicianIds = Array.isArray(overtimeRequest.technician_ids) ? overtimeRequest.technician_ids : [];
-
-      if (technicianIds.length > 0) {
-        // Update WorkAssignment records to allow overtime
-        await db.WorkAssignment.update(
-          { allow_overtime: true },
-          {
-            where: {
-              work_id: overtimeRequest.work_id,
-              technician_id: { [Op.in]: technicianIds },
-            },
-          }
-        );
-
-        logger.info(
-          `Updated allow_overtime for work ${overtimeRequest.work_id} with technicians: ${technicianIds.join(", ")}`
-        );
+    // Update all pending technician records to approved with approver info
+    await db.OvertimeRequestTechnician.update(
+      {
+        status: "approved",
+        approver_id: approverId,
+        approved_at: new Date(),
+        is_paid,
+        notes,
+      },
+      {
+        where: {
+          overtime_request_id: requestId,
+          status: "pending",
+        },
       }
-    }
+    );
+
+    logger.info(
+      `Updated allow_overtime for work ${overtimeRequest.work_id} - technicians approved for OT request ${requestId}`
+    );
 
     // Fetch with relations
     const result = await db.OvertimeRequest.findByPk(updatedRequest.id, {
       include: [
         { model: db.User, as: "user", attributes: ["id", "name", "email"] },
         { model: db.User, as: "approver", attributes: ["id", "name"] },
+        {
+          model: db.OvertimeRequestTechnician,
+          as: "requestTechnicians",
+          include: [{ model: db.User, as: "technician", attributes: ["id", "name", "email", "phone"] }],
+        },
       ],
     });
 
-    // Convert to JSON format and attach technicians
     const data = result.toJSON();
-    if (Array.isArray(data.technician_ids) && data.technician_ids.length > 0) {
-      const technicians = await db.User.findAll({
-        where: { id: { [Op.in]: data.technician_ids } },
-        attributes: ["id", "name", "email", "phone"],
-        raw: true,
-      });
-      const techById = Object.fromEntries(technicians.map((t) => [t.id, t]));
-      data.technicians = data.technician_ids.map((id) => techById[id]).filter(Boolean);
-    } else {
-      data.technicians = [];
-    }
 
     logger.info(`Overtime request ${requestId} approved by user ${approverId}`);
 
@@ -419,27 +385,36 @@ export const rejectOvertimeRequestService = async (requestId, approverId, reject
       notes: rejectReason,
     });
 
+    // Update all pending technician records to rejected
+    await db.OvertimeRequestTechnician.update(
+      {
+        status: "rejected",
+        approver_id: approverId,
+        approved_at: new Date(),
+        notes: rejectReason,
+      },
+      {
+        where: {
+          overtime_request_id: requestId,
+          status: "pending",
+        },
+      }
+    );
+
     // Fetch with relations
     const result = await db.OvertimeRequest.findByPk(updatedRequest.id, {
       include: [
         { model: db.User, as: "user", attributes: ["id", "name", "email"] },
         { model: db.User, as: "approver", attributes: ["id", "name"] },
+        {
+          model: db.OvertimeRequestTechnician,
+          as: "requestTechnicians",
+          include: [{ model: db.User, as: "technician", attributes: ["id", "name", "email", "phone"] }],
+        },
       ],
     });
 
-    // Convert to JSON format and attach technicians
     const data = result.toJSON();
-    if (Array.isArray(data.technician_ids) && data.technician_ids.length > 0) {
-      const technicians = await db.User.findAll({
-        where: { id: { [Op.in]: data.technician_ids } },
-        attributes: ["id", "name", "email", "phone"],
-        raw: true,
-      });
-      const techById = Object.fromEntries(technicians.map((t) => [t.id, t]));
-      data.technicians = data.technician_ids.map((id) => techById[id]).filter(Boolean);
-    } else {
-      data.technicians = [];
-    }
 
     logger.info(`Overtime request ${requestId} rejected by user ${approverId}`);
 

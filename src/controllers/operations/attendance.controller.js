@@ -89,11 +89,11 @@ export const checkInController = async (req, res) => {
     };
 
     if (!payload.user_id) {
-      throw new Error("Không xác định được user_id (thiếu token hoặc user_id trong body)");
+      throw new Error("Không xác định được thông tin người dùng");
     }
 
     if (payload.latitude == null || payload.longitude == null) {
-      throw new Error("Thiếu tọa độ: latitude và longitude là bắt buộc");
+      throw new Error("Không xác định được toạ độ người dùng");
     }
 
     const result = await checkInService(payload);
