@@ -77,13 +77,27 @@ export const createOvertimeRequestService = async (data) => {
       ],
     });
 
+    // Attach technician details
+    const resultJson = result.toJSON();
+    if (Array.isArray(resultJson.technician_ids) && resultJson.technician_ids.length > 0) {
+      const technicians = await db.User.findAll({
+        where: { id: { [Op.in]: resultJson.technician_ids } },
+        attributes: ["id", "name", "email", "phone"],
+        raw: true,
+      });
+      const techById = Object.fromEntries(technicians.map((t) => [t.id, t]));
+      resultJson.technicians = resultJson.technician_ids.map((id) => techById[id]).filter(Boolean);
+    } else {
+      resultJson.technicians = [];
+    }
+
     logger.info(
-      `Overtime request created: ${result.id} by user ${user_id} for technicians: ${technician_ids.join(", ")}`
+      `Overtime request created: ${resultJson.id} by user ${user_id} for technicians: ${resultJson.technician_ids?.join(", ")}`
     );
 
     return {
       success: true,
-      data: result,
+      data: resultJson,
       message: "Yêu cầu tăng ca đã được tạo thành công",
     };
   } catch (error) {
@@ -137,6 +151,22 @@ export const getOvertimeRequestsByUserService = async (userId, filters = {}) => 
     // Convert to JSON format
     const processedRows = rows.map((row) => row.toJSON());
 
+    // Populate technician details for each request
+    const allTechnicianIds = processedRows.flatMap((r) => r.technician_ids || []);
+    const uniqueTechnicianIds = [...new Set(allTechnicianIds)].filter(Boolean);
+    let techById = {};
+    if (uniqueTechnicianIds.length > 0) {
+      const technicians = await db.User.findAll({
+        where: { id: { [Op.in]: uniqueTechnicianIds } },
+        attributes: ["id", "name", "email", "phone"],
+        raw: true,
+      });
+      techById = Object.fromEntries(technicians.map((t) => [t.id, t]));
+    }
+    processedRows.forEach((r) => {
+      r.technicians = (r.technician_ids || []).map((id) => techById[id]).filter(Boolean);
+    });
+
     return {
       success: true,
       data: processedRows,
@@ -185,14 +215,33 @@ export const getAllOvertimeRequestsService = async (filters = {}) => {
         },
         { model: db.Work, as: "work", attributes: ["id", "title", "location"] },
       ],
-      // Put pending requests first, then sort by requested_date
-      order: [["requested_date", "ASC"]],
+      // Put pending requests first (qualified to avoid ambiguous column), then sort by requested_date
+      order: [
+        [db.sequelize.literal('CASE WHEN "overtime_requests"."status" = \'pending\' THEN 0 ELSE 1 END'), "ASC"],
+        ["requested_date", "ASC"],
+      ],
       limit: parseInt(limit),
       offset: parseInt(offset),
     });
 
     // Convert to JSON format
     const processedRows = rows.map((row) => row.toJSON());
+
+    // Populate technician details for each request
+    const allTechnicianIds = processedRows.flatMap((r) => r.technician_ids || []);
+    const uniqueTechnicianIds = [...new Set(allTechnicianIds)].filter(Boolean);
+    let techById = {};
+    if (uniqueTechnicianIds.length > 0) {
+      const technicians = await db.User.findAll({
+        where: { id: { [Op.in]: uniqueTechnicianIds } },
+        attributes: ["id", "name", "email", "phone"],
+        raw: true,
+      });
+      techById = Object.fromEntries(technicians.map((t) => [t.id, t]));
+    }
+    processedRows.forEach((r) => {
+      r.technicians = (r.technician_ids || []).map((id) => techById[id]).filter(Boolean);
+    });
 
     return {
       success: true,
@@ -293,8 +342,19 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
       ],
     });
 
-    // Convert to JSON format
+    // Convert to JSON format and attach technicians
     const data = result.toJSON();
+    if (Array.isArray(data.technician_ids) && data.technician_ids.length > 0) {
+      const technicians = await db.User.findAll({
+        where: { id: { [Op.in]: data.technician_ids } },
+        attributes: ["id", "name", "email", "phone"],
+        raw: true,
+      });
+      const techById = Object.fromEntries(technicians.map((t) => [t.id, t]));
+      data.technicians = data.technician_ids.map((id) => techById[id]).filter(Boolean);
+    } else {
+      data.technicians = [];
+    }
 
     logger.info(`Overtime request ${requestId} approved by user ${approverId}`);
 
@@ -367,8 +427,19 @@ export const rejectOvertimeRequestService = async (requestId, approverId, reject
       ],
     });
 
-    // Convert to JSON format
+    // Convert to JSON format and attach technicians
     const data = result.toJSON();
+    if (Array.isArray(data.technician_ids) && data.technician_ids.length > 0) {
+      const technicians = await db.User.findAll({
+        where: { id: { [Op.in]: data.technician_ids } },
+        attributes: ["id", "name", "email", "phone"],
+        raw: true,
+      });
+      const techById = Object.fromEntries(technicians.map((t) => [t.id, t]));
+      data.technicians = data.technician_ids.map((id) => techById[id]).filter(Boolean);
+    } else {
+      data.technicians = [];
+    }
 
     logger.info(`Overtime request ${requestId} rejected by user ${approverId}`);
 
