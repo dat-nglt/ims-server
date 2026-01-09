@@ -105,7 +105,7 @@ const validateWork = async (work_id, user_id) => {
 
   workForCheckIn.workAssignment = workAssignment;
 
-  return work;
+  return workForCheckIn;
 };
 
 const validateProject = async (project_id) => {
