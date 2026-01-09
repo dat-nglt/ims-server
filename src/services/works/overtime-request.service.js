@@ -215,9 +215,9 @@ export const getAllOvertimeRequestsService = async (filters = {}) => {
         },
         { model: db.Work, as: "work", attributes: ["id", "title", "location"] },
       ],
-      // Put pending requests first (qualified to avoid ambiguous column), then sort by requested_date
+      // Put pending requests first (use Sequelize model alias), then sort by requested_date
       order: [
-        [db.sequelize.literal('CASE WHEN "overtime_requests"."status" = \'pending\' THEN 0 ELSE 1 END'), "ASC"],
+        [db.sequelize.literal('CASE WHEN "OvertimeRequest"."status" = \'pending\' THEN 0 ELSE 1 END'), "ASC"],
         ["requested_date", "ASC"],
       ],
       limit: parseInt(limit),
