@@ -81,6 +81,11 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      technician_ids: {
+        type: DataTypes.ARRAY(DataTypes.INTEGER),
+        allowNull: true,
+        comment: "Danh sách ID của các kỹ thuật viên liên quan đến yêu cầu tăng ca",
+      },
       created_at: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,

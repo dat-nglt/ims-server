@@ -66,6 +66,11 @@ export async function up(queryInterface, Sequelize) {
       type: Sequelize.TEXT,
       allowNull: true,
     },
+    technician_ids: {
+      type: Sequelize.ARRAY(Sequelize.INTEGER),
+      allowNull: true,
+      comment: "Danh sách ID của các kỹ thuật viên liên quan đến yêu cầu tăng ca",
+    },
     created_at: {
       type: Sequelize.DATE,
       defaultValue: Sequelize.NOW,

@@ -65,7 +65,7 @@ export const createOvertimeRequestService = async (data) => {
       duration_minutes,
       reason,
       overtime_type,
-      technician_ids: JSON.stringify(technician_ids), // Store as JSON array string
+      technician_ids,
       status: "pending",
     });
 
@@ -76,11 +76,6 @@ export const createOvertimeRequestService = async (data) => {
         { model: db.Work, as: "work", attributes: ["id", "title", "location"] },
       ],
     });
-
-    // Parse technician_ids back to array
-    if (result && result.technician_ids) {
-      result.dataValues.technician_ids = JSON.parse(result.technician_ids);
-    }
 
     logger.info(
       `Overtime request created: ${result.id} by user ${user_id} for technicians: ${technician_ids.join(", ")}`
@@ -139,14 +134,8 @@ export const getOvertimeRequestsByUserService = async (userId, filters = {}) => 
       offset: parseInt(offset),
     });
 
-    // Parse technician_ids for each record
-    const processedRows = rows.map((row) => {
-      const data = row.toJSON();
-      if (data.technician_ids && typeof data.technician_ids === "string") {
-        data.technician_ids = JSON.parse(data.technician_ids);
-      }
-      return data;
-    });
+    // Convert to JSON format
+    const processedRows = rows.map((row) => row.toJSON());
 
     return {
       success: true,
@@ -200,14 +189,8 @@ export const getPendingOvertimeRequestsService = async (filters = {}) => {
       offset: parseInt(offset),
     });
 
-    // Parse technician_ids for each record
-    const processedRows = rows.map((row) => {
-      const data = row.toJSON();
-      if (data.technician_ids && typeof data.technician_ids === "string") {
-        data.technician_ids = JSON.parse(data.technician_ids);
-      }
-      return data;
-    });
+    // Convert to JSON format
+    const processedRows = rows.map((row) => row.toJSON());
 
     return {
       success: true,
@@ -280,7 +263,7 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
 
     // Cập nhật trạng thái chấp nhận tăng ca cho các kỹ thuật viên liên quan trong WorkAssignment
     if (overtimeRequest.work_id) {
-      const technicianZaloIds = overtimeRequest.technician_ids ? JSON.parse(overtimeRequest.technician_ids) : [];
+      const technicianZaloIds = Array.isArray(overtimeRequest.technician_ids) ? overtimeRequest.technician_ids : [];
 
       if (technicianZaloIds.length > 0) {
         // Tìm các user.id tương ứng với zalo_id
@@ -320,11 +303,8 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
       ],
     });
 
-    // Parse technician_ids
+    // Convert to JSON format
     const data = result.toJSON();
-    if (data.technician_ids && typeof data.technician_ids === "string") {
-      data.technician_ids = JSON.parse(data.technician_ids);
-    }
 
     logger.info(`Overtime request ${requestId} approved by user ${approverId}`);
 
@@ -397,11 +377,8 @@ export const rejectOvertimeRequestService = async (requestId, approverId, reject
       ],
     });
 
-    // Parse technician_ids
+    // Convert to JSON format
     const data = result.toJSON();
-    if (data.technician_ids && typeof data.technician_ids === "string") {
-      data.technician_ids = JSON.parse(data.technician_ids);
-    }
 
     logger.info(`Overtime request ${requestId} rejected by user ${approverId}`);
 
