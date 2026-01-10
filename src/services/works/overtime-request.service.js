@@ -54,6 +54,48 @@ export const createOvertimeRequestService = async (data) => {
       }
     }
 
+    // Check for duplicate overtime request
+    // Check if there's already a pending/approved request with same criteria
+    const whereCondition = {
+      user_id,
+      overtime_type,
+      status: {
+        [Op.in]: ["pending", "approved"],
+      },
+    };
+
+    // Add work_id or work_title filter
+    if (work_id) {
+      whereCondition.work_id = work_id;
+    } else if (work_title) {
+      whereCondition.work_title = work_title;
+    }
+
+    const existingRequest = await db.OvertimeRequest.findOne({
+      where: whereCondition,
+      include: [
+        {
+          model: db.OvertimeRequestTechnician,
+          as: "requestTechnicians",
+          attributes: ["technician_id"],
+        },
+      ],
+    });
+
+    // If found existing request, check if technician list overlaps
+    if (existingRequest) {
+      const existingTechs = existingRequest.requestTechnicians.map((t) => t.technician_id);
+      const hasOverlap = technician_ids.some((id) => existingTechs.includes(id));
+
+      if (hasOverlap) {
+        return {
+          success: false,
+          data: null,
+          message: `Đã tồn tại yêu cầu tăng ca cho công việc "${work_title || existingRequest.work_title}" với loại tăng ca "${overtime_type}" cho cùng một số kỹ thuật viên. Vui lòng chỉnh sửa hoặc xóa yêu cầu trước đó.`,
+        };
+      }
+    }
+
     // Create overtime request
     const overtimeRequest = await db.OvertimeRequest.create({
       user_id: user.id,
