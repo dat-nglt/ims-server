@@ -36,7 +36,7 @@ export const getAllWorksService = async (query = {}) => {
         {
           model: db.WorkAssignment,
           as: "assignments",
-          attributes: ["id", "work_id", "technician_id"],
+          attributes: ["id", "work_id", "technician_id", "assigned_status"],
           where: { assigned_status: { [Op.ne]: "cancelled" } }, // Loại bỏ các assignment đã bị hủy
           required: false, // LEFT JOIN để không loại bỏ các work không có assignment
         },
@@ -573,6 +573,8 @@ export const createWorkService = async (workData) => {
           {
             model: db.WorkAssignment,
             as: "assignments",
+            where: { assigned_status: { [db.Sequelize.Op.ne]: "cancelled" } }, // Filter out cancelled assignments
+            required: false, // LEFT JOIN to preserve work without active assignments
             include: [
               {
                 model: db.User,
@@ -952,6 +954,8 @@ export const updateWorkService = async (id, updateData) => {
           {
             model: db.WorkAssignment,
             as: "assignments",
+            where: { assigned_status: { [db.Sequelize.Op.ne]: "cancelled" } }, // Filter out cancelled assignments
+            required: false, // LEFT JOIN to preserve work without active assignments
             include: [
               {
                 model: db.User,
