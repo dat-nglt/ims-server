@@ -33,7 +33,13 @@ export const getAllWorksService = async (query = {}) => {
       include: [
         // { model: db.WorkCategory, as: "category", attributes: ["id", "name"] },
         { model: db.Project, as: "project", attributes: ["id", "name"] },
-        { model: db.WorkAssignment, as: "assignments", attributes: ["id", "work_id", "technician_id"] },
+        {
+          model: db.WorkAssignment,
+          as: "assignments",
+          attributes: ["id", "work_id", "technician_id"],
+          where: { assigned_status: { [Op.ne]: "cancelled" } }, // Loại bỏ các assignment đã bị hủy
+          required: false, // LEFT JOIN để không loại bỏ các work không có assignment
+        },
         { model: db.User, as: "salesPerson", attributes: ["id", "name", "employee_id", "avatar_url", "phone"] },
       ],
     });
