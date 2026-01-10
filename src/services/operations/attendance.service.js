@@ -93,12 +93,9 @@ export const getAlreadyOpenSession = async (userId, attendance_type_id, work_id)
       started_at: { [Op.between]: [todayStart, todayEnd] },
     };
 
-    // If caller provided a concrete work_id, search by it. If caller explicitly passed null (hub flow),
-    // we search for sessions where work_id IS NULL (hub sessions).
+    // If caller provided a concrete work_id, search by it.
     if (work_id != null) {
       where.work_id = work_id;
-    } else {
-      where.work_id = null;
     }
 
     const session = await db.AttendanceSession.findOne({

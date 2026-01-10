@@ -250,6 +250,8 @@ export const getAllOvertimeRequestsService = async (filters = {}) => {
 export const approveOvertimeRequestService = async (requestId, approverId, approvalData = {}) => {
   try {
     const { is_paid = false, notes, technician_id = null } = approvalData;
+    console.log("Approval Data:", approvalData);
+    return
 
     // Check if request exists
     const overtimeRequest = await db.OvertimeRequest.findByPk(requestId);

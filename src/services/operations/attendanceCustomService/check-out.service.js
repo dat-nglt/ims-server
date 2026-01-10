@@ -7,7 +7,7 @@ import logger from "../../../utils/logger.js";
  */
 export const checkOutService = async (payload) => {
   try {
-    validateInput(payload);
+    // validateInput(payload);
 
     await validateWorkAssignment(payload);
 
@@ -16,13 +16,14 @@ export const checkOutService = async (payload) => {
     validateCheckOutConditions(attendance, payload);
 
     const checkOutTime = new Date();
+
     const updateData = prepareCheckOutData(attendance, payload, checkOutTime);
 
     await updateAttendanceRecord(attendance, updateData);
 
     await computeValidityAndEarlyCompletion(attendance, payload, checkOutTime);
 
-    await updateWorkStatus(payload.work_id);
+    // await updateWorkStatus(payload.work_id); // Tạm thời không tự động cập nhật trạng thái công việc
 
     await updateSession(payload);
 
@@ -51,7 +52,7 @@ const validateWorkAssignment = async (payload) => {
     });
 
     if (!workAssignment) {
-      throw new Error("Hệ thống yêu cầu chỉ chấm công ra tại địa điểm công việc được phân bổ");
+      throw new Error("Người dùng không được phân công cho công việc này");
     }
 
     // Kiểm tra ngày yêu cầu công việc có phải trong hôm nay hay không (chỉ cho work_id > 0)

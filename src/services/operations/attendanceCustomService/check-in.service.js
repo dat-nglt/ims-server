@@ -157,8 +157,8 @@ const checkExistingSession = async (user_id, attendance_type_id) => {
       success: false,
       alreadyCheckedIn: true,
       message: checkInAt
-        ? `Người dùng đã chấm công vào lúc ${checkInAt.split("T")[1].substring(0, 5)}`
-        : `Người dùng đã có phiên chấm công hiện tại`,
+        ? `Bạn đã thực hiện chấm công vào lúc ${checkInAt.split("T")[1].substring(0, 5)}`
+        : `Bạn đã có phiên chấm công hiện tại`,
       session: {
         id: anySession.id,
         work: anySession.work ? { id: anySession.work.id, title: anySession.work.title } : null,
@@ -224,7 +224,6 @@ const prepareAttendanceData = (checkInPayload, attendanceType) => {
       const startTimeMinutes = parseTimeToMinutes(attendanceType.start_time);
       const checkInTimeObj = new Date();
       const checkInMinutes = checkInTimeObj.getHours() * 60 + checkInTimeObj.getMinutes();
-      console.log("Check-in minutes:", checkInMinutes, "Start time minutes:", startTimeMinutes);
       isAfterStartTime = checkInMinutes >= startTimeMinutes;
     } catch (e) {
       throw new Error("Lỗi khi phân tích thời gian bắt đầu của loại chấm công");
