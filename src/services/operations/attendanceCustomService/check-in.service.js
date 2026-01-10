@@ -61,6 +61,9 @@ export const checkInService = async (checkInPayload) => {
     await updateWorkStatus(work_id);
 
     // Cập nhật assigned_status trong WorkAssignment khi chấm công vào thành công
+
+    console.log("Updating WorkAssignment status for workAssignmentId: ", workForAttendance.workAssignment.id);
+
     await updateWorkAssignmentStatus(workForAttendance.workAssignment.id, "in_progress");
 
     // Tạo thông báo hệ thống về việc chấm công vào công việc
