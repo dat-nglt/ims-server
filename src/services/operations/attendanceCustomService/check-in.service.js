@@ -11,15 +11,17 @@ export const checkInService = async (checkInPayload) => {
   try {
     let { user_id, work_id, project_id, attendance_type_id } = checkInPayload;
 
+    // Xác thực công việc và người dùng
     const workForAttendance = await validateWork(work_id, user_id);
 
+    // Xác thực loại chấm công
     const attendanceType = await validateAttendanceType(attendance_type_id);
 
     // Ràng buộc chấm công tăng ca
     if (attendanceType && (attendanceType.code === "overtime_lunch" || attendanceType.code === "overtime_night")) {
-      // Kiểm tra xem kỹ thuật viên có được phê duyệt tăng ca cho công việc này hay không
       const todayDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
 
+      // Kiểm tra xem ngươi dùng có yêu cầu tăng ca được phê duyệt cho công việc này và loại tăng ca này không
       const approvedOT = await db.OvertimeRequest.findOne({
         where: {
           work_id,
@@ -42,35 +44,33 @@ export const checkInService = async (checkInPayload) => {
       }
     }
 
-    const user = await validateUser(user_id); // kiểm tra người dùng tồn tại trong hệ thống
-    await validateProject(project_id);
+    const user = await validateUser(user_id);
 
     const existingSession = await checkExistingSession(user_id, attendance_type_id, work_id);
-
     // Nếu tồn tại phiên chấm công mở hoặc đã chấm công xong công việc với ca chấm công trong ngày hôm nay, trả về thông tin phiên/chấm công đó và không tạo mới
     if (existingSession) {
       return existingSession;
     }
 
+    await validateProject(project_id);
+
     // Chuẩn bị dữ liệu chấm công và tạo bản ghi chấm công
     const attendanceData = prepareAttendanceData(checkInPayload, attendanceType);
 
+    // Tạo bản ghi chấm công
     const attendance = await createAttendanceRecord(attendanceData);
 
-    // Khi thực hiện chấm công vào, cập nhật trạng thái công việc sang "in_progress" nghĩa là đang thực hiện công việc
+    // Chấm công thành công => cập nhật lại trạng thái công việc
     await updateWorkStatus(work_id);
 
-    // Cập nhật assigned_status trong WorkAssignment khi chấm công vào thành công
-
-    console.log("workForAttendance.workAssignment:", workForAttendance);
+    // Cập nhật lại trạng thái bản ghi phân bổ công việc => in_progress
     if (workForAttendance.workAssignment && workForAttendance.workAssignment.id) {
       await db.WorkAssignment.update(
         { assigned_status: "in_progress" },
         { where: { id: workForAttendance.workAssignment.id } }
       );
-
       logger.info(
-        `Updated WorkAssignment ${workForAttendance.workAssignment.id} assigned_status to in_progress for work ${work_id} and technician ${user_id}`
+        `Cập nhật phân bổ công việc với mã [${workForAttendance.workAssignment.id}] sang trạng thái đang thực hiện thành công`
       );
     }
 
@@ -301,7 +301,8 @@ const updateWorkStatus = async (wid) => {
 // Tạo thông báo chấm công vào công việc
 const createCheckInNotification = async (user, workForAttendance) => {
   try {
-    const title = `Chấm công vào công việc`;
+    const title = `CHẤM CÔNG CÔNG VIỆC`;
+    console.log(workForAttendance)
     const message = `Người dùng ${user.name} đã chấm công vào công việc "${workForAttendance.title}".`;
     const related_work_id = workForAttendance.id;
 
