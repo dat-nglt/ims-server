@@ -169,11 +169,7 @@ export const rejectOvertimeRequestController = async (req, res) => {
       technician_id,
     });
 
-    if (result.success) {
-      return res.json(result);
-    } else {
-      return res.status(400).json(result);
-    }
+    return res.json(result);
   } catch (error) {
     logger.error(`[${req.id}] Error in rejectOvertimeRequestController:`, error.message);
     res.status(500).json({

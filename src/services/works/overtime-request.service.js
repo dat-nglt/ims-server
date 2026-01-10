@@ -27,8 +27,7 @@ export const createOvertimeRequestService = async (data) => {
       return {
         success: false,
         data: null,
-        message:
-          "Vui lòng cung cấp đầy đủ thông tin (user_id, requested_date, start_time, end_time, overtime_type, technician_ids)",
+        message: "Vui lòng cung cấp đầy đủ thông tin bắt buộc cho yêu cầu tăng ca",
       };
     }
 
@@ -91,7 +90,9 @@ export const createOvertimeRequestService = async (data) => {
         return {
           success: false,
           data: null,
-          message: `Đã tồn tại yêu cầu tăng ca cho công việc "${work_title || existingRequest.work_title}" với loại tăng ca "${overtime_type}" cho cùng một số kỹ thuật viên. Vui lòng chỉnh sửa hoặc xóa yêu cầu trước đó.`,
+          message: `Đã tồn tại yêu cầu tăng ca của bạn cho công việc "${
+            work_title || existingRequest.work_title
+          }". Vui lòng chờ đợi phê duyệt`,
         };
       }
     }
