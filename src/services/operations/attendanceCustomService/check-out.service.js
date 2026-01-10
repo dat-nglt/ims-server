@@ -79,7 +79,7 @@ const validateWorkAssignment = async (payload) => {
       where: {
         work_id: payload.work_id,
         technician_id: payload.user_id,
-        assigned_status: { [db.Sequelize.Op.in]: ["pending", "accepted", "completed"] },
+        assigned_status: { [db.Sequelize.Op.in]: ["in_progress", "accepted"] },
       },
     });
 
