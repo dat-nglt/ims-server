@@ -120,7 +120,7 @@ export const createOvertimeRequestService = async (data) => {
  */
 export const getOvertimeRequestsByUserService = async (userId, filters = {}) => {
   try {
-    const { status, startDate, endDate, limit = 50, offset = 0 } = filters;
+    const { status, startDate, endDate } = filters;
 
     // Build where condition
     const whereCondition = { user_id: userId };
@@ -151,8 +151,6 @@ export const getOvertimeRequestsByUserService = async (userId, filters = {}) => 
         },
       ],
       order: [["requested_date", "DESC"]],
-      limit: parseInt(limit),
-      offset: parseInt(offset),
     });
 
     // Convert to JSON format
@@ -181,7 +179,7 @@ export const getOvertimeRequestsByUserService = async (userId, filters = {}) => 
  */
 export const getAllOvertimeRequestsService = async (filters = {}) => {
   try {
-    const { startDate, endDate, limit = 100, offset = 0 } = filters;
+    const { startDate, endDate } = filters;
 
     // Return all overtime requests; we'll order so that pending records come first
     const whereCondition = {};
@@ -216,8 +214,6 @@ export const getAllOvertimeRequestsService = async (filters = {}) => {
         [db.sequelize.literal('CASE WHEN "OvertimeRequest"."status" = \'pending\' THEN 0 ELSE 1 END'), "ASC"],
         ["requested_date", "ASC"],
       ],
-      limit: parseInt(limit),
-      offset: parseInt(offset),
     });
 
     // Convert to JSON format
@@ -243,7 +239,7 @@ export const getAllOvertimeRequestsService = async (filters = {}) => {
  * Service: Duyệt yêu cầu tăng ca
  * @param {number} requestId - ID yêu cầu tăng ca
  * @param {number} approverId - ID người duyệt
- * @param {Object} approvalData - {isPaid, notes, technician_id(optional)}
+ * @param {Object} approvalData - {isPaid,, technician_id(optional)}
  * - technician_id: nếu có, chỉ duyệt technician này; nếu không, duyệt tất cả pending
  * @returns {Object} - Kết quả thực thi
  */
@@ -384,7 +380,7 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
  * - technician_id: nếu có, chỉ từ chối technician này; nếu không, từ chối tất cả pending
  * @returns {Object} - Kết quả thực thi
  */
-export const rejectOvertimeRequestService = async (requestId, approverId, rejectionData) => {
+export const rejectOvertimeRequestService = async (requestId, approverId, rejectionData = {}) => {
   try {
     const { reject_reason = "", technician_id = null } = rejectionData;
 

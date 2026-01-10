@@ -155,16 +155,19 @@ export const approveOvertimeRequestController = async (req, res) => {
 export const rejectOvertimeRequestController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { approverId, rejectReason } = req.body;
+    const { approverId, reject_reason, technician_id } = req.body;
 
-    if (!id || !approverId || !rejectReason) {
+    if (!id || !approverId || !reject_reason) {
       return res.status(400).json({
         success: false,
-        message: "Thiếu request ID, approverId hoặc rejectReason",
+        message: "Thiếu request ID, approverId hoặc reject_reason",
       });
     }
 
-    const result = await overtimeRequestService.rejectOvertimeRequestService(id, approverId, rejectReason);
+    const result = await overtimeRequestService.rejectOvertimeRequestService(id, approverId, {
+      reject_reason,
+      technician_id,
+    });
 
     if (result.success) {
       return res.json(result);
