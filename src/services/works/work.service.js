@@ -120,6 +120,8 @@ export const getWorkByCodeService = async (workCode) => {
         {
           model: db.WorkAssignment,
           as: "assignments",
+          where: { assigned_status: { [db.Sequelize.Op.ne]: "cancelled" } }, // Filter out cancelled assignments
+          required: false, // LEFT JOIN to preserve work without active assignments
           attributes: [
             "id",
             "work_id",
@@ -254,6 +256,8 @@ export const getWorkByIdService = async (workId) => {
         {
           model: db.WorkAssignment,
           as: "assignments",
+          where: { assigned_status: { [db.Sequelize.Op.ne]: "cancelled" } }, // Filter out cancelled assignments
+          required: false, // LEFT JOIN to preserve work without active assignments
           attributes: [
             "id",
             "work_id",
