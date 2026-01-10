@@ -379,6 +379,7 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
         console.log("Checking assignment for technician: ", techRecord.technician_id);
         const existingAssignment = await db.WorkAssignment.findOne({
           where: {
+            assigned_by: approverId,
             work_id: overtimeRequest.work_id,
             technician_id: techRecord.technician_id,
           },
