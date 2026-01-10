@@ -77,6 +77,7 @@ export const getListOfWorkAssignmentsService = async (ZAID, isToday = false) => 
     // Xây dựng điều kiện where dựa trên tham số isToday
     const whereCondition = {
       technician_id: technician.id,
+      assigned_status: { [Op.ne]: "cancelled" }, 
     };
 
     if (isToday) {
