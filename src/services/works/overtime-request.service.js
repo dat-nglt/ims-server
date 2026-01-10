@@ -196,7 +196,7 @@ export const getAllOvertimeRequestsService = async (filters = {}) => {
       }
     }
 
-    const { count, rows } = await db.OvertimeRequest.findAndCountAll({
+    const { rows } = await db.OvertimeRequest.findAndCountAll({
       where: whereCondition,
       include: [
         {
@@ -226,7 +226,7 @@ export const getAllOvertimeRequestsService = async (filters = {}) => {
     return {
       success: true,
       data: processedRows,
-      total: count,
+      total: processedRows.length,
       message: "Lấy danh sách yêu cầu tăng ca thành công",
     };
   } catch (error) {
