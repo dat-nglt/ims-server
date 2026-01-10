@@ -856,7 +856,7 @@ export const updateWorkService = async (id, updateData) => {
 
       const currentTechnicianIds = currentAssignments.map((a) => a.technician_id);
 
-      // 1. Add new technicians that are not yet assigned
+      // 1. Add new technicians that are not yet assigned (or restore cancelled assignments)
       for (const techId of newAssignedTechnicianIds) {
         try {
           const technician = await db.User.findByPk(techId);
@@ -865,27 +865,58 @@ export const updateWorkService = async (id, updateData) => {
             continue;
           }
 
-          // Check if already assigned
-          const existing = await db.WorkAssignment.findOne({ where: { work_id: id, technician_id: techId } });
-          if (existing) {
-            logger.info(`Technician ${techId} already assigned to work ${id}, skipping`);
+          // Check if already assigned (and not cancelled)
+          const existingActive = await db.WorkAssignment.findOne({
+            where: {
+              work_id: id,
+              technician_id: techId,
+              assigned_status: { [db.Sequelize.Op.ne]: "cancelled" },
+            },
+          });
+
+          if (existingActive) {
+            logger.info(`Technician ${techId} already assigned to work ${id} with active status, skipping`);
             continue;
           }
 
-          const assignment = await db.WorkAssignment.create({
-            work_id: id,
-            technician_id: techId,
-            assigned_by: updateData.changed_by || work.created_by,
-            assignment_date: new Date(),
-            assigned_status: "pending",
-            created_at: new Date(),
-            updated_at: new Date(),
+          // Check if there's a cancelled assignment to restore
+          const cancelledAssignment = await db.WorkAssignment.findOne({
+            where: {
+              work_id: id,
+              technician_id: techId,
+              assigned_status: "cancelled",
+            },
           });
 
-          createdAssignments.push(assignment);
-          logger.info(`Created assignment for technician ${techId} to work ${id}`);
+          if (cancelledAssignment) {
+            // Restore the cancelled assignment
+            await cancelledAssignment.update({
+              assigned_status: "pending",
+              assignment_date: new Date(),
+              assigned_by: updateData.changed_by || work.created_by,
+              updated_at: new Date(),
+            });
+            createdAssignments.push(cancelledAssignment);
+            logger.info(
+              `Restored cancelled assignment id ${cancelledAssignment.id} for technician ${techId} to work ${id}`
+            );
+          } else {
+            // Create new assignment
+            const assignment = await db.WorkAssignment.create({
+              work_id: id,
+              technician_id: techId,
+              assigned_by: updateData.changed_by || work.created_by,
+              assignment_date: new Date(),
+              assigned_status: "pending",
+              created_at: new Date(),
+              updated_at: new Date(),
+            });
+
+            createdAssignments.push(assignment);
+            logger.info(`Created assignment for technician ${techId} to work ${id}`);
+          }
         } catch (assignmentErr) {
-          logger.error("Failed to create assignment for technician " + techId + ": " + assignmentErr.message);
+          logger.error("Failed to create/restore assignment for technician " + techId + ": " + assignmentErr.message);
         }
       }
 
