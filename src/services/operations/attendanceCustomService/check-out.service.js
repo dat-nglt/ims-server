@@ -59,6 +59,8 @@ export const checkOutService = async (payload) => {
       }
     }
 
+    await createCheckOutNotification(attendance, payload);
+
     return { success: true, data: attendance, message: "Chấm công ra thành công" };
   } catch (error) {
     logger.warn("Error in checkOutService:" + error.message);
@@ -118,7 +120,6 @@ const findAttendanceRecord = async (payload) => {
       order: [["check_in_time", "DESC"]],
     });
 
-    // If session exists but no open attendance found for this work/type, treat as already checked-out
     if (attendance) {
       return attendance;
     }
@@ -285,5 +286,27 @@ const updateSession = async (payload) => {
       });
       logger.info(`Closed session id=${session.id} for user=${payload.user_id} work=${payload.work_id}`);
     }
+  }
+};
+
+// Tạo thông báo chấm công ra công việc
+const createCheckOutNotification = async (attendance, payload) => {
+  try {
+    const user = await db.User.findByPk(payload.user_id);
+    const work = await db.Work.findByPk(payload.work_id);
+
+    if (work && user) {
+      await db.Notification.create({
+        recipient_id: work.created_by,
+        type: "check_out",
+        title: "CHẤM CÔNG RA CÔNG VIỆC",
+        message: `Người dùng ${user.name} đã chấm công ra công việc "${work.title}".`,
+        related_work_id: work.id,
+        status: "unread",
+      });
+      logger.info(`Tạo thông báo chấm công ra công việc thành công`);
+    }
+  } catch (err) {
+    logger.error("Lỗi khi tạo thông báo chấm công ra công việc: " + err.message);
   }
 };
