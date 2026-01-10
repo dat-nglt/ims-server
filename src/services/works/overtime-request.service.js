@@ -250,9 +250,6 @@ export const getAllOvertimeRequestsService = async (filters = {}) => {
 export const approveOvertimeRequestService = async (requestId, approverId, approvalData = {}) => {
   try {
     const { is_paid = false, notes, technician_id = null } = approvalData;
-    console.log("Approval Data:", approvalData);
-    return
-
     // Check if request exists
     const overtimeRequest = await db.OvertimeRequest.findByPk(requestId);
     if (!overtimeRequest) {
@@ -319,7 +316,9 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
     );
 
     logger.info(
-      `Overtime request ${requestId} technician(s) approved by user ${approverId}. Technician ID: ${technician_id || "all"}`
+      `Overtime request ${requestId} technician(s) approved by user ${approverId}. Technician ID: ${
+        technician_id || "all"
+      }`
     );
 
     // Kiểm tra xem TẤT CẢ technician đã được duyệt chưa
