@@ -45,7 +45,7 @@ export async function up(queryInterface, Sequelize) {
       defaultValue: Sequelize.NOW,
     },
     assigned_status: {
-      type: Sequelize.ENUM("pending", "accepted", "rejected", "completed", "cancelled"),
+      type: Sequelize.ENUM("pending", "accepted", "in_progress", "rejected", "completed", "cancelled"),
       defaultValue: "pending",
     },
     accepted_at: {

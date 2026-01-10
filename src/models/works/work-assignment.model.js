@@ -53,7 +53,7 @@ export default (sequelize, DataTypes) => {
       },
       // Trạng thái: pending, accepted, rejected, completed
       assigned_status: {
-        type: DataTypes.ENUM("pending", "accepted", "rejected", "completed", "cancelled"),
+        type: DataTypes.ENUM("pending", "accepted", "in_progress", "rejected", "completed", "cancelled"),
         defaultValue: "pending",
       },
       // Thời gian chấp nhận
