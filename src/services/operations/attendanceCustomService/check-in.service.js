@@ -61,10 +61,16 @@ export const checkInService = async (checkInPayload) => {
     await updateWorkStatus(work_id);
 
     // Cập nhật assigned_status trong WorkAssignment khi chấm công vào thành công
+    if (workForAttendance.workAssignment && workForAttendance.workAssignment.id) {
+      await db.WorkAssignment.update(
+        { assigned_status: "in_progress" },
+        { where: { id: workForAttendance.workAssignment.id } }
+      );
 
-    console.log("Updating WorkAssignment status for workAssignmentId: ", workForAttendance.workAssignment.id);
-
-    await updateWorkAssignmentStatus(workForAttendance.workAssignment.id, "in_progress");
+      logger.info(
+        `Updated WorkAssignment ${workForAttendance.workAssignment.id} assigned_status to in_progress for work ${work_id} and technician ${user_id}`
+      );
+    }
 
     // Tạo thông báo hệ thống về việc chấm công vào công việc
     await createCheckInNotification(user, work_id, workForAttendance);
@@ -288,14 +294,6 @@ const updateWorkStatus = async (wid) => {
     return affectedRows > 0;
   }
   return false;
-};
-
-const updateWorkAssignmentStatus = async (workAssignmentId, newStatus) => {
-  if (workAssignmentId && workAssignmentId > 0) {
-    logger.error(`Updating WorkAssignment ${workAssignmentId} assigned_status to ${newStatus}`);
-    await db.WorkAssignment.update({ assigned_status: newStatus }, { where: { id: workAssignmentId } });
-    logger.info(`Updated WorkAssignment ${workAssignmentId} assigned_status to ${newStatus}`);
-  }
 };
 
 // Tạo thông báo chấm công vào công việc
