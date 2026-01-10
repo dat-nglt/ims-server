@@ -75,7 +75,7 @@ export const checkInService = async (checkInPayload) => {
     }
 
     // Tạo thông báo hệ thống về việc chấm công vào công việc
-    await createCheckInNotification(user, work_id, workForAttendance);
+    await createCheckInNotification(user, workForAttendance);
 
     return {
       success: true,
@@ -302,7 +302,6 @@ const updateWorkStatus = async (wid) => {
 const createCheckInNotification = async (user, workForAttendance) => {
   try {
     const title = `CHẤM CÔNG CÔNG VIỆC`;
-    console.log(workForAttendance)
     const message = `Người dùng ${user.name} đã chấm công vào công việc "${workForAttendance.title}".`;
     const related_work_id = workForAttendance.id;
 
