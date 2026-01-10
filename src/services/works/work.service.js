@@ -826,6 +826,7 @@ export const updateWorkService = async (id, updateData) => {
 
     // --- Non-blocking: handle assignments if provided ---
     let createdAssignments = [];
+    let cancelledAssignments = [];
     if (updateData.assigned_to_technician_id !== undefined) {
       const parseTechnicianIds = (val) => {
         if (val === undefined || val === null || val === "") return [];
@@ -839,9 +840,18 @@ export const updateWorkService = async (id, updateData) => {
         return !isNaN(n) ? [n] : [];
       };
 
-      const assignedTechnicianIds = parseTechnicianIds(updateData.assigned_to_technician_id);
+      const newAssignedTechnicianIds = parseTechnicianIds(updateData.assigned_to_technician_id);
 
-      for (const techId of assignedTechnicianIds) {
+      // Get current assignments for this work
+      const currentAssignments = await db.WorkAssignment.findAll({
+        where: { work_id: id },
+        attributes: ["id", "technician_id", "assigned_status"],
+      });
+
+      const currentTechnicianIds = currentAssignments.map((a) => a.technician_id);
+
+      // 1. Add new technicians that are not yet assigned
+      for (const techId of newAssignedTechnicianIds) {
         try {
           const technician = await db.User.findByPk(techId);
           if (!technician) {
@@ -849,7 +859,7 @@ export const updateWorkService = async (id, updateData) => {
             continue;
           }
 
-          // Avoid duplicate assignment
+          // Check if already assigned
           const existing = await db.WorkAssignment.findOne({ where: { work_id: id, technician_id: techId } });
           if (existing) {
             logger.info(`Technician ${techId} already assigned to work ${id}, skipping`);
@@ -867,8 +877,30 @@ export const updateWorkService = async (id, updateData) => {
           });
 
           createdAssignments.push(assignment);
+          logger.info(`Created assignment for technician ${techId} to work ${id}`);
         } catch (assignmentErr) {
           logger.error("Failed to create assignment for technician " + techId + ": " + assignmentErr.message);
+        }
+      }
+
+      // 2. Cancel assignments for technicians that are no longer in the new list
+      for (const currentAssignment of currentAssignments) {
+        if (!newAssignedTechnicianIds.includes(currentAssignment.technician_id)) {
+          try {
+            // Only cancel if not already completed or cancelled
+            if (!["completed", "cancelled"].includes(currentAssignment.assigned_status)) {
+              await db.WorkAssignment.update(
+                { assigned_status: "cancelled", updated_at: new Date() },
+                { where: { id: currentAssignment.id } }
+              );
+              cancelledAssignments.push(currentAssignment);
+              logger.info(
+                `Cancelled assignment id ${currentAssignment.id} for technician ${currentAssignment.technician_id} from work ${id}`
+              );
+            }
+          } catch (cancelErr) {
+            logger.error("Failed to cancel assignment " + currentAssignment.id + ": " + cancelErr.message);
+          }
         }
       }
     }
@@ -940,6 +972,26 @@ export const updateWorkService = async (id, updateData) => {
           }
         } catch (err) {
           logger.error("Failed to create assignment notification: " + err.message);
+        }
+
+        // Notification for cancelled assignments
+        try {
+          if (cancelledAssignments && cancelledAssignments.length > 0) {
+            const cancelledTechnicianIds = cancelledAssignments.map((a) => a.technician_id);
+            await createNotificationService({
+              title: "Công việc được hủy giao",
+              message: `Công việc "${updatedWork.title}" không còn được giao cho bạn.`,
+              type: "work_unassigned",
+              related_work_id: updatedWork.id,
+              priority: "medium",
+              recipients: cancelledTechnicianIds,
+            });
+            logger.info(
+              `Unassignment notification sent to ${cancelledTechnicianIds.length} technician(s) for work id: ${updatedWork.id}`
+            );
+          }
+        } catch (err) {
+          logger.error("Failed to create unassignment notification: " + err.message);
         }
       })();
 
