@@ -23,9 +23,41 @@ export const checkOutService = async (payload) => {
 
     await computeValidityAndEarlyCompletion(attendance, payload, checkOutTime);
 
-    // await updateWorkStatus(payload.work_id); // Tạm thời không tự động cập nhật trạng thái công việc
-
     await updateSession(payload);
+
+    // Cập nhật assigned_status trong WorkAssignment thành completed khi chấm công ra thành công
+    if (payload.work_id && payload.work_id > 0) {
+      const workAssignment = await db.WorkAssignment.findOne({
+        where: {
+          work_id: payload.work_id,
+          technician_id: payload.user_id,
+        },
+      });
+
+      if (workAssignment && workAssignment.id) {
+        await db.WorkAssignment.update({ assigned_status: "completed" }, { where: { id: workAssignment.id } });
+
+        logger.info(
+          `Updated WorkAssignment ${workAssignment.id} assigned_status to completed for work ${payload.work_id} and technician ${payload.user_id}`
+        );
+
+        // Kiểm tra xem tất cả WorkAssignment liên quan đến công việc hiện tại đã hoàn thành chưa
+        const pendingOrAcceptedAssignments = await db.WorkAssignment.count({
+          where: {
+            work_id: payload.work_id,
+            assigned_status: { [db.Sequelize.Op.in]: ["pending", "accepted"] },
+          },
+        });
+
+        // Nếu không còn assignment nào ở trạng thái pending hoặc accepted, cập nhật trạng thái công việc thành completed
+        if (pendingOrAcceptedAssignments === 0) {
+          await updateWorkStatus(payload.work_id);
+          logger.info(
+            `All WorkAssignments for work ${payload.work_id} are completed. Updated work status to completed.`
+          );
+        }
+      }
+    }
 
     return { success: true, data: attendance, message: "Chấm công ra thành công" };
   } catch (error) {
