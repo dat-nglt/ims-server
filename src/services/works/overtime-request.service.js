@@ -376,6 +376,8 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
         approved_at: new Date(),
       });
 
+      console.log("Overtime request fully approved, assigning technicians to work...: ", overtimeRequest.work_id);
+
       // Assign approved technicians to the work if not already assigned
       if (overtimeRequest.work_id) {
         // Get all approved technicians for this request
@@ -390,12 +392,15 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
 
         // For each approved technician, check if already assigned to the work
         for (const techRecord of approvedTechs) {
+          console.log("Checking assignment for technician: ", techRecord.technician_id);
           const existingAssignment = await db.WorkAssignment.findOne({
             where: {
               work_id: overtimeRequest.work_id,
               technician_id: techRecord.technician_id,
             },
           });
+
+          console.log("Existing assignment: ", existingAssignment);
 
           // If not assigned, add technician to the work
           if (!existingAssignment) {
