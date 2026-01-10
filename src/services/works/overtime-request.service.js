@@ -375,6 +375,49 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
         approver_id: approverId,
         approved_at: new Date(),
       });
+
+      // Assign approved technicians to the work if not already assigned
+      if (overtimeRequest.work_id) {
+        // Get all approved technicians for this request
+        const approvedTechs = await db.OvertimeRequestTechnician.findAll({
+          where: {
+            overtime_request_id: requestId,
+            status: "approved",
+          },
+          attributes: ["technician_id"],
+          raw: true,
+        });
+
+        // For each approved technician, check if already assigned to the work
+        for (const techRecord of approvedTechs) {
+          const existingAssignment = await db.WorkAssignment.findOne({
+            where: {
+              work_id: overtimeRequest.work_id,
+              technician_id: techRecord.technician_id,
+            },
+          });
+
+          // If not assigned, add technician to the work
+          if (!existingAssignment) {
+            try {
+              await db.WorkAssignment.create({
+                work_id: overtimeRequest.work_id,
+                technician_id: techRecord.technician_id,
+                assigned_at: new Date(),
+              });
+
+              logger.info(
+                `Technician ${techRecord.technician_id} assigned to work ${overtimeRequest.work_id} from approved overtime request ${requestId}`
+              );
+            } catch (assignmentError) {
+              logger.warn(
+                `Failed to assign technician ${techRecord.technician_id} to work ${overtimeRequest.work_id}: ${assignmentError.message}`
+              );
+              // Continue with other technicians even if one fails
+            }
+          }
+        }
+      }
     }
 
     // Fetch with relations
