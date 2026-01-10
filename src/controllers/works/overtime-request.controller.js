@@ -12,8 +12,7 @@ export const createOvertimeRequestController = async (req, res) => {
     if (!userRequestingId || !type || !startTime || !endTime || !technicians || !Array.isArray(technicians)) {
       return res.status(400).json({
         success: false,
-        message:
-          "Vui lòng cung cấp đầy đủ thông tin bắt buộc (userRequestingId, type, startTime, endTime, technicians)",
+        message: "Vui lòng cung cấp đầy đủ thông tin bắt buộc",
       });
     }
 
@@ -23,7 +22,7 @@ export const createOvertimeRequestController = async (req, res) => {
     const durationMinutes = Math.round((end - start) / (1000 * 60));
 
     if (durationMinutes <= 0) {
-      return res.status(400).json({
+      return res.json({
         success: false,
         message: "Thời gian kết thúc phải sau thời gian bắt đầu",
       });
@@ -42,11 +41,7 @@ export const createOvertimeRequestController = async (req, res) => {
       technician_ids: technicians,
     });
 
-    if (result.success) {
-      return res.status(201).json(result);
-    } else {
-      return res.status(400).json(result);
-    }
+    return res.json(result);
   } catch (error) {
     logger.error(`[${req.id}] Error in createOvertimeRequestController:`, error.message);
     res.status(500).json({
