@@ -60,6 +60,9 @@ export const checkInService = async (checkInPayload) => {
     // Khi thực hiện chấm công vào, cập nhật trạng thái công việc sang "in_progress" nghĩa là đang thực hiện công việc
     await updateWorkStatus(work_id);
 
+    // Cập nhật assigned_status trong WorkAssignment khi chấm công vào thành công
+    await updateWorkAssignmentStatus(workForAttendance.workAssignment.id, "in_progress");
+
     // Tạo thông báo hệ thống về việc chấm công vào công việc
     await createCheckInNotification(user, work_id, workForAttendance);
 
@@ -282,6 +285,14 @@ const updateWorkStatus = async (wid) => {
     return affectedRows > 0;
   }
   return false;
+};
+
+const updateWorkAssignmentStatus = async (workAssignmentId, newStatus) => {
+  if (workAssignmentId && workAssignmentId > 0) {
+    await db.WorkAssignment.update({ assigned_status: "in_progress" }, { where: { id: workAssignmentId } });
+
+    logger.info(`Updated WorkAssignment ${workAssignmentId} assigned_status to in_progress`);
+  }
 };
 
 // Tạo thông báo chấm công vào công việc
