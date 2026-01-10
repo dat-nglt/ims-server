@@ -120,7 +120,7 @@ export const getPendingOvertimeRequestsController = async (req, res) => {
 export const approveOvertimeRequestController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { approverId, isPaid, notes } = req.body;
+    const { approverId, isPaid, notes, technician_id } = req.body;
 
     if (!id || !approverId) {
       return res.status(400).json({
@@ -132,6 +132,7 @@ export const approveOvertimeRequestController = async (req, res) => {
     const result = await overtimeRequestService.approveOvertimeRequestService(id, approverId, {
       is_paid: isPaid,
       notes,
+      technician_id: technician_id,
     });
 
     if (result.success) {
