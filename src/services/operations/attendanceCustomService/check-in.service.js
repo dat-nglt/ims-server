@@ -38,9 +38,7 @@ export const checkInService = async (checkInPayload) => {
       });
 
       if (!approvedOT) {
-        throw new Error(
-          "Người dùng không có yêu cầu tăng ca được phê duyệt cho công việc này hoặc loại tăng ca này"
-        );
+        throw new Error("Người dùng không có yêu cầu tăng ca được phê duyệt cho công việc này hoặc loại tăng ca này");
       }
     }
 
@@ -226,6 +224,7 @@ const prepareAttendanceData = (checkInPayload, attendanceType) => {
       const startTimeMinutes = parseTimeToMinutes(attendanceType.start_time);
       const checkInTimeObj = new Date();
       const checkInMinutes = checkInTimeObj.getHours() * 60 + checkInTimeObj.getMinutes();
+      console.log("Check-in minutes:", checkInMinutes, "Start time minutes:", startTimeMinutes);
       isAfterStartTime = checkInMinutes >= startTimeMinutes;
     } catch (e) {
       throw new Error("Lỗi khi phân tích thời gian bắt đầu của loại chấm công");

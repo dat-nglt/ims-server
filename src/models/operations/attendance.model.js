@@ -223,6 +223,7 @@ export default (sequelize, DataTypes) => {
         allowNull: true,
         defaultValue: null,
       },
+
       is_valid_time_check_out: {
         type: DataTypes.BOOLEAN,
         allowNull: true,
