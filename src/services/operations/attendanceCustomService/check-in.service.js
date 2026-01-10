@@ -289,9 +289,9 @@ const updateWorkStatus = async (wid) => {
 
 const updateWorkAssignmentStatus = async (workAssignmentId, newStatus) => {
   if (workAssignmentId && workAssignmentId > 0) {
-    await db.WorkAssignment.update({ assigned_status: "in_progress" }, { where: { id: workAssignmentId } });
-
-    logger.info(`Updated WorkAssignment ${workAssignmentId} assigned_status to in_progress`);
+    logger.error(`Updating WorkAssignment ${workAssignmentId} assigned_status to ${newStatus}`);
+    await db.WorkAssignment.update({ assigned_status: newStatus }, { where: { id: workAssignmentId } });
+    logger.info(`Updated WorkAssignment ${workAssignmentId} assigned_status to ${newStatus}`);
   }
 };
 
