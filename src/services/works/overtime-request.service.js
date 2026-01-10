@@ -376,7 +376,7 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
         approved_at: new Date(),
       });
 
-      console.log("Overtime request fully approved, assigning technicians to work...: ", overtimeRequest.work_id);
+      logger.error("Overtime request fully approved, assigning technicians to work...: ", overtimeRequest.work_id);
 
       // Assign approved technicians to the work if not already assigned
       if (overtimeRequest.work_id) {
