@@ -9,7 +9,6 @@ import {
   getOfficeLocationController,
   getTechnicianLocationHistoryController,
   getJobItemsLocationsController,
-  getGeocodingReverseController,
   getAttendanceSummaryController,
   getAttendanceStatisticsController,
   getAllAttendanceSessionsController,
@@ -17,11 +16,6 @@ import {
   getActiveSessionByUserController,
   getClosedSessionsController,
   checkOutSessionController,
-  getAllAttendanceTypesController,
-  getAttendanceTypeByIdController,
-  createAttendanceTypeController,
-  updateAttendanceTypeController,
-  deleteAttendanceTypeController,
   getCurrentDayAttendanceHistoryByUserIdController,
   getCurrentMonthAttendanceHistoryByUserIdController,
   getDailyCheckInRangeByUserController,
@@ -87,26 +81,6 @@ router.get("/locations/technicians/:technicianId/history", getTechnicianLocation
 
 // GET /locations/job-items - job items locations
 router.get("/locations/job-items", getJobItemsLocationsController);
-
-// GET /locations/geocoding/reverse - reverse geocoding
-router.get("/locations/geocoding/reverse", getGeocodingReverseController);
-
-// --- Attendance type routes
-
-// GET /types - list attendance types
-router.get("/types", getAllAttendanceTypesController);
-
-// POST /types - create attendance type
-router.post("/types", createAttendanceTypeController);
-
-// GET /types/:id - get attendance type by id
-router.get("/types/:id", getAttendanceTypeByIdController);
-
-// PUT /types/:id - update attendance type
-router.put("/types/:id", updateAttendanceTypeController);
-
-// DELETE /types/:id - delete attendance type
-router.delete("/types/:id", deleteAttendanceTypeController);
 
 // --- Reports routes
 

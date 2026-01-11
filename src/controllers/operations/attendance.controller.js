@@ -326,28 +326,6 @@ export const getJobItemsLocationsController = async (req, res) => {
   }
 };
 
-/**
- * Xử lý geocoding reverse
- */
-export const getGeocodingReverseController = async (req, res) => {
-  try {
-    const { lat, lng, language } = req.query;
-    const result = await attendanceService.getGeocodingReverseService({
-      lat: parseFloat(lat),
-      lng: parseFloat(lng),
-      language: language || "vi",
-    });
-    res.json({
-      status: "success",
-      data: result.data,
-      message: "Geocoding reverse thành công",
-    });
-  } catch (error) {
-    logger.error(`[${req.id}] Error in getGeocodingReverseController:`, error.message);
-    res.status(500).json({ error: error.message });
-  }
-};
-
 // ==================== ATTENDANCE SUMMARY & STATISTICS CONTROLLERS ====================
 
 /**
@@ -519,94 +497,6 @@ export const checkOutSessionController = async (req, res) => {
   }
 };
 
-// ==================== ATTENDANCE TYPE CONTROLLERS ====================
-
-/**
- * Lấy danh sách tất cả loại chấm công
- */
-export const getAllAttendanceTypesController = async (req, res) => {
-  try {
-    const result = await attendanceService.getAllAttendanceTypesService();
-    res.json({
-      status: "success",
-      data: result.data,
-      message: "Lấy danh sách loại chấm công thành công",
-    });
-  } catch (error) {
-    logger.error(`[${req.id}] Error in getAllAttendanceTypesController:`, error.message);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-/**
- * Lấy loại chấm công theo ID
- */
-export const getAttendanceTypeByIdController = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await attendanceService.getAttendanceTypeByIdService(id);
-    res.json({
-      status: "success",
-      data: result.data,
-      message: "Lấy thông tin loại chấm công thành công",
-    });
-  } catch (error) {
-    logger.error(`[${req.id}] Error in getAttendanceTypeByIdController:`, error.message);
-    res.status(404).json({ error: error.message });
-  }
-};
-
-/**
- * Tạo loại chấm công mới
- */
-export const createAttendanceTypeController = async (req, res) => {
-  try {
-    const result = await attendanceService.createAttendanceTypeService(req.body);
-    res.status(201).json({
-      status: "success",
-      data: result.data,
-      message: "Tạo loại chấm công thành công",
-    });
-  } catch (error) {
-    logger.error(`[${req.id}] Error in createAttendanceTypeController:`, error.message);
-    res.status(400).json({ error: error.message });
-  }
-};
-
-/**
- * Cập nhật loại chấm công
- */
-export const updateAttendanceTypeController = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await attendanceService.updateAttendanceTypeService(id, req.body);
-    res.json({
-      status: "success",
-      data: result.data,
-      message: "Cập nhật loại chấm công thành công",
-    });
-  } catch (error) {
-    logger.error(`[${req.id}] Error in updateAttendanceTypeController:`, error.message);
-    res.status(400).json({ error: error.message });
-  }
-};
-
-/**
- * Xóa loại chấm công
- */
-export const deleteAttendanceTypeController = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await attendanceService.deleteAttendanceTypeService(id);
-    res.json({
-      status: "success",
-      message: result.message,
-    });
-  } catch (error) {
-    logger.error(`[${req.id}] Error in deleteAttendanceTypeController:`, error.message);
-    res.status(400).json({ error: error.message });
-  }
-};
 // ==================== ALL USERS ATTENDANCE RANGE CONTROLLER ====================
 
 /**

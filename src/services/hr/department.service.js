@@ -320,6 +320,5 @@ export const deleteDepartmentService = async (departmentId) => {
     }
 };
 
-// Note: assignRoleToDepartmentService removed — role assignment is now handled inside updateDepartmentService when `roles` array is passed in update payload.;
 
 

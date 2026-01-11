@@ -13,7 +13,13 @@ import {
 } from "./users/index.js";
 import { routeForProject } from "./projects/index.js";
 import { routeForCustomers } from "./customers/index.js";
-import { routeForWorks, routeForWorkCategories, routeForWorkAssignments, routeForWorkReports, routeForOvertimeRequests } from "./works/index.js";
+import {
+  routeForWorks,
+  routeForWorkCategories,
+  routeForWorkAssignments,
+  routeForWorkReports,
+  routeForOvertimeRequests,
+} from "./works/index.js";
 import {
   routeForAttachments,
   routeForNotifications,
@@ -21,17 +27,11 @@ import {
   routeForUploads,
   routeForAttendanceTypes,
 } from "./operations/index.js";
-import {
-  routeForEmployeeProfiles,
-  routeForTechnicianSkills,
-  routeForDepartments,
-  routeForPositions,
-} from "./hr/index.js";
+import { routeForEmployeeProfiles, routeForDepartments, routeForPositions } from "./hr/index.js";
 import { routeForSalesReports } from "./reports/index.js";
 import { routeForPerformanceMetrics, routeForDashboardMetrics } from "./metrics/index.js";
 import { routeForSystemConfig } from "./system/index.js";
 import { routeForZaloWebhook } from "./webhooks/index.js";
-import examplesRouter from "./examples.js";
 
 const mainRouter = (server) => {
   // Mini App Routes
@@ -69,7 +69,6 @@ const mainRouter = (server) => {
 
   // HR & Management
   server.use("/api/v1/ims/employee-profiles", routeForEmployeeProfiles);
-  server.use("/api/v1/ims/technician-skills", routeForTechnicianSkills);
   server.use("/api/v1/ims/departments", routeForDepartments);
   server.use("/api/v1/ims/positions", routeForPositions);
 
@@ -85,9 +84,6 @@ const mainRouter = (server) => {
 
   // Webhooks
   server.use("/api/v1/ims/zalo-webhook", routeForZaloWebhook);
-
-  // Examples - Authentication middleware usage examples
-  server.use("/api/v1/ims/examples", examplesRouter);
 };
 
 export default mainRouter;

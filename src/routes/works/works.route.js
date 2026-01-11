@@ -1,7 +1,7 @@
 import express from "express";
 import {
-  getAllWorksController, // Lấy danh sách công việc
-  getWorksStatisticsController, // Lấy thống kê công việc
+  getAllWorksController,
+  getWorksStatisticsController, 
   createWorkController,
   updateWorkController,
   approveWorkController,

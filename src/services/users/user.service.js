@@ -4,12 +4,11 @@ import logger from "../../utils/logger.js";
 import * as employeeProfileService from "../hr/employee-profile.service.js";
 /**
  * Lấy danh sách tất cả người dùng
- * SQL: SELECT u.*, ur.*, r.*, m.*, ep.*, ts.* FROM users u
+ * SQL: SELECT u.*, ur.*, r.*, m.*, ep.* FROM users u
  * LEFT JOIN user_roles ur ON u.id = ur.user_id
  * LEFT JOIN roles r ON ur.role_id = r.id AND r.is_deleted = false
  * LEFT JOIN users m ON u.manager_id = m.id
  * LEFT JOIN employee_profiles ep ON u.id = ep.user_id AND ep.is_active = true
- * LEFT JOIN technician_skills ts ON u.id = ts.technician_id;
  */
 export const getAllUsersService = async () => {
   try {
@@ -26,11 +25,6 @@ export const getAllUsersService = async () => {
           where: { is_active: true },
           required: false, // Left join
         },
-        {
-          model: db.TechnicianSkill,
-          as: "skills",
-          required: false, // Left join
-        },
       ],
       order: [["created_at", "DESC"]], // Sắp xếp theo ngày mới tạo giảm dần
     });
@@ -43,12 +37,11 @@ export const getAllUsersService = async () => {
 
 /**
  * Lấy thông tin người dùng theo ID
- * SQL: SELECT u.*, ur.*, r.*, m.*, ep.*, ts.* FROM users u
+ * SQL: SELECT u.*, ur.*, r.*, m.*, ep.* FROM users u
  * LEFT JOIN user_roles ur ON u.id = ur.user_id
  * LEFT JOIN roles r ON ur.role_id = r.id AND r.is_deleted = false
  * LEFT JOIN users m ON u.manager_id = m.id
  * LEFT JOIN employee_profiles ep ON u.id = ep.user_id AND ep.is_active = true
- * LEFT JOIN technician_skills ts ON u.id = ts.technician_id
  * WHERE u.id = ?;
  */
 export const getUserByIdService = async (id) => {
@@ -64,11 +57,6 @@ export const getUserByIdService = async (id) => {
           model: db.EmployeeProfile,
           as: "profile",
           where: { is_active: true },
-          required: false,
-        },
-        {
-          model: db.TechnicianSkill,
-          as: "skills",
           required: false,
         },
       ],

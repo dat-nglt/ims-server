@@ -9,8 +9,6 @@ import {
 
 const router = express.Router();
 
-// Department Routes
-
 /**
  * GET /api/departments
  * Lấy danh sách tất cả phòng ban

@@ -249,40 +249,6 @@ export const rejectWorkAssignmentService = async (id, rejectionData) => {
 };
 
 /**
- * Hoàn thành phân công
- */
-export const completeWorkAssignmentService = async (id) => {
-  try {
-    const assignment = await db.WorkAssignment.findByPk(id);
-    if (!assignment) {
-      throw new Error("Phân công không tồn tại");
-    }
-
-    await assignment.update({
-      assigned_status: "completed",
-      actual_end_time: new Date(),
-    });
-
-    // Log work history
-    try {
-      await createWorkHistoryService({
-        work_id: assignment.work_id,
-        action: "completed",
-        changed_by: assignment.technician_id,
-        notes: "Phân công hoàn thành",
-      });
-    } catch (historyError) {
-      logger.error("Failed to log work history for completion:", historyError.message);
-    }
-
-    return { success: true, data: assignment };
-  } catch (error) {
-    logger.error("Error in completeWorkAssignmentService:" + error.message);
-    throw error;
-  }
-};
-
-/**
  * Cập nhật phân công công việc
  */
 export const updateWorkAssignmentService = async (id, updateData) => {
@@ -316,44 +282,6 @@ export const updateWorkAssignmentService = async (id, updateData) => {
     return { success: true, data: assignment };
   } catch (error) {
     logger.error("Error in updateWorkAssignmentService:" + error.message);
-    throw error;
-  }
-};
-
-/**
- * Bắt đầu công việc (set actual_start_time)
- */
-export const startWorkAssignmentService = async (id) => {
-  try {
-    const assignment = await db.WorkAssignment.findByPk(id);
-    if (!assignment) {
-      throw new Error("Phân công không tồn tại");
-    }
-
-    if (assignment.assigned_status !== "accepted") {
-      throw new Error("Chỉ có thể bắt đầu công việc đã được chấp nhận");
-    }
-
-    await assignment.update({
-      actual_start_time: new Date(),
-      updated_at: new Date(),
-    });
-
-    // Log work history
-    try {
-      await createWorkHistoryService({
-        work_id: assignment.work_id,
-        action: "started",
-        changed_by: assignment.technician_id,
-        notes: "Công việc bắt đầu",
-      });
-    } catch (historyError) {
-      logger.error("Failed to log work history for start:", historyError.message);
-    }
-
-    return { success: true, data: assignment };
-  } catch (error) {
-    logger.error("Error in startWorkAssignmentService:" + error.message);
     throw error;
   }
 };

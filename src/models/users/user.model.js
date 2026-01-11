@@ -189,11 +189,6 @@ export default (sequelize, DataTypes) => {
             as: "attendances",
         });
 
-        User.hasMany(models.TechnicianSkill, {
-            foreignKey: "technician_id",
-            as: "skills",
-        });
-
         User.hasOne(models.EmployeeProfile, {
             foreignKey: { name: "user_id", allowNull: false },
             as: "profile",

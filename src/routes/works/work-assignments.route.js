@@ -6,8 +6,6 @@ import {
   updateWorkAssignmentController,
   acceptWorkAssignmentController,
   rejectWorkAssignmentController,
-  startWorkAssignmentController,
-  completeWorkAssignmentController,
   getWorkAssignmentsByWorkIdController,
 } from "../../controllers/works/work-assignment.controller.js";
 
@@ -30,12 +28,6 @@ router.put("/:id/accept", acceptWorkAssignmentController);
 
 // REJECT work assignment
 router.put("/:id/reject", rejectWorkAssignmentController);
-
-// START work assignment
-router.put("/:id/start", startWorkAssignmentController);
-
-// COMPLETE work assignment
-router.put("/:id/complete", completeWorkAssignmentController);
 
 // GET work assignments by work ID
 router.get("/work/:workId", getWorkAssignmentsByWorkIdController);

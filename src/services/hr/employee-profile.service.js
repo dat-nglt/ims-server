@@ -172,44 +172,6 @@ export const getEmployeeProfileByUserIdService = async (employeeId) => {
 };
 
 /**
- * Tạo hồ sơ
- * SQL: INSERT INTO employee_profiles (user_id, department, specialization, certification, phone_secondary, address, date_of_birth, gender, id_number, hire_date, total_experience_years, performance_rating, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true, NOW(), NOW());
- */
-export const createEmployeeProfileService = async (profileData) => {
-  try {
-    const { user_id } = profileData;
-
-    if (!user_id) {
-      throw new Error("user_id là bắt buộc");
-    }
-
-    // Kiểm tra người dùng tồn tại và active
-    const user = await db.User.findByPk(user_id);
-    if (!user || !user.is_active) {
-      throw new Error("Người dùng không tồn tại hoặc không hoạt động");
-    }
-
-    // Kiểm tra hồ sơ đã tồn tại cho user này
-    const existingProfile = await db.EmployeeProfile.findOne({
-      where: { user_id },
-    });
-    if (existingProfile) {
-      throw new Error("Hồ sơ nhân viên đã tồn tại cho người dùng này");
-    }
-
-    const profile = await db.EmployeeProfile.create({
-      ...profileData,
-      is_active: true, // Ensure new profiles are active
-    });
-
-    return { success: true, data: profile };
-  } catch (error) {
-    logger.error("Error in createEmployeeProfileService:" + error.message);
-    throw error;
-  }
-};
-
-/**
  * Cập nhật hồ sơ
  * SQL: UPDATE employee_profiles SET department = ?, specialization = ?, certification = ?, phone_secondary = ?, address = ?, date_of_birth = ?, gender = ?, id_number = ?, hire_date = ?, total_experience_years = ?, performance_rating = ?, updated_at = NOW() WHERE user_id = ? AND is_active = true;
  */

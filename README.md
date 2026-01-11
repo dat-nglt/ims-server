@@ -130,7 +130,6 @@ sudo systemctl reload nginx
   - `/projects`: Quản lý dự án
   - `/works`: Quản lý công việc
   - `/employee-profiles`: Quản lý hồ sơ nhân viên
-  - `/technician-skills`: Quản lý kỹ năng kỹ thuật viên
   - `/check-ins`: Check-in và vị trí
   - `/notifications`: Thông báo
   - `/reports`: Báo cáo

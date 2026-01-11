@@ -90,24 +90,6 @@ export const rejectWorkAssignmentController = async (req, res) => {
 };
 
 /**
- * Hoàn thành phân công
- */
-export const completeWorkAssignmentController = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await workAssignmentService.completeWorkAssignmentService(id);
-    res.json({
-      status: "success",
-      data: result.data,
-      message: "Hoàn thành phân công thành công",
-    });
-  } catch (error) {
-    logger.error(`[${req.id}] Error in completeWorkAssignmentController:`, error.message);
-    res.status(400).json({ error: error.message });
-  }
-};
-
-/**
  * Cập nhật phân công
  */
 export const updateWorkAssignmentController = async (req, res) => {
@@ -126,24 +108,6 @@ export const updateWorkAssignmentController = async (req, res) => {
     } else {
       res.status(400).json({ error: error.message });
     }
-  }
-};
-
-/**
- * Bắt đầu công việc
- */
-export const startWorkAssignmentController = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await workAssignmentService.startWorkAssignmentService(id);
-    res.json({
-      status: "success",
-      data: result.data,
-      message: "Bắt đầu công việc thành công",
-    });
-  } catch (error) {
-    logger.error(`[${req.id}] Error in startWorkAssignmentController:`, error.message);
-    res.status(400).json({ error: error.message });
   }
 };
 

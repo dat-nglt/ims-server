@@ -1,29 +1,6 @@
 import logger from "../../utils/logger.js";
 import * as notificationService from "../../services/operations/index.js";
 
-// Normalize notification with recipient data
-const normalizeNotification = (notification, recipient = null) => {
-  if (!notification) return null;
-  const data = notification.toJSON ? notification.toJSON() : notification;
-  return {
-    id: data.id,
-    title: data.title,
-    message: data.message,
-    type: data.type,
-    related_work_id: data.related_work_id,
-    related_project_id: data.related_project_id,
-    read: recipient ? Boolean(recipient.is_read) : false,
-    read_at: recipient ? recipient.read_at : null,
-    timestamp: data.timestamp || data.created_at,
-    priority: data.priority || "low",
-    meta: data.meta || null,
-    action_url: data.action_url || null,
-    is_system: data.is_system || false,
-    work: data.work || null,
-    project: data.project || null,
-  };
-};
-
 /**
  * Lấy danh sách thông báo
  */
