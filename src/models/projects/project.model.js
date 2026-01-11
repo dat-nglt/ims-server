@@ -200,7 +200,7 @@ export default (sequelize, DataTypes) => {
 
     // Một dự án có nhiều thành viên (many-to-many với User qua bảng project_members)
     Project.belongsToMany(models.User, {
-      through: 'project_members', // Giả sử bảng junction là project_members
+      through: 'project_team_members', // Giả sử bảng junction là project_members
       foreignKey: 'project_id',
       otherKey: 'user_id',
       as: 'team', // Để khớp với frontend: team: Array<string> (các tên user)
