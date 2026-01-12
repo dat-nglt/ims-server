@@ -946,6 +946,58 @@ export const updateWorkService = async (id, updateData) => {
           }
         }
       }
+
+      // --- Auto-update work status based on assignments ---
+      try {
+        // Get all non-cancelled assignments
+        const allAssignments = await db.WorkAssignment.findAll({
+          where: {
+            work_id: id,
+            assigned_status: { [db.Sequelize.Op.ne]: "cancelled" },
+          },
+        });
+
+        if (allAssignments && allAssignments.length > 0) {
+          const assignmentStatuses = allAssignments.map((a) => a.assigned_status);
+          const allCompleted = assignmentStatuses.every((status) => status === "completed");
+          const anyInProgress = assignmentStatuses.some((status) => status === "in_progress");
+          const anyAccepted = assignmentStatuses.some((status) => status === "accepted");
+
+          // Update work status based on assignments
+          let newWorkStatus = work.status;
+          if (allCompleted) {
+            newWorkStatus = "completed";
+            logger.info(
+              `Tất cả các phân bổ công việc đã được hoàn thành. Cập nhật trạng thái công việc sang "Hoàn thành".`
+            );
+          } else if (anyInProgress) {
+            if (work.status !== "in_progress" && work.status !== "completed") {
+              newWorkStatus = "in_progress";
+              logger.info(
+                `Tồn tại ít nhất một phân bổ công việc đang tiến hành. Cập nhật trạng thái công việc sang "Đang tiến hành".`
+              );
+            }
+          } else if (anyAccepted) {
+            if (work.status === "pending" || work.status === "assigned") {
+              newWorkStatus = "assigned";
+              logger.info(
+                `Tồn tại ít nhất một phân bổ công việc đã được chấp nhận. Cập nhật trạng thái công việc sang "Chờ xử lý".`
+              );
+            }
+          }
+
+          // Perform status update if changed
+          if (newWorkStatus !== work.status) {
+            await work.update({ status: newWorkStatus, updated_at: new Date() });
+            logger.info(
+              `Work ${id} status updated from ${work.status} to ${newWorkStatus} based on assignment statuses.`
+            );
+          }
+        }
+      } catch (statusUpdateErr) {
+        logger.error("Failed to auto-update work status based on assignments: " + statusUpdateErr.message);
+        // Non-blocking error, continue processing
+      }
     }
 
     // --- Reload updated work with relations before returning ---

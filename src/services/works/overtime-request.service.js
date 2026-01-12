@@ -361,6 +361,7 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
     );
 
     // Assign approved technicians to the work if not already assigned
+    let newAssignmentsCreated = false;
     if (overtimeRequest.work_id) {
       // Get all approved technicians for this request
       const approvedTechs = await db.OvertimeRequestTechnician.findAll({
@@ -391,6 +392,7 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
               assigned_at: new Date(),
             });
 
+            newAssignmentsCreated = true;
             logger.info(
               `Technician ${techRecord.technician_id} assigned to work ${overtimeRequest.work_id} from approved overtime request ${requestId}`
             );
@@ -400,6 +402,66 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
             );
             // Continue with other technicians even if one fails
           }
+        }
+      }
+
+      // --- Auto-update work status based on assignments if new assignments were created ---
+      if (newAssignmentsCreated) {
+        try {
+          const work = await db.Work.findByPk(overtimeRequest.work_id);
+          if (work) {
+            // Get all non-cancelled assignments
+            const allAssignments = await db.WorkAssignment.findAll({
+              where: {
+                work_id: overtimeRequest.work_id,
+                assigned_status: { [Op.ne]: "cancelled" },
+              },
+            });
+
+            if (allAssignments && allAssignments.length > 0) {
+              const assignmentStatuses = allAssignments.map((a) => a.assigned_status);
+              const allCompleted = assignmentStatuses.every((status) => status === "completed");
+              const anyInProgress = assignmentStatuses.some((status) => status === "in_progress");
+              const anyAccepted = assignmentStatuses.some((status) => status === "accepted");
+
+              // Update work status based on assignments
+              let newWorkStatus = work.status;
+              if (allCompleted) {
+                newWorkStatus = "completed";
+                logger.info(
+                  `All assignments for work ${overtimeRequest.work_id} are completed. Updating work status to completed.`
+                );
+              } else if (anyInProgress) {
+                if (work.status !== "in_progress" && work.status !== "completed") {
+                  newWorkStatus = "in_progress";
+                  logger.info(
+                    `At least one assignment for work ${overtimeRequest.work_id} is in progress. Updating work status to in_progress.`
+                  );
+                }
+              } else if (anyAccepted) {
+                if (work.status === "pending" || work.status === "assigned") {
+                  newWorkStatus = "assigned";
+                  logger.info(
+                    `At least one assignment for work ${overtimeRequest.work_id} is accepted. Updating work status to assigned.`
+                  );
+                }
+              }
+
+              // Perform status update if changed
+              if (newWorkStatus !== work.status) {
+                await work.update({ status: newWorkStatus, updated_at: new Date() });
+                logger.info(
+                  `Work ${overtimeRequest.work_id} status updated from ${work.status} to ${newWorkStatus} based on assignment statuses.`
+                );
+              }
+            }
+          }
+        } catch (statusUpdateErr) {
+          logger.error(
+            "Failed to auto-update work status based on assignments in approveOvertimeRequest: " +
+              statusUpdateErr.message
+          );
+          // Non-blocking error, continue processing
         }
       }
     }
