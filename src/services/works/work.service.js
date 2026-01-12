@@ -654,13 +654,15 @@ export const createWorkService = async (workData) => {
  */
 export const updateWorkService = async (id, updateData) => {
   let transaction = null;
+
   try {
+    // Kiểm tr công việc có tồn tai không
     const work = await db.Work.findByPk(id);
     if (!work) {
       throw new Error("Công việc không tồn tại");
     }
 
-    // --- FK validations (if provided) ---
+    // Kiểm tra người dùng thực hiện thay đổi
     if (updateData.created_by) {
       const creator = await db.User.findByPk(updateData.created_by);
       if (!creator) {
@@ -668,6 +670,7 @@ export const updateWorkService = async (id, updateData) => {
       }
     }
 
+    // Kiểm tra danh mục công việc nếu thay đổi
     if (updateData.category_id) {
       const category = await db.WorkCategory.findByPk(updateData.category_id);
       if (!category) {
@@ -675,6 +678,7 @@ export const updateWorkService = async (id, updateData) => {
       }
     }
 
+    // Kiểm tra dự án nếu thay đổi
     if (updateData.project_id) {
       const project = await db.Project.findByPk(updateData.project_id);
       if (!project) {
@@ -682,6 +686,7 @@ export const updateWorkService = async (id, updateData) => {
       }
     }
 
+    // Kiểm tra nhân viên kinh doanh nếu thay đổi
     if (updateData.created_by_sales_id) {
       const salesPerson = await db.User.findByPk(updateData.created_by_sales_id);
       if (!salesPerson) {
@@ -689,6 +694,7 @@ export const updateWorkService = async (id, updateData) => {
       }
     }
 
+    // Kiểm tra khách hàng nếu thay đổi
     if (updateData.customer_id) {
       const customer = await db.Customer.findByPk(updateData.customer_id);
       if (!customer) {
@@ -837,8 +843,9 @@ export const updateWorkService = async (id, updateData) => {
     })();
 
     // --- Non-blocking: handle assignments if provided ---
-    let createdAssignments = [];
-    let cancelledAssignments = [];
+    let createdAssignments = []; // Mảng lưu các phân công mới tạo hoặc khôi phục
+    let cancelledAssignments = []; // Mảng lưu các phân công bị hủy bỏ
+    // Chỉ xử lý nếu trường này được cung cấp
     if (updateData.assigned_to_technician_id !== undefined) {
       const parseTechnicianIds = (val) => {
         if (val === undefined || val === null || val === "") return [];
@@ -852,17 +859,16 @@ export const updateWorkService = async (id, updateData) => {
         return !isNaN(n) ? [n] : [];
       };
 
+      // Lấy danh sách kỹ thuật viên mới được phân công
       const newAssignedTechnicianIds = parseTechnicianIds(updateData.assigned_to_technician_id);
 
-      // Get current assignments for this work
+      // Lấy danh sách phân công hiện tại
       const currentAssignments = await db.WorkAssignment.findAll({
         where: { work_id: id },
         attributes: ["id", "technician_id", "assigned_status"],
       });
 
-      const currentTechnicianIds = currentAssignments.map((a) => a.technician_id);
-
-      // 1. Add new technicians that are not yet assigned (or restore cancelled assignments)
+      // Thêm phân công cho kỹ thuật viên nếu chưa có hoặc khôi phục phân công bị huỷ
       for (const techId of newAssignedTechnicianIds) {
         try {
           const technician = await db.User.findByPk(techId);
@@ -871,7 +877,7 @@ export const updateWorkService = async (id, updateData) => {
             continue;
           }
 
-          // Check if already assigned (and not cancelled)
+          // Lấy danh sách phân công hiện tại trừ phân công đã bị hủy
           const existingActive = await db.WorkAssignment.findOne({
             where: {
               work_id: id,
@@ -885,7 +891,7 @@ export const updateWorkService = async (id, updateData) => {
             continue;
           }
 
-          // Check if there's a cancelled assignment to restore
+          // Kiểm tra nếu có phân công bị hủy trước đó, thì khôi phục lại
           const cancelledAssignment = await db.WorkAssignment.findOne({
             where: {
               work_id: id,
@@ -926,7 +932,7 @@ export const updateWorkService = async (id, updateData) => {
         }
       }
 
-      // 2. Cancel assignments for technicians that are no longer in the new list
+      // 2. Huỷ phân công cho các kỹ thuật viên không còn trong danh sách mới
       for (const currentAssignment of currentAssignments) {
         if (!newAssignedTechnicianIds.includes(currentAssignment.technician_id)) {
           try {
@@ -947,9 +953,8 @@ export const updateWorkService = async (id, updateData) => {
         }
       }
 
-      // --- Auto-update work status based on assignments ---
       try {
-        // Get all non-cancelled assignments
+        // Lấy tất cả phân công công việc hiện tại trừ các phân công đã bị hủy
         const allAssignments = await db.WorkAssignment.findAll({
           where: {
             work_id: id,
@@ -957,6 +962,7 @@ export const updateWorkService = async (id, updateData) => {
           },
         });
 
+        // Kiểm tra trạng thái phân công để cập nhật trạng thái công việc
         if (allAssignments && allAssignments.length > 0) {
           const assignmentStatuses = allAssignments.map((a) => a.assigned_status);
           const allCompleted = assignmentStatuses.every((status) => status === "completed");
@@ -964,28 +970,35 @@ export const updateWorkService = async (id, updateData) => {
           const anyAccepted = assignmentStatuses.some((status) => status === "accepted");
           const anyPending = assignmentStatuses.some((status) => status === "pending");
 
-          // Update work status based on assignments
+          // Cập nhật trạng thái công việc dựa trên trạng thái phân công
           let newWorkStatus = work.status;
+          // Nếu tất cả phân công đều completed
           if (allCompleted) {
             newWorkStatus = "completed";
             logger.info(
               `Tất cả các phân bổ công việc đã được hoàn thành. Cập nhật trạng thái công việc sang "Hoàn thành".`
             );
-          } else if (anyInProgress) {
+          }
+          // Nếu có ít nhất một phân công đang thực hiện
+          else if (anyInProgress) {
             if (work.status !== "in_progress" && work.status !== "completed") {
               newWorkStatus = "in_progress";
               logger.info(
                 `Tồn tại ít nhất một phân bổ công việc đang tiến hành. Cập nhật trạng thái công việc sang "Đang tiến hành".`
               );
             }
-          } else if (anyAccepted) {
+          }
+          // Nếu có ít nhất một phân công đã được chấp nhận
+          else if (anyAccepted) {
             if (work.status === "pending" || work.status === "assigned" || work.status === "completed") {
               newWorkStatus = "pending";
               logger.info(
                 `Tồn tại ít nhất một phân bổ công việc đã được chấp nhận. Cập nhật trạng thái công việc sang "Chờ xử lý".`
               );
             }
-          } else if (anyPending) {
+          }
+          // Nếu có ít nhất một phân công đang chờ xử lý
+          else if (anyPending) {
             // Nếu chỉ có pending (không có in_progress hay accepted), nhưng work status là completed
             // thì cần cập nhật lại thành assigned (vì có technician mới được gán)
             if (work.status === "completed") {
@@ -996,7 +1009,7 @@ export const updateWorkService = async (id, updateData) => {
             }
           }
 
-          // Perform status update if changed
+          // Nếu trạng thái công việc có sự thay đổi, thực hiện cập nhật
           if (newWorkStatus !== work.status) {
             await work.update({ status: newWorkStatus, updated_at: new Date() });
             logger.info(
@@ -1005,8 +1018,7 @@ export const updateWorkService = async (id, updateData) => {
           }
         }
       } catch (statusUpdateErr) {
-        logger.error("Failed to auto-update work status based on assignments: " + statusUpdateErr.message);
-        // Non-blocking error, continue processing
+        throw new Error("Lỗi khi thực hiện cập nhật công việc");
       }
     }
 
@@ -1104,12 +1116,10 @@ export const updateWorkService = async (id, updateData) => {
 
       return { success: true, data: updatedWork, message: "Cập nhật công việc thành công" };
     } catch (reloadErr) {
-      logger.error("Error while reloading updated work: " + reloadErr.message);
       return { success: true, data: work };
     }
   } catch (error) {
     if (transaction) await transaction.rollback();
-    logger.error("Error in updateWorkService: " + error.message);
     throw error;
   }
 };
