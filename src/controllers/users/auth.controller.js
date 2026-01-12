@@ -36,8 +36,6 @@ export const loginController = async (req, res) => {
     // Tìm user theo phone
     const userResult = await userService.getUserByPhoneService(phone);
 
-    console.log("Thông tin người dùng: ", userResult.data.userRoles);
-
     if (!userResult.success) {
       return res.status(200).json({
         status: "error",

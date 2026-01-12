@@ -25,37 +25,46 @@ export const checkOutService = async (payload) => {
 
     await updateSession(payload);
 
-    // Cập nhật assigned_status trong WorkAssignment thành completed khi chấm công ra thành công
+    // Cập nhật assigned_status trong WorkAssignment thành completed chỉ khi tất cả session đã closed
     if (payload.work_id && payload.work_id > 0) {
-      const workAssignment = await db.WorkAssignment.findOne({
+      // Kiểm tra tất cả session liên quan đến công việc và người dùng có trạng thái closed không
+      const openSessions = await db.AttendanceSession.count({
         where: {
+          user_id: payload.user_id,
           work_id: payload.work_id,
-          technician_id: payload.user_id,
+          status: { [db.Sequelize.Op.ne]: "closed" },
         },
       });
 
-      if (workAssignment && workAssignment.id) {
-        await db.WorkAssignment.update({ assigned_status: "completed" }, { where: { id: workAssignment.id } });
-
-        logger.info(
-          `Updated WorkAssignment ${workAssignment.id} assigned_status to completed for work ${payload.work_id} and technician ${payload.user_id}`
-        );
-
-        // Kiểm tra xem tất cả WorkAssignment liên quan đến công việc hiện tại đã hoàn thành chưa
-        const pendingOrAcceptedAssignments = await db.WorkAssignment.count({
+      // Chỉ cập nhật WorkAssignment khi tất cả session đã closed
+      if (openSessions === 0) {
+        const workAssignment = await db.WorkAssignment.findOne({
           where: {
             work_id: payload.work_id,
-            assigned_status: { [db.Sequelize.Op.in]: ["pending", "accepted"] },
+            technician_id: payload.user_id,
           },
         });
 
-        // Nếu không còn assignment nào ở trạng thái pending hoặc accepted, cập nhật trạng thái công việc thành completed
-        if (pendingOrAcceptedAssignments === 0) {
-          await updateWorkStatus(payload.work_id);
-          logger.info(
-            `All WorkAssignments for work ${payload.work_id} are completed. Updated work status to completed.`
-          );
+        if (workAssignment && workAssignment.id) {
+          await db.WorkAssignment.update({ assigned_status: "completed" }, { where: { id: workAssignment.id } });
+
+          // Kiểm tra xem tất cả WorkAssignment liên quan đến công việc hiện tại đã hoàn thành chưa
+          const pendingOrAcceptedAssignments = await db.WorkAssignment.count({
+            where: {
+              work_id: payload.work_id,
+              assigned_status: { [db.Sequelize.Op.in]: ["pending", "accepted"] },
+            },
+          });
+
+          // Nếu không còn assignment nào ở trạng thái pending hoặc accepted, cập nhật trạng thái công việc thành completed
+          if (pendingOrAcceptedAssignments === 0) {
+            await updateWorkStatus(payload.work_id);
+          }
         }
+      } else {
+        logger.warn(
+          `Skipped WorkAssignment update for work ${payload.work_id} and technician ${payload.user_id}. Still have ${openSessions} open session(s).`
+        );
       }
     }
 
