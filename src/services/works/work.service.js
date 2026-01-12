@@ -962,6 +962,7 @@ export const updateWorkService = async (id, updateData) => {
           const allCompleted = assignmentStatuses.every((status) => status === "completed");
           const anyInProgress = assignmentStatuses.some((status) => status === "in_progress");
           const anyAccepted = assignmentStatuses.some((status) => status === "accepted");
+          const anyPending = assignmentStatuses.some((status) => status === "pending");
 
           // Update work status based on assignments
           let newWorkStatus = work.status;
@@ -978,10 +979,19 @@ export const updateWorkService = async (id, updateData) => {
               );
             }
           } else if (anyAccepted) {
-            if (work.status === "pending" || work.status === "assigned") {
-              newWorkStatus = "assigned";
+            if (work.status === "pending" || work.status === "assigned" || work.status === "completed") {
+              newWorkStatus = "pending";
               logger.info(
                 `Tồn tại ít nhất một phân bổ công việc đã được chấp nhận. Cập nhật trạng thái công việc sang "Chờ xử lý".`
+              );
+            }
+          } else if (anyPending) {
+            // Nếu chỉ có pending (không có in_progress hay accepted), nhưng work status là completed
+            // thì cần cập nhật lại thành assigned (vì có technician mới được gán)
+            if (work.status === "completed") {
+              newWorkStatus = "pending";
+              logger.info(
+                `Phát hiện technician mới được gán sau khi công việc hoàn thành. Cập nhật trạng thái công việc sang "Chờ xử lý".`
               );
             }
           }
