@@ -1,35 +1,27 @@
 import express from "express";
-import {
-  getAllNotificationsController,
-  getNotificationByIdController,
-  markNotificationAsReadController,
-  deleteNotificationController,
-  getUnreadNotificationsCountController,
-  getAllSystemNotificationsController,
-  markAllNotificationsAsReadController,
-} from "../../controllers/operations/notification.controller.js";
+import * as notificationControllers from "../../controllers/operations/notification.controller.js";
 
 const router = express.Router();
 
 // GET all notifications for user
-router.get("/", getAllNotificationsController);
+router.get("/", notificationControllers.getAllNotificationsController);
 
 // GET all system notifications
-router.get("/all-system", getAllSystemNotificationsController);
+router.get("/all-system", notificationControllers.getAllSystemNotificationsController);
 
 // GET notification by ID
-router.get("/:id", getNotificationByIdController);
+router.get("/:id", notificationControllers.getNotificationByIdController);
 
 // MARK notification as read
-router.put("/:id/read", markNotificationAsReadController);
+router.put("/:id/read", notificationControllers.markNotificationAsReadController);
 
 // MARK all notifications as read for user
-router.put("/read-all", markAllNotificationsAsReadController);
+router.put("/read-all", notificationControllers.markAllNotificationsAsReadController);
 
 // DELETE notification
-router.delete("/:id", deleteNotificationController);
+router.delete("/:id", notificationControllers.deleteNotificationController);
 
 // GET unread notifications count
-router.get("/unread/count", getUnreadNotificationsCountController);
+router.get("/unread/count", notificationControllers.getUnreadNotificationsCountController);
 
 export default router;

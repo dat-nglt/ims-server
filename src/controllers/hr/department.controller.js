@@ -1,18 +1,12 @@
 import logger from "../../utils/logger.js";
-import {
-  getAllDepartmentsService,
-  getDepartmentWithRolesByIdService,
-  createDepartmentService,
-  updateDepartmentService,
-  deleteDepartmentService,
-} from "../../services/hr/index.js";
+import * as departmentService from "../../services/hr/index.js";
 
 // Lấy danh sách tất cả phòng ban
 export const getAllDepartmentsController = async (req, res) => {
   try {
     const { includeRoles = false, includeInactive = false, isSelection = false } = req.query;
 
-    const result = await getAllDepartmentsService({
+    const result = await departmentService.getAllDepartmentsService({
       includeRoles: includeRoles === "true",
       includeInactive: includeInactive === "true",
       isSelection: isSelection === "true",
@@ -34,7 +28,7 @@ export const getDepartmentByIdController = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await getDepartmentWithRolesByIdService(id);
+    const result = await departmentService.getDepartmentWithRolesByIdService(id);
 
     if (!result.success) {
       return res.status(404).json({ status: "error", message: result.message });
@@ -58,7 +52,7 @@ export const createDepartmentController = async (req, res) => {
       return res.status(401).json({ error: "Không có quyền" });
     }
 
-    const result = await createDepartmentService(departmentData, createdBy);
+    const result = await departmentService.createDepartmentService(departmentData, createdBy);
 
     if (!result.success) {
       return res.status(400).json(result);
@@ -83,7 +77,7 @@ export const updateDepartmentController = async (req, res) => {
       return res.status(401).json({ error: "Không có quyền" });
     }
 
-    const result = await updateDepartmentService(id, updateData, updatedBy);
+    const result = await departmentService.updateDepartmentService(id, updateData, updatedBy);
 
     if (!result.success) {
       // if not found, return 404
@@ -105,7 +99,7 @@ export const deleteDepartmentController = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await deleteDepartmentService(id);
+    const result = await departmentService.deleteDepartmentService(id);
 
     if (!result.success) {
       // not found -> 404

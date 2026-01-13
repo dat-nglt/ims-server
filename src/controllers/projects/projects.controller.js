@@ -1,18 +1,10 @@
 import logger from "../../utils/logger.js";
-import {
-  getProjectsService,
-  getStatisticsService,
-  getDistributionService,
-  createProjectService,
-  updateProjectService,
-  deleteProjectService,
-  getProjectsCategoryForWorkService,
-} from "../../services/projects/projects.service.js";
-import { getAllProjectHistoriesService } from "../../services/projects/project-history.service.js";
+import * as projectsService from "../../services/projects/projects.service.js";
+import * as projectHistoryService from "../../services/projects/project-history.service.js";
 
 export const getProjectsController = async (req, res) => {
   try {
-    const result = await getProjectsService(req.query);
+    const result = await projectsService.getProjectsService(req.query);
     res.json(result);
   } catch (error) {
     logger.error(`[${req.id}] Error in getProjectsController:`, error.message);
@@ -23,7 +15,7 @@ export const getProjectsController = async (req, res) => {
 export const getProjectsCategoryForWorkController = async (req, res) => {
   try {
     // Return all projects without filters or pagination
-    const result = await getProjectsCategoryForWorkService();
+    const result = await projectsService.getProjectsCategoryForWorkService();
     res.json(result);
   } catch (error) {
     logger.error(`[${req.id}] Error in getProjectsCategoryForWorkController:`, error.message);
@@ -36,7 +28,7 @@ export const getProjectsCategoryForWorkController = async (req, res) => {
  */
 export const getStatisticsController = async (req, res) => {
   try {
-    const result = await getStatisticsService();
+    const result = await projectsService.getStatisticsService();
     res.json({
       status: "success",
       data: result.data,
@@ -53,7 +45,7 @@ export const getStatisticsController = async (req, res) => {
  */
 export const getDistributionController = async (req, res) => {
   try {
-    const result = await getDistributionService();
+    const result = await projectsService.getDistributionService();
     res.json({
       status: "success",
       data: result.data,
@@ -70,7 +62,7 @@ export const getDistributionController = async (req, res) => {
  */
 export const createProjectController = async (req, res) => {
   try {
-    const result = await createProjectService(req.body);
+    const result = await projectsService.createProjectService(req.body);
     res.status(201).json({
       status: "success",
       data: result.data,
@@ -88,7 +80,7 @@ export const createProjectController = async (req, res) => {
 export const updateProjectController = async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await updateProjectService(id, req.body);
+    const result = await projectsService.updateProjectService(id, req.body);
     res.json({
       status: "success",
       data: result.data,
@@ -106,7 +98,7 @@ export const updateProjectController = async (req, res) => {
 export const deleteProjectController = async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await deleteProjectService(id);
+    const result = await projectsService.deleteProjectService(id);
     res.json({
       status: "success",
       data: result,
@@ -124,7 +116,7 @@ export const deleteProjectController = async (req, res) => {
 export const getProjectHistoriesController = async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await getAllProjectHistoriesService(id);
+    const result = await projectHistoryService.getAllProjectHistoriesService(id);
     res.json({
       status: "success",
       data: result.data,

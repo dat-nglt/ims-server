@@ -3,7 +3,8 @@
 /**
  * Seeder 000: Seed Users (merged)
  *
- * Seeds 10 users into the `users` table.
+ * Seeds 6 users into the `users` table.
+ * All users have valid Zalo IDs for integration.
  */
 
 export async function up(queryInterface, Sequelize) {
@@ -110,79 +111,11 @@ export async function up(queryInterface, Sequelize) {
       created_at: new Date("2025-12-12T08:00:00.000Z"),
       updated_at: new Date("2025-12-12T08:00:00.000Z"),
     },
-    {
-      employee_id: "EMP007",
-      name: "Nhân viên 7",
-      position_id: null,
-      avatar_url: "https://res.cloudinary.com/djiwsnmtq/image/upload/v1768035267/defaultUser_fldfhz.jpg",
-      phone: "0797000444",
-      email: "staff7@example.com",
-      password: "0797000444",
-      zalo_id: null,
-      status: "active",
-      manager_id: 1,
-      is_active: true,
-      approved: "approved",
-      last_login: null,
-      created_at: new Date("2025-12-13T08:00:00.000Z"),
-      updated_at: new Date("2025-12-13T08:00:00.000Z"),
-    },
-    {
-      employee_id: "EMP008",
-      name: "Nhân viên 8",
-      position_id: null,
-      avatar_url: "https://res.cloudinary.com/djiwsnmtq/image/upload/v1768035267/defaultUser_fldfhz.jpg",
-      phone: "0797000555",
-      email: "staff8@example.com",
-      password: "0797000555",
-      zalo_id: null,
-      status: "active",
-      manager_id: 1,
-      is_active: true,
-      approved: "approved",
-      last_login: null,
-      created_at: new Date("2025-12-14T08:00:00.000Z"),
-      updated_at: new Date("2025-12-14T08:00:00.000Z"),
-    },
-    {
-      employee_id: "EMP009",
-      name: "Nhân viên 9",
-      position_id: null,
-      avatar_url: "https://res.cloudinary.com/djiwsnmtq/image/upload/v1768035267/defaultUser_fldfhz.jpg",
-      phone: "0797000666",
-      email: "staff9@example.com",
-      password: "0797000666",
-      zalo_id: null,
-      status: "active",
-      manager_id: 1,
-      is_active: true,
-      approved: "approved",
-      last_login: null,
-      created_at: new Date("2025-12-15T08:00:00.000Z"),
-      updated_at: new Date("2025-12-15T08:00:00.000Z"),
-    },
-    {
-      employee_id: "EMP010",
-      name: "Nhân viên 10",
-      position_id: null,
-      avatar_url: "https://res.cloudinary.com/djiwsnmtq/image/upload/v1768035267/defaultUser_fldfhz.jpg",
-      phone: "0797000777",
-      email: "staff10@example.com",
-      password: "0797000777",
-      zalo_id: null,
-      status: "active",
-      manager_id: 1,
-      is_active: true,
-      approved: "approved",
-      last_login: null,
-      created_at: new Date("2025-12-16T08:00:00.000Z"),
-      updated_at: new Date("2025-12-16T08:00:00.000Z"),
-    },
   ];
 
   await queryInterface.bulkInsert("users", usersData, {});
 }
 
 export async function down(queryInterface, Sequelize) {
-  await queryInterface.bulkDelete("users", { id: { [Sequelize.Op.in]: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] } }, {});
+  await queryInterface.bulkDelete("users", { id: { [Sequelize.Op.in]: [1, 2, 3, 4, 5, 6] } }, {});
 }

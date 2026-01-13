@@ -1,8 +1,4 @@
-import {
-  sendNotificationService,
-  sendOrderConfirmationService,
-  sendCustomNotificationService,
-} from "../../services/mini-app/notification.service.js";
+import * as notificationService from "../../services/mini-app/notification.service.js";
 import logger from "../../utils/logger.js";
 
 /**
@@ -20,7 +16,7 @@ export const sendOrderConfirmationController = async (req, res) => {
       });
     }
 
-    const result = await sendOrderConfirmationService(receiverId, orderData || {});
+    const result = await notificationService.sendOrderConfirmationService(receiverId, orderData || {});
     res.json(result);
   } catch (error) {
     logger.error(
@@ -58,7 +54,7 @@ export const sendCustomNotificationController = async (req, res) => {
       });
     }
 
-    const result = await sendCustomNotificationService(
+    const result = await notificationService.sendCustomNotificationService(
       receiverId,
       title,
       contentTitle,
@@ -96,7 +92,7 @@ export const sendNotificationController = async (req, res) => {
       });
     }
 
-    const result = await sendNotificationService(
+    const result = await notificationService.sendNotificationService(
       receiverId,
       templateData,
       templateId

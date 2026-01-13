@@ -70,7 +70,6 @@ export const getWorkByCodeController = async (req, res) => {
 export const createWorkController = async (req, res) => {
   try {
     const result = await workService.createWorkService(req.body);
-    // Backwards compatible response shape: return created work directly in `data`
     res.status(201).json(result);
   } catch (error) {
     logger.error(`[${req.id}] Error in createWorkController:`, error.message);

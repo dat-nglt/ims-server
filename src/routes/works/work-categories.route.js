@@ -1,27 +1,21 @@
 import express from "express";
-import {
-  getAllWorkCategoriesController,
-  getWorkCategoryByIdController,
-  createWorkCategoryController,
-  updateWorkCategoryController,
-  deleteWorkCategoryController,
-} from "../../controllers/works/work-category.controller.js";
+import * as workCategoryControllers from "../../controllers/works/work-category.controller.js";
 
 const router = express.Router();
 
 // Query params: ?page=1&limit=20&search=name&is_active=true
-router.get("/", getAllWorkCategoriesController);
+router.get("/", workCategoryControllers.getAllWorkCategoriesController);
 
 // GET work category by ID
-router.get("/:id", getWorkCategoryByIdController);
+router.get("/:id", workCategoryControllers.getWorkCategoryByIdController);
 
 // CREATE new work category
-router.post("/", createWorkCategoryController);
+router.post("/", workCategoryControllers.createWorkCategoryController);
 
 // UPDATE work category
-router.put("/:id", updateWorkCategoryController);
+router.put("/:id", workCategoryControllers.updateWorkCategoryController);
 
 // DELETE work category (soft delete)
-router.delete("/:id", deleteWorkCategoryController);
+router.delete("/:id", workCategoryControllers.deleteWorkCategoryController);
 
 export default router;

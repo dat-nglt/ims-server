@@ -1,31 +1,24 @@
 import express from "express";
-import {
-    getAllWorkReportsController,
-    getWorkReportByIdController,
-    createWorkReportController,
-    updateWorkReportController,
-    approveWorkReportController,
-    rejectWorkReportController,
-} from "../../controllers/works/work-report.controller.js";
+import * as workReportControllers from "../../controllers/works/work-report.controller.js";
 
 const router = express.Router();
 
 // GET all work reports
-router.get("/", getAllWorkReportsController);
+router.get("/", workReportControllers.getAllWorkReportsController);
 
 // GET work report by ID
-router.get("/:id", getWorkReportByIdController);
+router.get("/:id", workReportControllers.getWorkReportByIdController);
 
 // CREATE new work report
-router.post("/", createWorkReportController);
+router.post("/", workReportControllers.createWorkReportController);
 
 // UPDATE work report
-router.put("/:id", updateWorkReportController);
+router.put("/:id", workReportControllers.updateWorkReportController);
 
 // APPROVE work report
-router.put("/:id/approve", approveWorkReportController);
+router.put("/:id/approve", workReportControllers.approveWorkReportController);
 
 // REJECT work report
-router.put("/:id/reject", rejectWorkReportController);
+router.put("/:id/reject", workReportControllers.rejectWorkReportController);
 
 export default router;

@@ -1,4 +1,4 @@
-import rolePermissionsService from "../../services/users/role-permissions.service.js";
+import * as rolePermissionsService from "../../services/users/role-permissions.service.js";
 
 const assignPermission = async (req, res) => {
     try {
@@ -84,4 +84,4 @@ const bulkAssignPermissions = async (req, res) => {
     }
 };
 
-export default { assignPermission, removePermission, bulkAssignPermissions };
+export { assignPermission, removePermission, bulkAssignPermissions };

@@ -1,14 +1,5 @@
 import logger from "../../utils/logger.js";
-import {
-  getAllPositionsService,
-  getPositionByIdService,
-  createPositionService,
-  updatePositionService,
-  deletePositionService,
-  getPositionsByDepartmentService,
-  assignRoleToPositionService,
-  removeRoleFromPositionService,
-} from "../../services/hr/index.js";
+import * as positionService from "../../services/hr/index.js";
 
 /**
  * GET /api/positions
@@ -25,7 +16,7 @@ export const getAllPositionsController = async (req, res) => {
       includeInactive = false,
     } = req.query;
 
-    const result = await getAllPositionsService({
+    const result = await positionService.getAllPositionsService({
       departmentId: departmentId ? parseInt(departmentId) : undefined,
       level,
       status,
@@ -60,7 +51,7 @@ export const getPositionByIdController = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await getPositionByIdService(id);
+    const result = await positionService.getPositionByIdService(id);
 
     if (!result.success) {
       return res.status(404).json({ status: "error", message: result.message });
@@ -97,7 +88,7 @@ export const createPositionController = async (req, res) => {
       });
     }
 
-    const result = await createPositionService(positionData, createdBy);
+    const result = await positionService.createPositionService(positionData, createdBy);
 
     if (!result.success) {
       return res.status(400).json(result);
@@ -129,7 +120,7 @@ export const updatePositionController = async (req, res) => {
       return res.status(401).json({ error: "Không có quyền" });
     }
 
-    const result = await updatePositionService(id, updateData, updatedBy);
+    const result = await positionService.updatePositionService(id, updateData, updatedBy);
 
     if (!result.success) {
       return res.status(400).json(result);
@@ -159,7 +150,7 @@ export const deletePositionController = async (req, res) => {
       return res.status(401).json({ error: "Không có quyền" });
     }
 
-    const result = await deletePositionService(id, deletedBy);
+    const result = await positionService.deletePositionService(id, deletedBy);
 
     if (!result.success) {
       return res.status(400).json(result);
@@ -185,7 +176,7 @@ export const getPositionsByDepartmentController = async (req, res) => {
     const { level, status, includeRoles = false, includeInactive = false } =
       req.query;
 
-    const result = await getPositionsByDepartmentService(
+    const result = await positionService.getPositionsByDepartmentService(
       departmentId,
       {
         level,
@@ -230,7 +221,7 @@ export const assignRoleToPositionController = async (req, res) => {
       return res.status(401).json({ error: "Không có quyền" });
     }
 
-    const result = await assignRoleToPositionService(
+    const result = await positionService.assignRoleToPositionService(
       id,
       roleId,
       is_default,
@@ -265,7 +256,7 @@ export const removeRoleFromPositionController = async (req, res) => {
       return res.status(401).json({ error: "Không có quyền" });
     }
 
-    const result = await removeRoleFromPositionService(id, roleId, removedBy);
+    const result = await positionService.removeRoleFromPositionService(id, roleId, removedBy);
 
     if (!result.success) {
       return res.status(400).json(result);

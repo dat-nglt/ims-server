@@ -1,35 +1,27 @@
 import express from "express";
-import {
-  getAllWorkAssignmentsController,
-  getWorkAssignmentForTechnicianController,
-  createWorkAssignmentController,
-  updateWorkAssignmentController,
-  acceptWorkAssignmentController,
-  rejectWorkAssignmentController,
-  getWorkAssignmentsByWorkIdController,
-} from "../../controllers/works/work-assignment.controller.js";
+import * as workAssignmentControllers from "../../controllers/works/work-assignment.controller.js";
 
 const router = express.Router();
 
 // GET all work assignments (legacy)
-router.get("/all", getAllWorkAssignmentsController);
+router.get("/all", workAssignmentControllers.getAllWorkAssignmentsController);
 
 // GET work assignment for technician by ID
-router.get("/:id", getWorkAssignmentForTechnicianController);
+router.get("/:id", workAssignmentControllers.getWorkAssignmentForTechnicianController);
 
 // CREATE new work assignment
-router.post("/", createWorkAssignmentController);
+router.post("/", workAssignmentControllers.createWorkAssignmentController);
 
 // UPDATE work assignment
-router.put("/:id", updateWorkAssignmentController);
+router.put("/:id", workAssignmentControllers.updateWorkAssignmentController);
 
 // ACCEPT work assignment
-router.put("/:id/accept", acceptWorkAssignmentController);
+router.put("/:id/accept", workAssignmentControllers.acceptWorkAssignmentController);
 
 // REJECT work assignment
-router.put("/:id/reject", rejectWorkAssignmentController);
+router.put("/:id/reject", workAssignmentControllers.rejectWorkAssignmentController);
 
 // GET work assignments by work ID
-router.get("/work/:workId", getWorkAssignmentsByWorkIdController);
+router.get("/work/:workId", workAssignmentControllers.getWorkAssignmentsByWorkIdController);
 
 export default router;

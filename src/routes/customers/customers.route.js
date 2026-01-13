@@ -1,27 +1,21 @@
-import express from 'express';
-import {
-  getCustomersController,
-  getCustomerByIdController,
-  createCustomerController,
-  updateCustomerController,
-  deleteCustomerController,
-} from '../../controllers/customers/customer.controller.js';
+import express from "express";
+import * as customerControllers from "../../controllers/customers/customer.controller.js";
 
 const router = express.Router();
 
 // GET / - list
-router.get('/', getCustomersController);
+router.get("/", customerControllers.getCustomersController);
 
 // GET /:id - get by id
-router.get('/:id', getCustomerByIdController);
+router.get("/:id", customerControllers.getCustomerByIdController);
 
 // POST / - create
-router.post('/', createCustomerController);
+router.post("/", customerControllers.createCustomerController);
 
 // PUT /:id - update
-router.put('/:id', updateCustomerController);
+router.put("/:id", customerControllers.updateCustomerController);
 
 // DELETE /:id - soft delete
-router.delete('/:id', deleteCustomerController);
+router.delete("/:id", customerControllers.deleteCustomerController);
 
 export default router;

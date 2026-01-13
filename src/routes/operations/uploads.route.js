@@ -1,5 +1,5 @@
 import express from "express";
-import { getCloudinarySignature } from "../../controllers/operations/uploads.controller.js";
+import * as uploadsControllers from "../../controllers/operations/uploads.controller.js";
 
 const routerForUpload = express.Router();
 
@@ -8,6 +8,6 @@ const routerForUpload = express.Router();
  * Body: { folder?: string }
  * Returns: { signature, timestamp, api_key, cloud_name, folder }
  */
-routerForUpload.post("/cloudinary/sign", getCloudinarySignature);
+routerForUpload.post("/cloudinary/sign", uploadsControllers.getCloudinarySignature);
 
 export default routerForUpload;
