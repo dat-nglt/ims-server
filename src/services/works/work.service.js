@@ -50,23 +50,64 @@ export const getAllWorksService = async (query = {}) => {
   }
 };
 
-export const getAllWorksGroupByUserService = async (userId) => {
+export const getAllWorksGroupByUserService = async (UID, isToday = false) => {
   try {
-    // Validate and coerce userId to integer to avoid SQL errors (e.g., 'undefined')
-    if (userId === undefined || userId === null) {
+    // Validation: UID must be provided and be a valid integer
+    if (UID === undefined || UID === null) {
       return { success: false, data: [], message: "Thiếu userId" };
     }
 
-    const uid = Number(userId);
+    const uid = Number(UID);
     if (Number.isNaN(uid) || !Number.isInteger(uid)) {
       return { success: false, data: [], message: "userId không hợp lệ" };
     }
 
-    // Lấy danh sách công việc được tạo bởi user, kèm theo các work assignments và thông tin chi tiết
-    const worksGroupbyUserID = await db.Work.findAll({
-      where: {
-        created_by: uid,
-      },
+    // Build where condition for Work based on created_by and optional isToday
+    const whereCondition = { created_by: uid };
+
+    if (isToday) {
+      const startOfDay = new Date();
+      startOfDay.setUTCHours(0, 0, 0, 0);
+      const endOfDay = new Date();
+      endOfDay.setUTCHours(23, 59, 59, 999);
+      whereCondition.required_date = {
+        [Op.between]: [startOfDay, endOfDay],
+      };
+    }
+
+    // Retrieve works created by the specified user with all relationships
+    const works = await db.Work.findAll({
+      where: whereCondition,
+      attributes: [
+        "id",
+        "work_code",
+        "title",
+        "description",
+        "notes",
+        "category_id",
+        "project_id",
+        "created_by",
+        "priority",
+        "status",
+        "service_type",
+        "required_date",
+        "required_time_hour",
+        "required_time_minute",
+        "created_date",
+        "completed_date",
+        "location",
+        "customer_name",
+        "customer_phone",
+        "customer_address",
+        "customer_id",
+        "location_lat",
+        "location_lng",
+        "estimated_hours",
+        "actual_hours",
+        "estimated_cost",
+        "actual_cost",
+        "payment_status",
+      ],
       include: [
         {
           model: db.WorkCategory,
@@ -74,14 +115,14 @@ export const getAllWorksGroupByUserService = async (userId) => {
           attributes: ["id", "name"],
         },
         {
-          model: db.User,
-          as: "salesPerson",
-          attributes: ["id", "name", "email", "phone", "avatar_url", "employee_id"],
-        },
-        {
           model: db.Project,
           as: "project",
           attributes: ["id", "name"],
+        },
+        {
+          model: db.User,
+          as: "salesPerson",
+          attributes: ["id", "name", "email", "phone", "avatar_url", "employee_id"],
         },
         {
           model: db.WorkAssignment,
@@ -103,7 +144,6 @@ export const getAllWorksGroupByUserService = async (userId) => {
             "actual_end_time",
             "notes",
             "created_at",
-            "updated_at",
           ],
           include: [
             {
@@ -123,19 +163,10 @@ export const getAllWorksGroupByUserService = async (userId) => {
       order: [["created_date", "DESC"]],
     });
 
-    return {
-      success: true,
-      data: worksGroupbyUserID,
-      message: "Lấy danh sách công việc theo người dùng thành công",
-    };
+    return { success: true, data: works, message: "Lấy danh sách công việc theo người dùng thành công" };
   } catch (error) {
-    logger.error("Error in getAllWorksGroupByUserService: " + error.message);
-
-    return {
-      success: false,
-      data: [],
-      message: "Lấy danh sách công việc theo người dùng thất bại: " + error.message,
-    };
+    logger.error(`Error in getAllWorksGroupByUserService with UID ${UID}: ${error.message}`);
+    return { success: false, data: [], message: "Lấy danh sách công việc thất bại: " + error.message };
   }
 };
 
