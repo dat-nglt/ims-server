@@ -7,7 +7,7 @@ const router = express.Router();
 // Đang sử dụng
 router.get("/", workControllers.getAllWorksController);
 
-router.get("/all-works-group-by-user", workControllers.getAllWorksGroupByUserController);
+router.get("/all-works-group-by-user/:userId", workControllers.getAllWorksGroupByUserController);
 
 // VN: Lấy danh sách kỹ thuật viên có thể phân công cho công việc
 // Đang sử dụng
