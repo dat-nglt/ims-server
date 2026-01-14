@@ -14,6 +14,17 @@ export const getAllWorksController = async (req, res) => {
   }
 };
 
+export const getAllWorksGroupByUserController = async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    const result = await workService.getAllWorksGroupByUserService(userId);
+    return res.json(result);
+  } catch (error) {
+    logger.error(`[${req.id}] Error in getAllWorksGroupByUserController:` + error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const getTechnicianListToAssignController = async (req, res) => {
   try {
     const result = await workService.getTechnicianListToAssignService();

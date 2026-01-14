@@ -1,6 +1,6 @@
 import db from "../../models/index.js";
 import logger from "../../utils/logger.js";
-import { Op } from "sequelize";
+import { Op, where } from "sequelize";
 import { Parser } from "json2csv";
 import ExcelJS from "exceljs";
 import { createWorkHistoryService } from "./work-history.service.js";
@@ -47,6 +47,39 @@ export const getAllWorksService = async (query = {}) => {
   } catch (error) {
     logger.error("Error in getAllWorksService: " + error.message);
     return { success: false, data: [], message: "Lấy danh sách công việc thất bại: " + error.message };
+  }
+};
+
+export const getAllWorksGroupByUserService = async (userId) => {
+  try {
+    const worksGroupbyUserID = await db.Work.findAll({
+      include: [
+        {
+          model: db.WorkAssignment,
+          as: "assignments",
+          attributes: ["id", "work_id", "technician_id", "assigned_status"],
+        },
+
+        { model: db.User, as: "salesPerson", attributes: ["id", "name", "employee_id", "avatar_url", "phone"] },
+      ],
+      where: {
+        created_by: userId,
+      },
+    });
+
+    return {
+      success: true,
+      data: worksGroupbyUserID,
+      message: "Lấy danh sách công việc theo người dùng thành công",
+    };
+  } catch (error) {
+    logger.error("Error in getAllWorksGroupByUserService: " + error.message);
+
+    return {
+      success: false,
+      data: [],
+      message: "Lấy danh sách công việc theo người dùng thất bại",
+    };
   }
 };
 
