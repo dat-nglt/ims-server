@@ -16,7 +16,7 @@ export const getAllWorksController = async (req, res) => {
 
 export const getAllWorksGroupByUserController = async (req, res) => {
   try {
-    const userId = req.query.userId;
+    const userId = req.params.userId;
     const result = await workService.getAllWorksGroupByUserService(userId);
     return res.json(result);
   } catch (error) {
