@@ -52,19 +52,75 @@ export const getAllWorksService = async (query = {}) => {
 
 export const getAllWorksGroupByUserService = async (userId) => {
   try {
+    // Validate and coerce userId to integer to avoid SQL errors (e.g., 'undefined')
+    if (userId === undefined || userId === null) {
+      return { success: false, data: [], message: "Thiếu userId" };
+    }
+
+    const uid = Number(userId);
+    if (Number.isNaN(uid) || !Number.isInteger(uid)) {
+      return { success: false, data: [], message: "userId không hợp lệ" };
+    }
+
+    // Lấy danh sách công việc được tạo bởi user, kèm theo các work assignments và thông tin chi tiết
     const worksGroupbyUserID = await db.Work.findAll({
+      where: {
+        created_by: uid,
+      },
       include: [
+        {
+          model: db.WorkCategory,
+          as: "category",
+          attributes: ["id", "name"],
+        },
+        {
+          model: db.User,
+          as: "salesPerson",
+          attributes: ["id", "name", "email", "phone", "avatar_url", "employee_id"],
+        },
+        {
+          model: db.Project,
+          as: "project",
+          attributes: ["id", "name"],
+        },
         {
           model: db.WorkAssignment,
           as: "assignments",
-          attributes: ["id", "work_id", "technician_id", "assigned_status"],
+          where: { assigned_status: { [Op.ne]: "cancelled" } },
+          required: false,
+          attributes: [
+            "id",
+            "work_id",
+            "technician_id",
+            "assigned_by",
+            "assignment_date",
+            "assigned_status",
+            "accepted_at",
+            "rejected_reason",
+            "estimated_start_time",
+            "estimated_end_time",
+            "actual_start_time",
+            "actual_end_time",
+            "notes",
+            "created_at",
+            "updated_at",
+          ],
+          include: [
+            {
+              model: db.User,
+              as: "technician",
+              attributes: ["id", "name", "email", "phone", "avatar_url", "position_id"],
+            },
+            {
+              model: db.User,
+              as: "assignedByUser",
+              attributes: ["id", "name", "email"],
+            },
+          ],
+          order: [["assignment_date", "DESC"]],
         },
-
-        { model: db.User, as: "salesPerson", attributes: ["id", "name", "employee_id", "avatar_url", "phone"] },
       ],
-      where: {
-        created_by: userId,
-      },
+      order: [["created_date", "DESC"]],
     });
 
     return {
@@ -78,7 +134,7 @@ export const getAllWorksGroupByUserService = async (userId) => {
     return {
       success: false,
       data: [],
-      message: "Lấy danh sách công việc theo người dùng thất bại",
+      message: "Lấy danh sách công việc theo người dùng thất bại: " + error.message,
     };
   }
 };
