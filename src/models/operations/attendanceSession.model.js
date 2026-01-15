@@ -89,21 +89,21 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.DECIMAL(11, 8),
                 allowNull: true,
             },
-            // ID văn phòng/kho - cho khối văn phòng (optional, thay thế work_id)
+            // ID địa điểm chấm công - cho khối văn phòng (optional, thay thế work_id)
             office_location_id: {
                 type: DataTypes.INTEGER,
                 allowNull: true,
                 references: {
-                    model: "office_locations",
+                    model: "attendance_locations",
                     key: "id",
                 },
             },
-            // ID văn phòng check-out (cho trường hợp công tác)
+            // ID địa điểm check-out (cho trường hợp công tác)
             office_location_id_check_out: {
                 type: DataTypes.INTEGER,
                 allowNull: true,
                 references: {
-                    model: "office_locations",
+                    model: "attendance_locations",
                     key: "id",
                 },
             },
