@@ -147,8 +147,6 @@ const checkExistingOfficeSession = async (user_id, office_location_id, attendanc
       },
     };
   }
-  }
-
   return null;
 };
 
