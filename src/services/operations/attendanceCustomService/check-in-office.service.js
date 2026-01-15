@@ -74,7 +74,7 @@ const validateUser = async (user_id) => {
 };
 
 const validateOfficeLocation = async (office_location_id) => {
-  if (!office_location_id || office_location_id <= 0) {
+  if (!office_location_id) {
     throw new Error("Thiếu thông tin văn phòng để chấm công");
   }
 
