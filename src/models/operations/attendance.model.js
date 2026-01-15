@@ -143,22 +143,22 @@ export default (sequelize, DataTypes) => {
         allowNull: true,
       },
 
-      // ID văn phòng/kho - cho khối văn phòng (optional, thay thế work_id)
+      // ID địa điểm chấm công - cho khối văn phòng (optional, thay thế work_id)
       office_location_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
-          model: "office_locations",
+          model: "attendance_locations",
           key: "id",
         },
       },
 
-      // ID văn phòng check-out (cho trường hợp công tác - check-out tại văn phòng khác)
+      // ID địa điểm check-out (cho trường hợp công tác - check-out tại địa điểm khác)
       office_location_id_check_out: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
-          model: "office_locations",
+          model: "attendance_locations",
           key: "id",
         },
       },
@@ -513,16 +513,16 @@ export default (sequelize, DataTypes) => {
       as: "attendanceSession",
     });
 
-    // Liên kết tới office location (check-in)
-    Attendance.belongsTo(models.OfficeLocation, {
+    // Liên kết tới địa điểm chấm công (check-in)
+    Attendance.belongsTo(models.AttendanceLocation, {
       foreignKey: "office_location_id",
-      as: "officeLocation",
+      as: "attendanceLocation",
     });
 
-    // Liên kết tới office location check-out (công tác)
-    Attendance.belongsTo(models.OfficeLocation, {
+    // Liên kết tới địa điểm check-out (công tác)
+    Attendance.belongsTo(models.AttendanceLocation, {
       foreignKey: "office_location_id_check_out",
-      as: "officeLocationCheckOut",
+      as: "attendanceLocationCheckOut",
     });
 
     // Liên kết tới người xét duyệt hoàn thành sớm
