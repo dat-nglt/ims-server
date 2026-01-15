@@ -143,6 +143,38 @@ export default (sequelize, DataTypes) => {
         allowNull: true,
       },
 
+      // ID văn phòng/kho - cho khối văn phòng (optional, thay thế work_id)
+      office_location_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "office_locations",
+          key: "id",
+        },
+      },
+
+      // ID văn phòng check-out (cho trường hợp công tác - check-out tại văn phòng khác)
+      office_location_id_check_out: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "office_locations",
+          key: "id",
+        },
+      },
+
+      // Phân loại chấm công (regular, business_trip, remote_work, work_from_home)
+      attendance_category: {
+        type: DataTypes.ENUM("regular", "business_trip", "remote_work", "work_from_home"),
+        defaultValue: "regular",
+      },
+
+      // Có cần kiểm tra vị trí hay không (true = check phạm vi, false = ignore vị trí)
+      require_location_verification: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+      },
+
       // Trạng thái (cập nhật: enum để hỗ trợ 'on_leave' từ TrackAttendance)
       status: {
         type: DataTypes.ENUM("checked_in", "checked_out", "on_leave"),
@@ -293,6 +325,10 @@ export default (sequelize, DataTypes) => {
         { fields: ["early_completion_reviewer_id"] }, // Index cho truy xuất theo người xét duyệt
         { fields: ["project_id", "check_in_time"] }, // Composite for project-date queries
         { fields: ["work_id", "check_in_time"] }, // Composite for work-date queries
+        { fields: ["office_location_id"] }, // Index cho văn phòng
+        { fields: ["office_location_id_check_out"] }, // Index cho office check-out
+        { fields: ["attendance_category"] }, // Index cho phân loại chấm công
+        { fields: ["office_location_id", "check_in_time"] }, // Composite for office-date queries
       ],
       hooks: {
         // Hook: set status from check_out_time
@@ -475,6 +511,18 @@ export default (sequelize, DataTypes) => {
     Attendance.belongsTo(models.AttendanceSession, {
       foreignKey: "attendance_session_id",
       as: "attendanceSession",
+    });
+
+    // Liên kết tới office location (check-in)
+    Attendance.belongsTo(models.OfficeLocation, {
+      foreignKey: "office_location_id",
+      as: "officeLocation",
+    });
+
+    // Liên kết tới office location check-out (công tác)
+    Attendance.belongsTo(models.OfficeLocation, {
+      foreignKey: "office_location_id_check_out",
+      as: "officeLocationCheckOut",
     });
 
     // Liên kết tới người xét duyệt hoàn thành sớm

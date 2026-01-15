@@ -89,6 +89,24 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DECIMAL(11, 8),
         allowNull: true,
       },
+      // ID văn phòng/kho - cho khối văn phòng (optional, thay thế work_id)
+      office_location_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "office_locations",
+          key: "id",
+        },
+      },
+      // ID văn phòng check-out (cho trường hợp công tác)
+      office_location_id_check_out: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "office_locations",
+          key: "id",
+        },
+      },
     },
     {
       tableName: "attendance_sessions",
@@ -101,6 +119,8 @@ export default (sequelize, DataTypes) => {
         { fields: ["ended_at"] },
         { fields: ["status"] },
         { fields: ["attendance_type_id"] },
+        { fields: ["office_location_id"] }, // Index cho office session
+        { fields: ["office_location_id_check_out"] }, // Index cho office check-out session
       ],
       hooks: {
         beforeSave: (session) => {
@@ -121,21 +141,32 @@ export default (sequelize, DataTypes) => {
         // - Nếu không → tạo session mới và ghi nhận lịch sử
         // Lưu ý: Session sẽ dùng chung cho primary technician + co-technicians
         beforeCreate: async (session, options) => {
-          // Kiểm tra xem đã có session open cho user/work này không
+          // Kiểm tra xem đã có session open cho user/work hoặc user/office_location không
+          const where = {
+            user_id: session.user_id,
+            attendance_type_id: session.attendance_type_id,
+            ended_at: null,
+            status: "open",
+          };
+
+          // Nếu là work_id (kỹ thuật)
+          if (session.work_id) {
+            where.work_id = session.work_id;
+          }
+          // Nếu là office_location_id (văn phòng)
+          else if (session.office_location_id) {
+            where.office_location_id = session.office_location_id;
+          }
+
           const existingSession = await session.constructor.findOne({
-            where: {
-              user_id: session.user_id,
-              attendance_type_id: session.attendance_type_id,
-              work_id: session.work_id,
-              ended_at: null,
-              status: "open",
-            },
+            where,
             transaction: options.transaction,
           });
 
           if (existingSession) {
+            const location = session.work_id ? "công việc" : "văn phòng";
             throw new Error(
-              `Không thể chấm công: Người dùng ${session.user_id} đã chấm công vào công việc lúc ${session.started_at}. Session ID: ${existingSession.id}`
+              `Không thể chấm công: Người dùng ${session.user_id} đã chấm công vào ${location} lúc ${session.started_at}. Session ID: ${existingSession.id}`
             );
           }
         },
@@ -310,6 +341,16 @@ export default (sequelize, DataTypes) => {
     AttendanceSession.belongsTo(models.AttendanceType, {
       foreignKey: "attendance_type_id",
       as: "attendance_type",
+    });
+
+    AttendanceSession.belongsTo(models.OfficeLocation, {
+      foreignKey: "office_location_id",
+      as: "officeLocation",
+    });
+
+    AttendanceSession.belongsTo(models.OfficeLocation, {
+      foreignKey: "office_location_id_check_out",
+      as: "officeLocationCheckOut",
     });
 
     AttendanceSession.belongsTo(models.Attendance, {

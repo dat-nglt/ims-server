@@ -26,6 +26,7 @@ import {
   routeForAttendance,
   routeForUploads,
   routeForAttendanceTypes,
+  routeForOfficeAttendance,
 } from "./operations/index.js";
 import { routeForEmployeeProfiles, routeForDepartments, routeForPositions } from "./hr/index.js";
 import { routeForSalesReports } from "./reports/index.js";
@@ -62,6 +63,7 @@ const mainRouter = (server) => {
 
   // Operations
   server.use("/api/v1/ims/attendance", routeForAttendance);
+  server.use("/api/v1/ims/attendance", routeForOfficeAttendance); // Office attendance routes
   server.use("/api/v1/ims/attendance-types", routeForAttendanceTypes);
   server.use("/api/v1/ims/uploads", routeForUploads);
   server.use("/api/v1/ims/attachments", routeForAttachments);

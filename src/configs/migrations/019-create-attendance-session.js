@@ -87,6 +87,24 @@ export async function up(queryInterface, Sequelize) {
       type: Sequelize.DECIMAL(11, 8),
       allowNull: true,
     },
+    // ID văn phòng/kho - cho khối văn phòng (optional, thay thế work_id)
+    office_location_id: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: "attendance_locations",
+        key: "id",
+      },
+    },
+    // ID văn phòng check-out (cho trường hợp công tác)
+    office_location_id_check_out: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: "attendance_locations",
+        key: "id",
+      },
+    },
     created_at: {
       type: Sequelize.DATE,
       defaultValue: Sequelize.NOW,
@@ -103,6 +121,8 @@ export async function up(queryInterface, Sequelize) {
   await queryInterface.addIndex("attendance_sessions", ["ended_at"]);
   await queryInterface.addIndex("attendance_sessions", ["status"]);
   await queryInterface.addIndex("attendance_sessions", ["attendance_type_id"]);
+  await queryInterface.addIndex("attendance_sessions", ["office_location_id"]);
+  await queryInterface.addIndex("attendance_sessions", ["office_location_id_check_out"]);
 }
 
 export async function down(queryInterface, Sequelize) {

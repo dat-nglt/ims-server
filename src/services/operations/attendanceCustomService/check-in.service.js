@@ -47,7 +47,7 @@ export const checkInService = async (checkInPayload) => {
     const user = await validateUser(user_id);
 
     const existingSession = await checkExistingSession(user_id, attendance_type_id, work_id);
-    // Nếu tồn tại phiên chấm công mở hoặc đã chấm công xong công việc với ca chấm công trong ngày hôm nay, trả về thông tin phiên/chấm công đó và không tạo mới
+    // Nếu tồn tại phiên chấm công mở cho công việc này hoặc đã chấm công xong công việc với ca chấm công trong ngày hôm nay, trả về thông tin phiên/chấm công đó và không tạo mới
     if (existingSession) {
       return existingSession;
     }
@@ -136,50 +136,94 @@ const validateAttendanceType = async (attendance_type_id) => {
   return null;
 };
 
-const checkExistingSession = async (user_id, attendance_type_id) => {
+const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
   const startOfCurrentDay = new Date(); /// Thời gian bắt đầu ngày hiện tại
   startOfCurrentDay.setHours(0, 0, 0, 0);
   const endOfCurrentDay = new Date(startOfCurrentDay); // Thời gian kết thúc ngày hiện tại
   endOfCurrentDay.setDate(endOfCurrentDay.getDate() + 1);
 
-  // Kiển tra các phiên chấm công mở trong ngày hôm nay cho từng CA CHẤM CÔNG thuộc từng NGƯỜI DÙNG
-  const whereCondition = {
+  // 1️⃣ KIỂM TRA PHIÊN CHẤM CÔNG MỞ (status: "open")
+  // Ngăn chặn check-in lặp lại cho cùng công việc + ca chấm công trong ngày
+  const whereConditionOpenSession = {
     user_id,
+    work_id, // ✅ THÊM: Kiểm tra công việc cụ thể
     status: "open",
     attendance_type_id,
     started_at: { [Op.between]: [startOfCurrentDay, endOfCurrentDay] },
   };
 
-  const anySession = await db.AttendanceSession.findOne({
-    where: whereCondition,
+  const openSession = await db.AttendanceSession.findOne({
+    where: whereConditionOpenSession,
     include: [{ model: db.Work, as: "work" }],
     order: [["started_at", "DESC"]],
   });
 
-  // Nếu tồn tại phiên chấm công mở trên CA CHẤM CÔNG thuộc NGƯỜI DÙNG, trả về thông tin phiên chấm công đó và không cho phép chấm công mới
-  if (anySession) {
+  // Nếu tồn tại phiên chấm công MỞ cho công việc này, trả về thông tin và không cho phép chấm công mới
+  if (openSession) {
     const latestAttendance = await db.Attendance.findOne({
-      where: { attendance_session_id: anySession.id, user_id },
+      where: { attendance_session_id: openSession.id, user_id },
       order: [["check_in_time", "DESC"]],
       attributes: ["id", "check_in_time"],
     });
 
-    // Định dạng lại thời gian check-in theo múi giờ Việt Nam
     const checkInAt = latestAttendance ? toVietnamTimeISO(latestAttendance.check_in_time) : null;
 
     return {
       success: false,
       alreadyCheckedIn: true,
       message: checkInAt
-        ? `Bạn đã thực hiện chấm công vào lúc ${checkInAt.split("T")[1].substring(0, 5)}`
+        ? `Bạn đã thực hiện chấm công vào lúc ${checkInAt.split("T")[1].substring(0, 5)} cho công việc này`
         : `Bạn đã có phiên chấm công hiện tại`,
       session: {
-        id: anySession.id,
-        work: anySession.work ? { id: anySession.work.id, title: anySession.work.title } : null,
+        id: openSession.id,
+        work: openSession.work ? { id: openSession.work.id, title: openSession.work.title } : null,
         check_in_time: checkInAt,
         check_in_id: latestAttendance ? latestAttendance.id : null,
       },
     };
+  }
+
+  // 2️⃣ KIỂM TRA XEM ĐÃ CHECK-OUT CHƯA
+  // Ngăn chặn check-in lại sau khi đã check-out cùng công việc trong ngày
+  const whereConditionClosedSession = {
+    user_id,
+    work_id, // ✅ THÊM: Kiểm tra công việc cụ thể
+    attendance_type_id,
+    started_at: { [Op.between]: [startOfCurrentDay, endOfCurrentDay] },
+    [Op.or]: [{ status: "closed" }, { status: "on_leave" }], // Phiên chấm công đã đóng
+  };
+
+  const closedSession = await db.AttendanceSession.findOne({
+    where: whereConditionClosedSession,
+    include: [{ model: db.Work, as: "work" }],
+    order: [["started_at", "DESC"]],
+  });
+
+  // Nếu đã check-out, không cho phép check-in lại
+  if (closedSession) {
+    const checkOutAttendance = await db.Attendance.findOne({
+      where: { attendance_session_id: closedSession.id, user_id, check_out_time: { [Op.ne]: null } },
+      order: [["check_out_time", "DESC"]],
+      attributes: ["id", "check_in_time", "check_out_time"],
+    });
+
+    if (checkOutAttendance) {
+      const checkOutAt = checkOutAttendance.check_out_time ? toVietnamTimeISO(checkOutAttendance.check_out_time) : null;
+
+      return {
+        success: false,
+        alreadyCheckedOut: true,
+        message: checkOutAt
+          ? `Bạn đã thực hiện chấm công ra lúc ${checkOutAt.split("T")[1].substring(0, 5)} cho công việc này. Không thể chấm công vào lại.`
+          : `Công việc này đã được hoàn thành trong ngày hôm nay. Không thể chấm công vào lại.`,
+        session: {
+          id: closedSession.id,
+          work: closedSession.work ? { id: closedSession.work.id, title: closedSession.work.title } : null,
+          check_out_time: checkOutAt,
+          check_out_id: checkOutAttendance ? checkOutAttendance.id : null,
+        },
+      };
+    }
   }
 
   return null;

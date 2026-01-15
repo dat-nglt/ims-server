@@ -104,6 +104,38 @@ export async function up(queryInterface, Sequelize) {
       allowNull: true,
       comment: "Địa chỉ check-out",
     },
+    // ID văn phòng/kho - cho khối văn phòng (optional, thay thế work_id)
+    office_location_id: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: "attendance_locations",
+        key: "id",
+      },
+      comment: "FK tới attendance_locations (cho khối văn phòng)",
+    },
+    // ID văn phòng check-out (cho trường hợp công tác - check-out tại văn phòng khác)
+    office_location_id_check_out: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: "attendance_locations",
+        key: "id",
+      },
+      comment: "FK tới attendance_locations cho check-out (công tác)",
+    },
+    // Phân loại chấm công (regular, business_trip, remote_work, work_from_home)
+    attendance_category: {
+      type: Sequelize.ENUM("regular", "business_trip", "remote_work", "work_from_home"),
+      defaultValue: "regular",
+      comment: "Phân loại chấm công: regular, business_trip, remote_work, work_from_home",
+    },
+    // Có cần kiểm tra vị trí hay không (true = check phạm vi, false = ignore vị trí)
+    require_location_verification: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: true,
+      comment: "Có cần kiểm tra vị trí hay không",
+    },
     // Cập nhật status thành ENUM để hỗ trợ 'on_leave'
     status: {
       type: Sequelize.ENUM("checked_in", "checked_out", "on_leave"),
@@ -274,6 +306,11 @@ export async function up(queryInterface, Sequelize) {
   // Additional indexes
   await queryInterface.addIndex("attendance", ["project_id", "check_in_time"]);
   await queryInterface.addIndex("attendance", ["work_id", "check_in_time"]);
+  // Indexes cho office attendance
+  await queryInterface.addIndex("attendance", ["office_location_id"]);
+  await queryInterface.addIndex("attendance", ["office_location_id_check_out"]);
+  await queryInterface.addIndex("attendance", ["attendance_category"]);
+  await queryInterface.addIndex("attendance", ["office_location_id", "check_in_time"]);
   // Composite index for location queries
   await queryInterface.addIndex("attendance", ["latitude", "longitude"]);
   // Partial index for quick violation lookup (Postgres) - create only if not exists
