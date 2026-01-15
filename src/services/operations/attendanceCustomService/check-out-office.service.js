@@ -23,12 +23,12 @@ export const checkOutOfficeService = async (payload) => {
       attendance_category = "regular",
     } = payload;
 
-    // 1. Validate office location
-    const officeLocation = await validateOfficeLocation(office_location_id);
+    // 1. Validate attendance location
+    const attendanceLocation = await validateAttendanceLocation(office_location_id);
 
-    // 2. Validate check-out office location (nếu công tác)
+    // 2. Validate check-out attendance location (nếu công tác)
     if (office_location_id_check_out && office_location_id_check_out > 0) {
-      await validateOfficeLocation(office_location_id_check_out);
+      await validateAttendanceLocation(office_location_id_check_out);
     }
 
     // 3. Tìm bản ghi chấm công mở
@@ -43,7 +43,7 @@ export const checkOutOfficeService = async (payload) => {
       attendance,
       payload,
       checkOutTime,
-      officeLocation,
+      attendanceLocation,
       office_location_id_check_out
     );
 
@@ -54,7 +54,7 @@ export const checkOutOfficeService = async (payload) => {
     await updateSession(user_id, office_location_id, attendance_type_id, checkOutTime);
 
     // 8. Tạo thông báo
-    await createOfficeCheckOutNotification(user_id, officeLocation, office_location_id_check_out, attendance_category);
+    await createOfficeCheckOutNotification(user_id, attendanceLocation, office_location_id_check_out, attendance_category);
 
     return {
       success: true,
@@ -73,21 +73,21 @@ export const checkOutOfficeService = async (payload) => {
 
 // ======================== Helper Functions ========================
 
-const validateOfficeLocation = async (office_location_id) => {
+const validateAttendanceLocation = async (office_location_id) => {
   if (!office_location_id) {
-    throw new Error("Thiếu thông tin văn phòng để chấm công ra");
+    throw new Error("Thiếu thông tin địa điểm để chấm công ra");
   }
 
-  const officeLocation = await db.OfficeLocation.findByPk(office_location_id);
-  if (!officeLocation) {
-    throw new Error("Không tìm thấy thông tin văn phòng");
+  const attendanceLocation = await db.AttendanceLocation.findByPk(office_location_id);
+  if (!attendanceLocation) {
+    throw new Error("Không tìm thấy thông tin địa điểm");
   }
 
-  if (!officeLocation.is_active) {
-    throw new Error("Văn phòng này hiện không hoạt động");
+  if (!attendanceLocation.is_active) {
+    throw new Error("Địa điểm này hiện không hoạt động");
   }
 
-  return officeLocation;
+  return attendanceLocation;
 };
 
 /**
@@ -141,9 +141,9 @@ const validateCheckOutConditions = (attendance, payload) => {
 };
 
 /**
- * Chuẩn bị dữ liệu check-out cho văn phòng
+ * Chuẩn bị dữ liệu check-out cho địa điểm
  */
-const prepareCheckOutData = (attendance, payload, checkOutTime, officeLocation, officeLocationCheckOut) => {
+const prepareCheckOutData = (attendance, payload, checkOutTime, attendanceLocation, officeLocationCheckOut) => {
   const photoUrlCheckOut = payload.photo_url_check_out ? String(payload.photo_url_check_out).trim() : null;
   const latCheckOut = payload.latitude_check_out || null;
   const lngCheckOut = payload.longitude_check_out || null;
@@ -157,8 +157,8 @@ const prepareCheckOutData = (attendance, payload, checkOutTime, officeLocation, 
   let isWithinAtCheckOut = true;
   let distanceFromOfficeCheckOut = null;
 
-  // Xác định office location để check-out
-  const targetOfficeCheckOut = officeLocationCheckOut || null;
+  // Xác định attendance location để check-out
+  const targetLocationCheckOut = officeLocationCheckOut || null;
 
   // Nếu không phải công tác/remote và có tọa độ, tính toán khoảng cách
   if (
@@ -167,20 +167,20 @@ const prepareCheckOutData = (attendance, payload, checkOutTime, officeLocation, 
     latCheckOut &&
     lngCheckOut
   ) {
-    // Nếu công tác, check-out tại office khác - tính từ office_location_check_out
-    // Nếu không, check-out tại office ban đầu - tính từ office_location
-    const targetOffice = targetOfficeCheckOut || targetOfficeCheckOut;
+    // Nếu công tác, check-out tại địa điểm khác - tính từ office_location_check_out
+    // Nếu không, check-out tại địa điểm ban đầu - tính từ office_location
+    const targetLocation = targetLocationCheckOut || targetLocationCheckOut;
 
-    if (targetOffice) {
+    if (targetLocation) {
       distanceFromOfficeCheckOut = calculateDistance(
         parseFloat(latCheckOut),
         parseFloat(lngCheckOut),
-        parseFloat(targetOffice.latitude),
-        parseFloat(targetOffice.longitude)
+        parseFloat(targetLocation.latitude),
+        parseFloat(targetLocation.longitude)
       );
 
-      if (distanceFromOfficeCheckOut > targetOffice.radius) {
-        calculatedViolationDistanceCheckOut = distanceFromOfficeCheckOut - targetOffice.radius;
+      if (distanceFromOfficeCheckOut > targetLocation.radius) {
+        calculatedViolationDistanceCheckOut = distanceFromOfficeCheckOut - targetLocation.radius;
         isWithinAtCheckOut = false;
       } else {
         isWithinAtCheckOut = true;
@@ -218,7 +218,7 @@ const prepareCheckOutData = (attendance, payload, checkOutTime, officeLocation, 
   }
 
   return {
-    office_location_id_check_out: targetOfficeCheckOut ? targetOfficeCheckOut.id : null,
+    office_location_id_check_out: targetLocationCheckOut ? targetLocationCheckOut.id : null,
     check_out_time: checkOutTime,
     check_out_time_on_local: checkOutTimeOnLocal,
     duration_minutes: durationMinutes,
@@ -226,7 +226,7 @@ const prepareCheckOutData = (attendance, payload, checkOutTime, officeLocation, 
     address_check_out: addressCheckOut,
     latitude_check_out: latCheckOut ? parseFloat(latCheckOut) : null,
     longitude_check_out: lngCheckOut ? parseFloat(lngCheckOut) : null,
-    location_name_check_out: locationNameCheckOut || (targetOfficeCheckOut ? targetOfficeCheckOut.name : null),
+    location_name_check_out: locationNameCheckOut || (targetLocationCheckOut ? targetLocationCheckOut.name : null),
     distance_from_work_check_out: distanceFromOfficeCheckOut,
     is_within_radius_check_out: isWithinAtCheckOutFinal,
     violation_distance_check_out: calculatedViolationDistanceCheckOut,
@@ -278,11 +278,11 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 };
 
 /**
- * Tạo thông báo chấm công ra văn phòng
+ * Tạo thông báo chấm công ra địa điểm
  */
 const createOfficeCheckOutNotification = async (
   user_id,
-  officeLocation,
+  attendanceLocation,
   officeLocationCheckOut,
   attendance_category
 ) => {
@@ -290,7 +290,7 @@ const createOfficeCheckOutNotification = async (
     const user = await db.User.findByPk(user_id);
     if (!user) return;
 
-    let message = `Nhân viên ${user.name} đã chấm công ra từ ${officeLocation.name}.`;
+    let message = `Nhân viên ${user.name} đã chấm công ra từ ${attendanceLocation.name}.`;
 
     if (attendance_category === "business_trip" && officeLocationCheckOut) {
       message = `Nhân viên ${user.name} đã kết thúc công tác tại ${officeLocationCheckOut.name}.`;

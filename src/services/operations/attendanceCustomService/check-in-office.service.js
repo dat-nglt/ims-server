@@ -27,8 +27,8 @@ export const checkInOfficeService = async (payload) => {
     // 1. Validate user
     const user = await validateUser(user_id);
 
-    // 2. Validate office location
-    const officeLocation = await validateOfficeLocation(office_location_id);
+    // 2. Validate attendance location
+    const attendanceLocation = await validateAttendanceLocation(office_location_id);
 
     // 3. Validate attendance type
     const attendanceType = await validateAttendanceType(attendance_type_id);
@@ -41,13 +41,13 @@ export const checkInOfficeService = async (payload) => {
     }
 
     // 5. Chuẩn bị dữ liệu chấm công
-    const attendanceData = prepareOfficeAttendanceData(payload, attendanceType, officeLocation);
+    const attendanceData = prepareOfficeAttendanceData(payload, attendanceType, attendanceLocation);
 
     // 6. Tạo bản ghi chấm công
     const attendance = await createAttendanceRecord(attendanceData);
 
     // 7. Tạo thông báo
-    await createOfficeCheckInNotification(user, officeLocation, attendance_category);
+    await createOfficeCheckInNotification(user, attendanceLocation, attendance_category);
 
     return {
       success: true,
@@ -73,21 +73,21 @@ const validateUser = async (user_id) => {
   return existUser;
 };
 
-const validateOfficeLocation = async (office_location_id) => {
+const validateAttendanceLocation = async (office_location_id) => {
   if (!office_location_id) {
-    throw new Error("Thiếu thông tin văn phòng để chấm công");
+    throw new Error("Thiếu thông tin địa điểm để chấm công");
   }
 
-  const officeLocation = await db.OfficeLocation.findByPk(office_location_id);
-  if (!officeLocation) {
-    throw new Error("Không tìm thấy thông tin văn phòng");
+  const attendanceLocation = await db.AttendanceLocation.findByPk(office_location_id);
+  if (!attendanceLocation) {
+    throw new Error("Không tìm thấy thông tin địa điểm");
   }
 
-  if (!officeLocation.is_active) {
-    throw new Error("Văn phòng này hiện không hoạt động");
+  if (!attendanceLocation.is_active) {
+    throw new Error("Địa điểm này hiện không hoạt động");
   }
 
-  return officeLocation;
+  return attendanceLocation;
 };
 
 const validateAttendanceType = async (attendance_type_id) => {
@@ -115,10 +115,10 @@ const checkExistingOfficeSession = async (user_id, office_location_id, attendanc
       user_id,
       status: "open",
       attendance_type_id,
-      office_location_id, // Specific to office location
+      office_location_id, // Specific to attendance location
       started_at: { [Op.between]: [startOfCurrentDay, endOfCurrentDay] },
     },
-    include: [{ model: db.OfficeLocation, as: "officeLocation" }],
+    include: [{ model: db.AttendanceLocation, as: "attendanceLocation" }],
     order: [["started_at", "DESC"]],
   });
 
@@ -139,22 +139,23 @@ const checkExistingOfficeSession = async (user_id, office_location_id, attendanc
         : `Bạn đã có phiên chấm công hiện tại`,
       session: {
         id: anySession.id,
-        officeLocation: anySession.officeLocation
-          ? { id: anySession.officeLocation.id, name: anySession.officeLocation.name }
+        attendanceLocation: anySession.attendanceLocation
+          ? { id: anySession.attendanceLocation.id, name: anySession.attendanceLocation.name }
           : null,
         check_in_time: checkInAt,
         check_in_id: latestAttendance ? latestAttendance.id : null,
       },
     };
   }
+  }
 
   return null;
 };
 
 /**
- * Chuẩn bị dữ liệu chấm công cho văn phòng
+ * Chuẩn bị dữ liệu chấm công cho địa điểm
  */
-const prepareOfficeAttendanceData = (payload, attendanceType, officeLocation) => {
+const prepareOfficeAttendanceData = (payload, attendanceType, attendanceLocation) => {
   let {
     user_id,
     office_location_id,
@@ -183,30 +184,30 @@ const prepareOfficeAttendanceData = (payload, attendanceType, officeLocation) =>
     requireLocationVerification = false;
   }
 
-  // Nếu có office_location, tính toán khoảng cách từ vị trí người dùng đến office
+  // Nếu có attendance_location, tính toán khoảng cách từ vị trí người dùng đến địa điểm
   let calculatedViolationDistance = null;
-  let isWithinOfficeRadius = true;
+  let isWithinLocationRadius = true;
 
-  if (requireLocationVerification && latitude && longitude && officeLocation) {
-    const distanceFromOffice = calculateDistance(
+  if (requireLocationVerification && latitude && longitude && attendanceLocation) {
+    const distanceFromLocation = calculateDistance(
       parseFloat(latitude),
       parseFloat(longitude),
-      parseFloat(officeLocation.latitude),
-      parseFloat(officeLocation.longitude)
+      parseFloat(attendanceLocation.latitude),
+      parseFloat(attendanceLocation.longitude)
     );
 
-    // Nếu vượt quá radius của office, tính violation distance
-    if (distanceFromOffice > officeLocation.radius) {
-      calculatedViolationDistance = distanceFromOffice - officeLocation.radius;
-      isWithinOfficeRadius = false;
+    // Nếu vượt quá radius của địa điểm, tính violation distance
+    if (distanceFromLocation > attendanceLocation.radius) {
+      calculatedViolationDistance = distanceFromLocation - attendanceLocation.radius;
+      isWithinLocationRadius = false;
     } else {
-      isWithinOfficeRadius = true;
+      isWithinLocationRadius = true;
     }
 
-    distance_from_work = distanceFromOffice; // Dùng lại field này cho office
+    distance_from_work = distanceFromLocation; // Dùng lại field này cho địa điểm
   }
 
-  const isWithinAtCheckIn = is_within_radius !== undefined ? is_within_radius : isWithinOfficeRadius;
+  const isWithinAtCheckIn = is_within_radius !== undefined ? is_within_radius : isWithinLocationRadius;
 
   // Kiểm tra nếu thời gian chấm công hiện tại đã sau thời gian bắt đầu của ca chấm công
   let isValidTimeCheckIn = true;
@@ -237,15 +238,15 @@ const prepareOfficeAttendanceData = (payload, attendanceType, officeLocation) =>
   return {
     user_id: parseInt(user_id, 10),
     office_location_id: parseInt(office_location_id, 10),
-    // Không có work_id cho văn phòng
+    // Không có work_id cho địa điểm chấm công
     work_id: null,
     project_id: null,
     check_in_time: new Date(),
     check_in_time_on_local: check_in_time_on_local || null,
     latitude: parseFloat(latitude),
     longitude: parseFloat(longitude),
-    location_name: location_name || officeLocation.name,
-    address: address || officeLocation.address,
+    location_name: location_name || attendanceLocation.name,
+    address: address || attendanceLocation.address,
     photo_url: photoUrlNormalized,
     device_info,
     ip_address,
@@ -313,14 +314,14 @@ const toVietnamTimeISO = (date) => {
 };
 
 /**
- * Tạo thông báo chấm công vào văn phòng
+ * Tạo thông báo chấm công vào địa điểm
  */
-const createOfficeCheckInNotification = async (user, officeLocation, attendance_category) => {
+const createOfficeCheckInNotification = async (user, attendanceLocation, attendance_category) => {
   try {
-    let message = `Nhân viên ${user.name} đã chấm công vào tại ${officeLocation.name}.`;
+    let message = `Nhân viên ${user.name} đã chấm công vào tại ${attendanceLocation.name}.`;
 
     if (attendance_category === "business_trip") {
-      message = `Nhân viên ${user.name} đã báo công tác tại ${officeLocation.name}.`;
+      message = `Nhân viên ${user.name} đã báo công tác tại ${attendanceLocation.name}.`;
     } else if (attendance_category === "remote_work") {
       message = `Nhân viên ${user.name} đã báo làm việc từ xa.`;
     }
