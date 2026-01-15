@@ -17,6 +17,12 @@ export async function up(queryInterface, Sequelize) {
       allowNull: true,
       references: { model: "works", key: "id" },
     },
+    department_id: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      references: { model: "departments", key: "id" },
+      comment: "Khối/Phòng ban yêu cầu tăng ca",
+    },
     requested_date: {
       type: Sequelize.DATEONLY,
       allowNull: false,
@@ -43,6 +49,27 @@ export async function up(queryInterface, Sequelize) {
       defaultValue: "overtime_lunch", 
       comment: "Loại tăng ca: overtime_lunch=trưa, overtime_night=tối, other=khác",
     },
+    overtime_category: {
+      type: Sequelize.ENUM(
+        "administrative_work",
+        "project_support",
+        "event_support",
+        "report_processing",
+        "data_entry",
+        "meeting_support",
+        "emergency_work",
+        "other"
+      ),
+      allowNull: false,
+      defaultValue: "administrative_work",
+      comment: "Phân loại: hành chính, hỗ trợ dự án, sự kiện, xử lý báo cáo, nhập liệu, hỗ trợ họp, khẩn cấp, khác",
+    },
+    priority: {
+      type: Sequelize.ENUM("low", "medium", "high", "urgent"),
+      allowNull: false,
+      defaultValue: "medium",
+      comment: "Mức độ ưu tiên: thấp, trung bình, cao, khẩn cấp",
+    },
     status: {
       type: Sequelize.ENUM("pending", "approved", "rejected", "cancelled"),
       allowNull: false,
@@ -62,6 +89,37 @@ export async function up(queryInterface, Sequelize) {
       allowNull: false,
       defaultValue: false,
     },
+    reviewed_by: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: { model: "users", key: "id" },
+      comment: "Người kiểm duyệt/phê chuẩn kết quả hoàn thành",
+    },
+    rejected_reason: {
+      type: Sequelize.TEXT,
+      allowNull: true,
+      comment: "Lý do từ chối (nếu status = rejected)",
+    },
+    is_completed: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: false,
+      comment: "Công việc tăng ca có hoàn thành hay không",
+    },
+    completion_notes: {
+      type: Sequelize.TEXT,
+      allowNull: true,
+      comment: "Ghi chú về kết quả hoàn thành công việc",
+    },
+    estimated_cost: {
+      type: Sequelize.DECIMAL(10, 2),
+      allowNull: true,
+      comment: "Chi phí ước tính cho tăng ca",
+    },
+    actual_cost: {
+      type: Sequelize.DECIMAL(10, 2),
+      allowNull: true,
+      comment: "Chi phí thực tế sau hoàn thành",
+    },
     notes: {
       type: Sequelize.TEXT,
       allowNull: true,
@@ -77,9 +135,11 @@ export async function up(queryInterface, Sequelize) {
   });
 
   await queryInterface.addIndex("overtime_requests", ["user_id"]);
+  await queryInterface.addIndex("overtime_requests", ["department_id"]);
   await queryInterface.addIndex("overtime_requests", ["work_id"]);
   await queryInterface.addIndex("overtime_requests", ["status"]);
   await queryInterface.addIndex("overtime_requests", ["requested_date"]);
+  await queryInterface.addIndex("overtime_requests", ["priority"]);
 }
 
 export async function down(queryInterface, Sequelize) {

@@ -3,7 +3,6 @@
  * Xử lý chấm công cho khối văn phòng
  */
 
-import db from "../../models/index.js";
 import { checkInOfficeService } from "../../services/operations/attendanceCustomService/check-in-office.service.js";
 import { checkOutOfficeService } from "../../services/operations/attendanceCustomService/check-out-office.service.js";
 import logger from "../../utils/logger.js";
@@ -38,14 +37,14 @@ export const checkInOfficeController = async (req, res) => {
         if (!user_id || !office_location_id) {
             return res.status(400).json({
                 success: false,
-                message: "Thiếu thông tin bắt buộc: user_id, office_location_id",
+                message: "Thông tin chấm công không đầy đủ",
             });
         }
 
         if (!latitude || !longitude) {
             return res.status(400).json({
                 success: false,
-                message: "Thiếu thông tin vị trí (latitude, longitude)",
+                message: "Thông tin chấm công không đầy đủ - thiếu tọa độ",
             });
         }
 
@@ -70,13 +69,12 @@ export const checkInOfficeController = async (req, res) => {
         };
 
         const result = await checkInOfficeService(payload);
-
         return res.status(200).json(result);
     } catch (error) {
         logger.error("Error in checkInOffice: " + error.message);
         res.status(500).json({
             success: false,
-            message: "Lỗi máy chủ khi chấm công vào",
+            message: "Hệ thống máy chủ gặp sự cố, vui lòng thử lại sau",
             error: error.message,
         });
     }
@@ -116,16 +114,6 @@ export const checkOutOfficeController = async (req, res) => {
             });
         }
 
-        // Nếu không phải công tác hoặc remote, phải có tọa độ
-        if (attendance_category !== "business_trip" && attendance_category !== "remote_work") {
-            if (!latitude_check_out || !longitude_check_out) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Thông tin chấm công không đầy đủ - thiếu tọa độ",
-                });
-            }
-        }
-
         const payload = {
             user_id,
             office_location_id,
@@ -147,13 +135,12 @@ export const checkOutOfficeController = async (req, res) => {
         };
 
         const result = await checkOutOfficeService(payload);
-
         return res.status(200).json(result);
     } catch (error) {
         logger.error("Error in checkOutOffice: " + error.message);
         res.status(500).json({
             success: false,
-            message: "Lỗi máy chủ khi chấm công ra",
+            message: "Hệ thống máy chủ gặp sự cố, vui lòng thử lại sau",
             error: error.message,
         });
     }
