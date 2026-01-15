@@ -129,6 +129,7 @@ const checkExistingOfficeSession = async (user_id, office_location_id, attendanc
     });
 
     if (openSession) {
+      
         const latestAttendance = await db.Attendance.findOne({
             where: { 
                 attendance_session_id: openSession.id, 

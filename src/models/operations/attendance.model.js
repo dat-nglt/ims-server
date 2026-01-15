@@ -364,6 +364,8 @@ export default (sequelize, DataTypes) => {
                 status: "closed",
                 latitude: checkIn.latitude,
                 longitude: checkIn.longitude,
+                office_location_id: checkIn.office_location_id,
+                office_location_id_check_out: checkIn.office_location_id_check_out,
               },
               { transaction: options.transaction }
             );
@@ -375,6 +377,7 @@ export default (sequelize, DataTypes) => {
                 user_id: checkIn.user_id,
                 attendance_type_id: checkIn.attendance_type_id,
                 work_id: sessionWorkId,
+                office_location_id: checkIn.office_location_id,
                 ended_at: null,
               },
               defaults: {
@@ -386,6 +389,7 @@ export default (sequelize, DataTypes) => {
                 status: "open",
                 latitude: checkIn.latitude,
                 longitude: checkIn.longitude,
+                office_location_id: checkIn.office_location_id,
               },
               transaction: options.transaction,
             });
@@ -445,6 +449,7 @@ export default (sequelize, DataTypes) => {
                   attendance_type_id: checkIn.attendance_type_id,
                   latitude: checkIn.latitude,
                   longitude: checkIn.longitude,
+                  office_location_id_check_out: checkIn.office_location_id_check_out,
                 },
                 { where: { id: checkIn.attendance_session_id }, transaction: options.transaction }
               );
@@ -454,7 +459,12 @@ export default (sequelize, DataTypes) => {
             // Otherwise, try to find an open session for this user/work and close it
             if (checkIn.check_out_time) {
               const session = await AttendanceSession.findOne({
-                where: { user_id: checkIn.user_id, work_id: checkIn.work_id, ended_at: null },
+                where: { 
+                  user_id: checkIn.user_id, 
+                  work_id: checkIn.work_id,
+                  office_location_id: checkIn.office_location_id,
+                  ended_at: null 
+                },
                 transaction: options.transaction,
               });
               if (session) {
@@ -466,6 +476,7 @@ export default (sequelize, DataTypes) => {
                     attendance_type_id: checkIn.attendance_type_id,
                     latitude: checkIn.latitude,
                     longitude: checkIn.longitude,
+                    office_location_id_check_out: checkIn.office_location_id_check_out,
                   },
                   { transaction: options.transaction }
                 );
