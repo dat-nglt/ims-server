@@ -13,77 +13,73 @@ import logger from "../../utils/logger.js";
  * Chấm công vào văn phòng
  */
 export const checkInOfficeController = async (req, res) => {
-  try {
-    const {
-      user_id,
-      office_location_id,
-      attendance_type_id,
-      department_id,
-      photo_url,
-      latitude,
-      longitude,
-      address,
-      location_name,
-      device_info,
-      ip_address,
-      attendance_category = "regular",
-      check_in_time_on_local,
-      check_in_metadata,
-      distance_from_work,
-      is_within_radius,
-      violation_distance,
-    } = req.body;
+    try {
+        const {
+            user_id,
+            office_location_id,
+            attendance_type_id,
+            department_id,
+            photo_url,
+            latitude,
+            longitude,
+            address,
+            location_name,
+            device_info,
+            ip_address,
+            attendance_category = "regular",
+            check_in_time_on_local,
+            check_in_metadata,
+            distance_from_work,
+            is_within_radius,
+            violation_distance,
+        } = req.body;
 
-    // Validation
-    if (!user_id || !office_location_id) {
-      return res.status(400).json({
-        success: false,
-        message: "Thiếu thông tin bắt buộc: user_id, office_location_id",
-      });
+        // Validation
+        if (!user_id || !office_location_id) {
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu thông tin bắt buộc: user_id, office_location_id",
+            });
+        }
+
+        if (!latitude || !longitude) {
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu thông tin vị trí (latitude, longitude)",
+            });
+        }
+
+        const payload = {
+            user_id,
+            office_location_id,
+            attendance_type_id,
+            department_id,
+            photo_url,
+            latitude,
+            longitude,
+            address,
+            location_name,
+            device_info,
+            ip_address,
+            attendance_category,
+            check_in_time_on_local,
+            check_in_metadata,
+            distance_from_work,
+            is_within_radius,
+            violation_distance,
+        };
+
+        const result = await checkInOfficeService(payload);
+
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error("Error in checkInOffice: " + error.message);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi máy chủ khi chấm công vào",
+            error: error.message,
+        });
     }
-
-    if (!latitude || !longitude) {
-      return res.status(400).json({
-        success: false,
-        message: "Thiếu thông tin vị trí (latitude, longitude)",
-      });
-    }
-
-    const payload = {
-      user_id,
-      office_location_id,
-      attendance_type_id,
-      department_id,
-      photo_url,
-      latitude,
-      longitude,
-      address,
-      location_name,
-      device_info,
-      ip_address,
-      attendance_category,
-      check_in_time_on_local,
-      check_in_metadata,
-      distance_from_work,
-      is_within_radius,
-      violation_distance,
-    };
-
-    const result = await checkInOfficeService(payload);
-
-    if (result.success) {
-      return res.status(200).json(result);
-    } else {
-      return res.status(400).json(result);
-    }
-  } catch (error) {
-    logger.error("Error in checkInOffice: " + error.message);
-    res.status(500).json({
-      success: false,
-      message: "Lỗi máy chủ khi chấm công vào",
-      error: error.message,
-    });
-  }
 };
 
 /**
@@ -91,78 +87,74 @@ export const checkInOfficeController = async (req, res) => {
  * Chấm công ra văn phòng
  */
 export const checkOutOfficeController = async (req, res) => {
-  try {
-    const {
-      user_id,
-      office_location_id,
-      attendance_type_id,
-      office_location_id_check_out,
-      photo_url_check_out,
-      latitude_check_out,
-      longitude_check_out,
-      address_check_out,
-      location_name_check_out,
-      device_info,
-      ip_address,
-      attendance_category = "regular",
-      check_out_time_on_local,
-      check_out_metadata,
-      distance_from_work,
-      is_within_radius,
-      violation_distance,
-    } = req.body;
+    try {
+        const {
+            user_id,
+            office_location_id,
+            attendance_type_id,
+            office_location_id_check_out,
+            photo_url_check_out,
+            latitude_check_out,
+            longitude_check_out,
+            address_check_out,
+            location_name_check_out,
+            device_info,
+            ip_address,
+            attendance_category = "regular",
+            check_out_time_on_local,
+            check_out_metadata,
+            distance_from_work,
+            is_within_radius,
+            violation_distance,
+        } = req.body;
 
-    // Validation
-    if (!user_id || !office_location_id) {
-      return res.status(400).json({
-        success: false,
-        message: "Thiếu thông tin bắt buộc: user_id, office_location_id",
-      });
-    }
+        // Validation
+        if (!user_id || !office_location_id) {
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu thông tin bắt buộc: user_id, office_location_id",
+            });
+        }
 
-    // Nếu không phải công tác hoặc remote, phải có tọa độ
-    if (attendance_category !== "business_trip" && attendance_category !== "remote_work") {
-      if (!latitude_check_out || !longitude_check_out) {
-        return res.status(400).json({
-          success: false,
-          message: "Thiếu thông tin vị trí check-out (latitude_check_out, longitude_check_out)",
+        // Nếu không phải công tác hoặc remote, phải có tọa độ
+        if (attendance_category !== "business_trip" && attendance_category !== "remote_work") {
+            if (!latitude_check_out || !longitude_check_out) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Thiếu thông tin vị trí check-out (latitude_check_out, longitude_check_out)",
+                });
+            }
+        }
+
+        const payload = {
+            user_id,
+            office_location_id,
+            attendance_type_id,
+            office_location_id_check_out,
+            photo_url_check_out,
+            latitude_check_out,
+            longitude_check_out,
+            address_check_out,
+            location_name_check_out,
+            device_info,
+            ip_address,
+            attendance_category,
+            check_out_time_on_local,
+            check_out_metadata,
+            distance_from_work,
+            is_within_radius,
+            violation_distance,
+        };
+
+        const result = await checkOutOfficeService(payload);
+
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error("Error in checkOutOffice: " + error.message);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi máy chủ khi chấm công ra",
+            error: error.message,
         });
-      }
     }
-
-    const payload = {
-      user_id,
-      office_location_id,
-      attendance_type_id,
-      office_location_id_check_out,
-      photo_url_check_out,
-      latitude_check_out,
-      longitude_check_out,
-      address_check_out,
-      location_name_check_out,
-      device_info,
-      ip_address,
-      attendance_category,
-      check_out_time_on_local,
-      check_out_metadata,
-      distance_from_work,
-      is_within_radius,
-      violation_distance,
-    };
-
-    const result = await checkOutOfficeService(payload);
-
-    if (result.success) {
-      return res.status(200).json(result);
-    } else {
-      return res.status(400).json(result);
-    }
-  } catch (error) {
-    logger.error("Error in checkOutOffice: " + error.message);
-    res.status(500).json({
-      success: false,
-      message: "Lỗi máy chủ khi chấm công ra",
-      error: error.message,
-    });
-  }
 };
