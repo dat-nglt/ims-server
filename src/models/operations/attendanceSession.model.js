@@ -343,14 +343,14 @@ export default (sequelize, DataTypes) => {
       as: "attendance_type",
     });
 
-    AttendanceSession.belongsTo(models.OfficeLocation, {
+    AttendanceSession.belongsTo(models.AttendanceLocation, {
       foreignKey: "office_location_id",
-      as: "officeLocation",
+      as: "attendanceLocation",
     });
 
-    AttendanceSession.belongsTo(models.OfficeLocation, {
+    AttendanceSession.belongsTo(models.AttendanceLocation, {
       foreignKey: "office_location_id_check_out",
-      as: "officeLocationCheckOut",
+      as: "attendanceLocationCheckOut",
     });
 
     AttendanceSession.belongsTo(models.Attendance, {
