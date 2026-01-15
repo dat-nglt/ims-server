@@ -13,6 +13,7 @@ import logger from "../../../utils/logger.js";
 import { createNotificationService } from "../notification.service.js";
 
 export const checkOutOfficeService = async (payload) => {
+  console.log("Check-Out Office Service Payload:", payload);
   try {
     let {
       user_id,
@@ -73,7 +74,7 @@ export const checkOutOfficeService = async (payload) => {
 // ======================== Helper Functions ========================
 
 const validateOfficeLocation = async (office_location_id) => {
-  if (!office_location_id || office_location_id <= 0) {
+  if (!office_location_id) {
     throw new Error("Thiếu thông tin văn phòng để chấm công ra");
   }
 

@@ -14,6 +14,7 @@ import { Op } from "sequelize";
 import { createNotificationService } from "../notification.service.js";
 
 export const checkInOfficeService = async (payload) => {
+  console.log("Check-In Office Service Payload:", payload);
   try {
     let {
       user_id,
