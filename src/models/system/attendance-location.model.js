@@ -86,5 +86,22 @@ export default (sequelize, DataTypes) => {
     }
   );
 
+  AttendanceLocation.associate = (models) => {
+    AttendanceLocation.hasMany(models.AttendanceSession, {
+      foreignKey: "office_location_id",
+      as: "sessions",
+    });
+
+    AttendanceLocation.hasMany(models.AttendanceSession, {
+      foreignKey: "office_location_id_check_out",
+      as: "checkOutSessions",
+    });
+
+    AttendanceLocation.hasMany(models.Attendance, {
+      foreignKey: "office_location_id",
+      as: "attendances",
+    });
+  };
+
   return AttendanceLocation;
 };
