@@ -190,7 +190,7 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
     work_id, // ✅ THÊM: Kiểm tra công việc cụ thể
     attendance_type_id,
     started_at: { [Op.between]: [startOfCurrentDay, endOfCurrentDay] },
-    [Op.or]: [{ status: "closed" }, { status: "on_leave" }], // Phiên chấm công đã đóng
+    [Op.or]: [{ status: "closed" }], // Phiên chấm công đã đóng
   };
 
   const closedSession = await db.AttendanceSession.findOne({
@@ -214,7 +214,9 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id) => {
         success: false,
         alreadyCheckedOut: true,
         message: checkOutAt
-          ? `Bạn đã thực hiện chấm công ra lúc ${checkOutAt.split("T")[1].substring(0, 5)} cho công việc này. Không thể chấm công vào lại.`
+          ? `Bạn đã thực hiện chấm công ra lúc ${checkOutAt
+              .split("T")[1]
+              .substring(0, 5)} cho công việc này. Không thể chấm công vào lại.`
           : `Công việc này đã được hoàn thành trong ngày hôm nay. Không thể chấm công vào lại.`,
         session: {
           id: closedSession.id,
