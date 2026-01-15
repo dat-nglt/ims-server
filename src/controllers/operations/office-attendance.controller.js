@@ -109,10 +109,10 @@ export const checkOutOfficeController = async (req, res) => {
         } = req.body;
 
         // Validation
-        if (!user_id || !office_location_id) {
+        if (!user_id || !office_location_id || !office_location_id_check_out) {
             return res.status(400).json({
                 success: false,
-                message: "Thiếu thông tin bắt buộc: user_id, office_location_id",
+                message: "Thông tin chấm công không đầy đủ",
             });
         }
 
@@ -121,7 +121,7 @@ export const checkOutOfficeController = async (req, res) => {
             if (!latitude_check_out || !longitude_check_out) {
                 return res.status(400).json({
                     success: false,
-                    message: "Thiếu thông tin vị trí check-out (latitude_check_out, longitude_check_out)",
+                    message: "Thông tin chấm công không đầy đủ - thiếu tọa độ",
                 });
             }
         }

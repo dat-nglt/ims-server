@@ -88,8 +88,11 @@ const validateAttendanceLocation = async (office_location_id) => {
     }
 
     // Ràng buộc: chỉ cho phép chấm công tại AttendanceLocation loại 'office'
-    if (attendanceLocation.type !== 'office') {
-        throw new Error(`Chỉ có thể chấm công tại các địa điểm loại 'office'. Địa điểm này là loại '${attendanceLocation.type}'`);
+    const atttendanceLocationType = ["office", "warehouse"];
+    if (!atttendanceLocationType.includes(attendanceLocation.type)) {
+        throw new Error(
+            `Chỉ có thể chấm công tại các địa điểm loại 'office'. Địa điểm này là loại '${attendanceLocation.type}'`
+        );
     }
 
     return attendanceLocation;
@@ -129,12 +132,11 @@ const checkExistingOfficeSession = async (user_id, office_location_id, attendanc
     });
 
     if (openSession) {
-      
         const latestAttendance = await db.Attendance.findOne({
-            where: { 
-                attendance_session_id: openSession.id, 
+            where: {
+                attendance_session_id: openSession.id,
                 user_id,
-                check_in_time: { [Op.between]: [startOfCurrentDay, endOfCurrentDay] }
+                check_in_time: { [Op.between]: [startOfCurrentDay, endOfCurrentDay] },
             },
             order: [["check_in_time", "DESC"]],
             attributes: ["id", "check_in_time"],
@@ -182,10 +184,10 @@ const checkExistingOfficeSession = async (user_id, office_location_id, attendanc
     });
 
     if (completedAttendance) {
-        const checkOutAt = completedAttendance.check_out_time 
-            ? toVietnamTimeISO(completedAttendance.check_out_time) 
+        const checkOutAt = completedAttendance.check_out_time
+            ? toVietnamTimeISO(completedAttendance.check_out_time)
             : null;
-        
+
         return {
             success: false,
             alreadyCheckedOut: true,
