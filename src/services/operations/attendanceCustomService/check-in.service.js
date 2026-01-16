@@ -32,7 +32,7 @@ export const checkInService = async (checkInPayload) => {
         include: [
           {
             model: db.OvertimeRequestTechnician,
-            as: "requestTechnicians",
+            as: "technicians",
             where: { technician_id: user_id, status: "approved" },
             required: true,
           },

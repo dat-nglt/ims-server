@@ -75,7 +75,7 @@ export const createOvertimeRequestService = async (data) => {
             include: [
                 {
                     model: db.OvertimeRequestTechnician,
-                    as: "requestTechnicians",
+                    as: "technicians",
                     attributes: ["technician_id"],
                 },
             ],
@@ -83,7 +83,7 @@ export const createOvertimeRequestService = async (data) => {
 
         // If found existing request, check if technician list overlaps
         if (existingRequest) {
-            const existingTechs = existingRequest.requestTechnicians.map((t) => t.technician_id);
+            const existingTechs = existingRequest.technicians.map((t) => t.technician_id);
             const hasOverlap = technician_ids.some((id) => existingTechs.includes(id));
 
             if (hasOverlap) {
@@ -124,11 +124,11 @@ export const createOvertimeRequestService = async (data) => {
         // Fetch with relations
         const result = await db.OvertimeRequest.findByPk(overtimeRequest.id, {
             include: [
-                { model: db.User, as: "user", attributes: ["id", "name", "email", "phone"] },
+                { model: db.User, as: "requester", attributes: ["id", "name", "email", "phone"] },
                 { model: db.Work, as: "work", attributes: ["id", "title", "location"] },
                 {
                     model: db.OvertimeRequestTechnician,
-                    as: "requestTechnicians",
+                    as: "technicians",
                     include: [{ model: db.User, as: "technician", attributes: ["id", "name", "email", "phone"] }],
                 },
             ],
@@ -450,51 +450,72 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
             };
         }
 
-        // Build update condition for OvertimeRequestTechnician
-        const whereCondition = {
-            overtime_request_id: requestId,
-            status: "pending",
-        };
+        // 🟢 KIỂM TRA LOẠI TĂNG CA
+        const isOfficeOvertime = overtimeRequest.overtime_type === "overtime_office";
 
-        // Nếu có technician_id, chỉ duyệt technician đó
-        if (technician_id) {
-            whereCondition.technician_id = technician_id;
-
-            // Kiểm tra technician record tồn tại
-            const techRecord = await db.OvertimeRequestTechnician.findOne({
-                where: whereCondition,
-            });
-
-            if (!techRecord) {
-                return {
-                    success: false,
-                    data: null,
-                    message: "Kỹ thuật viên này không trong danh sách chờ duyệt của yêu cầu này",
-                };
-            }
-        }
-
-        // Update OvertimeRequestTechnician records
-        await db.OvertimeRequestTechnician.update(
-            {
+        // 🔷 TRƯỜNG HỢP TĂNG CA VĂN PHÒNG: Cập nhật trực tiếp OvertimeRequest
+        if (isOfficeOvertime) {
+            await overtimeRequest.update({
                 status: "approved",
                 approver_id: approverId,
                 approved_at: new Date(),
                 is_paid,
-                notes,
-            },
-            { where: whereCondition }
-        );
+                notes: notes || null,
+            });
 
-        logger.info(
-            `Overtime request ${requestId} technician(s) approved by user ${approverId}. Technician ID: ${
-                technician_id || "all"
-            }`
-        );
+            logger.info(
+                `Office overtime request ${requestId} approved by user ${approverId}. Paid: ${is_paid}`
+            );
+        } else {
+            // 🔵 TRƯỜNG HỢP TĂNG CA KỸ THUẬT: Cập nhật OvertimeRequestTechnician
+
+            // Build update condition for OvertimeRequestTechnician
+            const whereCondition = {
+                overtime_request_id: requestId,
+                status: "pending",
+            };
+
+            // Nếu có technician_id, chỉ duyệt technician đó
+            if (technician_id) {
+                whereCondition.technician_id = technician_id;
+
+                // Kiểm tra technician record tồn tại
+                const techRecord = await db.OvertimeRequestTechnician.findOne({
+                    where: whereCondition,
+                });
+
+                if (!techRecord) {
+                    return {
+                        success: false,
+                        data: null,
+                        message: "Kỹ thuật viên này không trong danh sách chờ duyệt của yêu cầu này",
+                    };
+                }
+            }
+
+            // Update OvertimeRequestTechnician records
+            await db.OvertimeRequestTechnician.update(
+                {
+                    status: "approved",
+                    approver_id: approverId,
+                    approved_at: new Date(),
+                    is_paid,
+                    notes,
+                },
+                { where: whereCondition }
+            );
+
+            logger.info(
+                `Overtime request ${requestId} technician(s) approved by user ${approverId}. Technician ID: ${
+                    technician_id || "all"
+                }`
+            );
+        }
 
         // Assign approved technicians to the work if not already assigned
+        // 📌 CHỈ DÙNG CHO KỸ THUẬT VIÊN
         let newAssignmentsCreated = false;
-        if (overtimeRequest.work_id) {
+        if (!isOfficeOvertime && overtimeRequest.work_id) {
             // Get all approved technicians for this request
             const approvedTechs = await db.OvertimeRequestTechnician.findAll({
                 where: {
@@ -598,31 +619,35 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
             }
         }
 
-        // Kiểm tra xem TẤT CẢ technician đã được duyệt chưa
-        const pendingTechCount = await db.OvertimeRequestTechnician.count({
-            where: {
-                overtime_request_id: requestId,
-                status: "pending",
-            },
-        });
-
-        // Nếu không còn technician pending, update request status thành "approved"
-        if (pendingTechCount === 0) {
-            await overtimeRequest.update({
-                status: "approved",
-                approver_id: approverId,
-                approved_at: new Date(),
+        // 🟢 CẬP NHẬT TRẠNG THÁI REQUEST CHÍNH CHỈ KHI CẦN
+        if (!isOfficeOvertime) {
+            // Kiểm tra xem TẤT CẢ technician đã được duyệt chưa
+            const pendingTechCount = await db.OvertimeRequestTechnician.count({
+                where: {
+                    overtime_request_id: requestId,
+                    status: "pending",
+                },
             });
+
+            // Nếu không còn technician pending, update request status thành "approved"
+            if (pendingTechCount === 0) {
+                await overtimeRequest.update({
+                    status: "approved",
+                    approver_id: approverId,
+                    approved_at: new Date(),
+                });
+            }
         }
 
         // Fetch with relations
         const result = await db.OvertimeRequest.findByPk(requestId, {
             include: [
-                { model: db.User, as: "user", attributes: ["id", "name", "email"] },
+                { model: db.User, as: "requester", attributes: ["id", "name", "email", "phone"] },
                 { model: db.User, as: "approver", attributes: ["id", "name"] },
+                { model: db.Department, as: "department", attributes: ["id", "name"] },
                 {
                     model: db.OvertimeRequestTechnician,
-                    as: "requestTechnicians",
+                    as: "technicians",
                     include: [{ model: db.User, as: "technician", attributes: ["id", "name", "email", "phone"] }],
                 },
             ],
@@ -630,18 +655,17 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
 
         const data = result.toJSON();
 
-        logger.info(
-            `Overtime request ${requestId} technician(s) approved by user ${approverId}. Technician ID: ${
-                technician_id || "all"
-            }`
-        );
+        let successMessage = "Yêu cầu tăng ca đã được duyệt thành công";
+        if (!isOfficeOvertime) {
+            successMessage = technician_id
+                ? "Duyệt tăng ca cho kỹ thuật viên thành công"
+                : "Duyệt tăng ca cho tất cả kỹ thuật viên thành công";
+        }
 
         return {
             success: true,
             data,
-            message: technician_id
-                ? "Duyệt tăng ca cho kỹ thuật viên thành công"
-                : "Duyệt tăng ca cho tất cả kỹ thuật viên thành công",
+            message: successMessage,
         };
     } catch (error) {
         logger.error("Error in approveOvertimeRequestService: " + error.message);
@@ -694,73 +718,96 @@ export const rejectOvertimeRequestService = async (requestId, approverId, reject
             };
         }
 
-        // Build update condition for OvertimeRequestTechnician
-        const whereCondition = {
-            overtime_request_id: requestId,
-            status: "pending",
-        };
+        // 🟢 KIỂM TRA LOẠI TĂNG CA
+        const isOfficeOvertime = overtimeRequest.overtime_type === "overtime_office";
 
-        // Nếu có technician_id, chỉ từ chối technician đó
-        if (technician_id) {
-            whereCondition.technician_id = technician_id;
-
-            // Kiểm tra technician record tồn tại
-            const techRecord = await db.OvertimeRequestTechnician.findOne({
-                where: whereCondition,
-            });
-
-            if (!techRecord) {
-                return {
-                    success: false,
-                    data: null,
-                    message: "Kỹ thuật viên này không trong danh sách chờ duyệt của yêu cầu này",
-                };
-            }
-        }
-
-        // Update OvertimeRequestTechnician records to rejected
-        await db.OvertimeRequestTechnician.update(
-            {
-                status: "rejected",
-                approver_id: approverId,
-                approved_at: new Date(),
-                notes: reject_reason,
-            },
-            { where: whereCondition }
-        );
-
-        logger.info(
-            `Overtime request ${requestId} technician(s) rejected by user ${approverId}. Technician ID: ${
-                technician_id || "all"
-            }`
-        );
-
-        // Kiểm tra xem có technician pending còn lại không
-        const pendingTechCount = await db.OvertimeRequestTechnician.count({
-            where: {
-                overtime_request_id: requestId,
-                status: "pending",
-            },
-        });
-
-        // Nếu không còn technician pending, update request status thành "rejected"
-        if (pendingTechCount === 0) {
+        // 🔷 TRƯỜNG HỢP TĂNG CA VĂN PHÒNG: Cập nhật trực tiếp OvertimeRequest
+        if (isOfficeOvertime) {
             await overtimeRequest.update({
                 status: "rejected",
                 approver_id: approverId,
                 approved_at: new Date(),
-                notes: reject_reason,
+                rejected_reason: reject_reason || null,
+                notes: reject_reason || null,
             });
+
+            logger.info(
+                `Office overtime request ${requestId} rejected by user ${approverId}. Reason: ${reject_reason}`
+            );
+        } else {
+            // 🔵 TRƯỜNG HỢP TĂNG CA KỸ THUẬT: Cập nhật OvertimeRequestTechnician
+
+            // Build update condition for OvertimeRequestTechnician
+            const whereCondition = {
+                overtime_request_id: requestId,
+                status: "pending",
+            };
+
+            // Nếu có technician_id, chỉ từ chối technician đó
+            if (technician_id) {
+                whereCondition.technician_id = technician_id;
+
+                // Kiểm tra technician record tồn tại
+                const techRecord = await db.OvertimeRequestTechnician.findOne({
+                    where: whereCondition,
+                });
+
+                if (!techRecord) {
+                    return {
+                        success: false,
+                        data: null,
+                        message: "Kỹ thuật viên này không trong danh sách chờ duyệt của yêu cầu này",
+                    };
+                }
+            }
+
+            // Update OvertimeRequestTechnician records to rejected
+            await db.OvertimeRequestTechnician.update(
+                {
+                    status: "rejected",
+                    approver_id: approverId,
+                    approved_at: new Date(),
+                    notes: reject_reason,
+                },
+                { where: whereCondition }
+            );
+
+            logger.info(
+                `Overtime request ${requestId} technician(s) rejected by user ${approverId}. Technician ID: ${
+                    technician_id || "all"
+                }`
+            );
+
+            // 🟢 CẬP NHẬT TRẠNG THÁI REQUEST CHÍNH CHỈ KHI CẦN
+            // Kiểm tra xem có technician pending còn lại không
+            const pendingTechCount = await db.OvertimeRequestTechnician.count({
+                where: {
+                    overtime_request_id: requestId,
+                    status: "pending",
+                },
+            });
+
+            // Nếu không còn technician pending, update request status thành "rejected"
+            if (pendingTechCount === 0) {
+                await overtimeRequest.update({
+                    status: "rejected",
+                    approver_id: approverId,
+                    approved_at: new Date(),
+                    rejected_reason: reject_reason || null,
+                    notes: reject_reason || null,
+                });
+            }
         }
 
         // Fetch with relations
         const result = await db.OvertimeRequest.findByPk(requestId, {
             include: [
-                { model: db.User, as: "user", attributes: ["id", "name", "email"] },
+                { model: db.User, as: "requester", attributes: ["id", "name", "email", "phone"] },
                 { model: db.User, as: "approver", attributes: ["id", "name"] },
+                { model: db.Department, as: "department", attributes: ["id", "name"] },
                 {
                     model: db.OvertimeRequestTechnician,
-                    as: "requestTechnicians",
+                    as: "technicians",
                     include: [{ model: db.User, as: "technician", attributes: ["id", "name", "email", "phone"] }],
                 },
             ],
@@ -768,18 +815,17 @@ export const rejectOvertimeRequestService = async (requestId, approverId, reject
 
         const data = result.toJSON();
 
-        logger.info(
-            `Overtime request ${requestId} technician(s) rejected by user ${approverId}. Technician ID: ${
-                technician_id || "all"
-            }`
-        );
+        let successMessage = "Yêu cầu tăng ca đã bị từ chối thành công";
+        if (!isOfficeOvertime) {
+            successMessage = technician_id
+                ? "Từ chối tăng ca cho kỹ thuật viên thành công"
+                : "Từ chối tăng ca cho tất cả kỹ thuật viên thành công";
+        }
 
         return {
             success: true,
             data,
-            message: technician_id
-                ? "Từ chối tăng ca cho kỹ thuật viên thành công"
-                : "Từ chối tăng ca cho tất cả kỹ thuật viên thành công",
+            message: successMessage,
         };
     } catch (error) {
         logger.error("Error in rejectOvertimeRequestService: " + error.message);
