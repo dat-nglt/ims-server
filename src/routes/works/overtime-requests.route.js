@@ -12,6 +12,8 @@ const router = express.Router();
 // Body: { user_id, work_id?, requested_date, start_time, end_time, duration_minutes?, reason, overtime_type }
 router.post("/", overtimeRequestControllers.createOvertimeRequestController);
 
+router.post("/office", overtimeRequestControllers.createOvertimeRequestControllerOffice);
+
 // VN: Lấy danh sách yêu cầu tăng ca của người dùng
 // Method: GET
 // Params: user_id

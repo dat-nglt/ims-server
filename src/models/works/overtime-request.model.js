@@ -53,13 +53,28 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.INTEGER,
                 allowNull: true,
             },
+            // Thời gian chấm công vào thực tế
+            actual_checkin_time: {
+                type: DataTypes.TIME,
+                allowNull: true,
+            },
+            // Thời gian chấm công ra thực tế
+            actual_checkout_time: {
+                type: DataTypes.TIME,
+                allowNull: true,
+            },
+            // Số giờ làm việc thực tế (tính từ actual_checkin_time và actual_checkout_time)
+            actual_duration_minutes: {
+                type: DataTypes.INTEGER,
+                allowNull: true,
+            },
             reason: {
                 type: DataTypes.TEXT,
                 allowNull: true,
             },
             // Loại tăng ca: overtime_lunch=trưa, overtime_night=tối, other=khác
             overtime_type: {
-                type: DataTypes.ENUM("overtime_lunch", "overtime_night", "other"),
+                type: DataTypes.ENUM("overtime_lunch", "overtime_night", "overtime_office", "other"),
                 allowNull: false,
                 defaultValue: "overtime_lunch",
             },

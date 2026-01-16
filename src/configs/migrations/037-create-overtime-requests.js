@@ -38,12 +38,24 @@ export async function up(queryInterface, Sequelize) {
             type: Sequelize.INTEGER,
             allowNull: true,
         },
+        actual_checkin_time: {
+            type: Sequelize.TIME,
+            allowNull: true,
+        },
+        actual_checkout_time: {
+            type: Sequelize.TIME,
+            allowNull: true,
+        },
+        actual_duration_minutes: {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+        },
         reason: {
             type: Sequelize.TEXT,
             allowNull: true,
         },
         overtime_type: {
-            type: Sequelize.ENUM("overtime_lunch", "overtime_night", "other"),
+            type: Sequelize.ENUM("overtime_lunch", "overtime_night", "overtime_office", "other"),
             allowNull: false,
             defaultValue: "overtime_lunch",
         },
