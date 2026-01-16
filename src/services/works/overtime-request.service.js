@@ -171,6 +171,7 @@ export const createOvertimeRequestServiceOffice = async (data) => {
             notes,
             work_id,
             department_id,
+            overtime_type,
         } = data;
 
         // Validate required fields for office overtime
@@ -249,7 +250,7 @@ export const createOvertimeRequestServiceOffice = async (data) => {
             overtime_category,
             priority: priority || "medium",
             notes: notes || null,
-            overtime_type: "office_overtime", // Default type for office staff
+            overtime_type: overtime_type || "overtime_office", // Default type for office staff
             status: "pending",
         });
 
