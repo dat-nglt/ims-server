@@ -314,7 +314,9 @@ export const getOvertimeRequestsByUserService = async (userId, filters = {}) => 
         const { count, rows } = await db.OvertimeRequest.findAndCountAll({
             where: whereCondition,
             include: [
+                { model: db.User, as: "requester", attributes: ["id", "name", "email", "phone"] },
                 { model: db.Work, as: "work", attributes: ["id", "title", "location"] },
+                { model: db.Department, as: "department", attributes: ["id", "name"] },
                 { model: db.User, as: "approver", attributes: ["id", "name"] },
                 {
                     model: db.OvertimeRequestTechnician,
