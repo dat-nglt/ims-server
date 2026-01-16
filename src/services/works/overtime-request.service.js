@@ -318,7 +318,7 @@ export const getOvertimeRequestsByUserService = async (userId, filters = {}) => 
                 { model: db.User, as: "approver", attributes: ["id", "name"] },
                 {
                     model: db.OvertimeRequestTechnician,
-                    as: "requestTechnicians",
+                    as: "technicians",
                     include: [{ model: db.User, as: "technician", attributes: ["id", "name", "email", "phone"] }],
                 },
             ],
