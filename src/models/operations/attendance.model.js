@@ -372,14 +372,21 @@ export default (sequelize, DataTypes) => {
 
             checkIn.attendance_session_id = session.id;
           } else {
+            // Build where condition for findOrCreate, excluding null office_location_id
+            const whereSessionCondition = {
+              user_id: checkIn.user_id,
+              attendance_type_id: checkIn.attendance_type_id,
+              work_id: sessionWorkId,
+              ended_at: null,
+            };
+
+            // Chỉ thêm office_location_id nếu nó có giá trị (không null/undefined)
+            if (checkIn.office_location_id) {
+              whereSessionCondition.office_location_id = checkIn.office_location_id;
+            }
+
             const [session] = await AttendanceSession.findOrCreate({
-              where: {
-                user_id: checkIn.user_id,
-                attendance_type_id: checkIn.attendance_type_id,
-                work_id: sessionWorkId,
-                office_location_id: checkIn.office_location_id,
-                ended_at: null,
-              },
+              where: whereSessionCondition,
               defaults: {
                 user_id: checkIn.user_id,
                 work_id: sessionWorkId,
@@ -458,13 +465,19 @@ export default (sequelize, DataTypes) => {
 
             // Otherwise, try to find an open session for this user/work and close it
             if (checkIn.check_out_time) {
+              const whereClosedCondition = {
+                user_id: checkIn.user_id,
+                work_id: checkIn.work_id,
+                ended_at: null,
+              };
+
+              // Thêm office_location_id nếu có
+              if (checkIn.office_location_id) {
+                whereClosedCondition.office_location_id = checkIn.office_location_id;
+              }
+
               const session = await AttendanceSession.findOne({
-                where: { 
-                  user_id: checkIn.user_id, 
-                  work_id: checkIn.work_id,
-                  office_location_id: checkIn.office_location_id,
-                  ended_at: null 
-                },
+                where: whereClosedCondition,
                 transaction: options.transaction,
               });
               if (session) {
