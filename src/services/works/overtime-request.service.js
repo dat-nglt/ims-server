@@ -258,7 +258,6 @@ export const createOvertimeRequestServiceOffice = async (data) => {
         const result = await db.OvertimeRequest.findByPk(overtimeRequest.id, {
             include: [
                 { model: db.User, as: "requester", attributes: ["id", "name", "email", "phone"] },
-                { model: db.Department, as: "department", attributes: ["id", "name"] },
                 { model: db.Work, as: "work", attributes: ["id", "title", "location"] },
             ],
         });
@@ -640,7 +639,6 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
             include: [
                 { model: db.User, as: "requester", attributes: ["id", "name", "email", "phone"] },
                 { model: db.User, as: "approver", attributes: ["id", "name"] },
-                { model: db.Department, as: "department", attributes: ["id", "name"] },
                 {
                     model: db.OvertimeRequestTechnician,
                     as: "technicians",
@@ -800,7 +798,6 @@ export const rejectOvertimeRequestService = async (requestId, approverId, reject
             include: [
                 { model: db.User, as: "requester", attributes: ["id", "name", "email", "phone"] },
                 { model: db.User, as: "approver", attributes: ["id", "name"] },
-                { model: db.Department, as: "department", attributes: ["id", "name"] },
                 {
                     model: db.OvertimeRequestTechnician,
                     as: "technicians",
