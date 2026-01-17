@@ -17,38 +17,18 @@ export const checkInService = async (checkInPayload) => {
         // Xác thực loại chấm công
         const attendanceType = await validateAttendanceType(attendance_type_id);
 
-        // Ràng buộc chấm công tăng ca
-        if (attendanceType && (attendanceType.code === "overtime_lunch" || attendanceType.code === "overtime_night")) {
-            const todayDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
-
-            // Kiểm tra xem ngươi dùng có yêu cầu tăng ca được phê duyệt cho công việc này và loại tăng ca này không
-            const approvedOT = await db.OvertimeRequest.findOne({
-                where: {
-                    work_id,
-                    status: "approved",
-                    requested_date: todayDate,
-                    overtime_type: attendanceType.code,
-                },
-                include: [
-                    {
-                        model: db.OvertimeRequestTechnician,
-                        as: "technicians",
-                        where: { technician_id: user_id, status: "approved" },
-                        required: true,
-                    },
-                ],
-            });
-
-            if (!approvedOT) {
-                throw new Error(
-                    "Người dùng không có yêu cầu tăng ca được phê duyệt cho công việc này hoặc loại tăng ca này"
-                );
-            }
-        }
+        // Ràng buộc chấm công tăng ca (tách hàm để clean code)
+        await ensureOvertimeApprovedForWork(user_id, work_id, attendanceType);
 
         const user = await validateUser(user_id);
 
-        const existingSession = await checkExistingSession(user_id, attendance_type_id, work_id, office_location_id);
+        const existingSession = await checkExistingSession(
+            user_id,
+            attendance_type_id,
+            work_id,
+            office_location_id,
+            attendanceType,
+        );
         // Nếu tồn tại phiên chấm công mở cho công việc này hoặc đã chấm công xong công việc với ca chấm công trong ngày hôm nay, trả về thông tin phiên/chấm công đó và không tạo mới
         if (existingSession) {
             return existingSession;
@@ -69,10 +49,10 @@ export const checkInService = async (checkInPayload) => {
         if (workForAttendance.workAssignment && workForAttendance.workAssignment.id) {
             await db.WorkAssignment.update(
                 { assigned_status: "in_progress" },
-                { where: { id: workForAttendance.workAssignment.id } }
+                { where: { id: workForAttendance.workAssignment.id } },
             );
             logger.info(
-                `Cập nhật phân bổ công việc với mã [${workForAttendance.workAssignment.id}] sang trạng thái đang thực hiện thành công`
+                `Cập nhật phân bổ công việc với mã [${workForAttendance.workAssignment.id}] sang trạng thái đang thực hiện thành công`,
             );
         }
 
@@ -138,30 +118,76 @@ const validateAttendanceType = async (attendance_type_id) => {
     return null;
 };
 
-const checkExistingSession = async (user_id, attendance_type_id, work_id, office_location_id = null) => {
+/**
+ * Ensure the user has an approved overtime request for the given work and overtime type.
+ * Throws an Error if validation fails.
+ */
+const ensureOvertimeApprovedForWork = async (user_id, work_id, attendanceType) => {
+    if (!attendanceType || (attendanceType.code !== "overtime_lunch" && attendanceType.code !== "overtime_night")) {
+        return;
+    }
+
+    const todayDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+
+    const approvedOT = await db.OvertimeRequest.findOne({
+        where: {
+            work_id,
+            status: "approved",
+            requested_date: todayDate,
+            overtime_type: attendanceType.code,
+        },
+        include: [
+            {
+                model: db.OvertimeRequestTechnician,
+                as: "technicians",
+                where: { technician_id: user_id, status: "approved" },
+                required: true,
+            },
+        ],
+    });
+
+    if (!approvedOT) {
+        throw new Error("Bạn không có yêu cầu tăng ca được phê duyệt cho công việc này và loại tăng ca này");
+    }
+};
+
+const checkExistingSession = async (user_id, attendance_type_id, work_id, office_location_id = null, attendanceType = null) => {
+    const OVERTIME_CODES = ["overtime_lunch", "overtime_night"];
+    const isOvertime = attendanceType && OVERTIME_CODES.includes(attendanceType.code);
+
     const startOfCurrentDay = new Date(); /// Thời gian bắt đầu ngày hiện tại
     startOfCurrentDay.setHours(0, 0, 0, 0);
     const endOfCurrentDay = new Date(startOfCurrentDay); // Thời gian kết thúc ngày hiện tại
     endOfCurrentDay.setDate(endOfCurrentDay.getDate() + 1);
 
     // 1️⃣ KIỂM TRA PHIÊN CHẤM CÔNG MỞ (status: "open")
-    // Ngăn chặn check-in lặp lại cho cùng công việc + ca chấm công trong ngày
+    // Nếu là overtime => chỉ kiểm tra cùng loại overtime
+    // Nếu không phải overtime => kiểm tra mọi loại CA TRỪ overtime để tránh chấm đồng thời 2 ca (ban ngày/đêm)
     const whereConditionOpenSession = {
         user_id,
         work_id, // ✅ THÊM: Kiểm tra công việc cụ thể
         status: "open",
-        attendance_type_id,
         started_at: { [Op.between]: [startOfCurrentDay, endOfCurrentDay] },
     };
+
+    if (isOvertime) {
+        whereConditionOpenSession.attendance_type_id = attendance_type_id;
+    }
 
     // Thêm office_location_id nếu có
     if (office_location_id) {
         whereConditionOpenSession.office_location_id = office_location_id;
     }
 
+    // Build include: always include Work, and if not overtime add filter to exclude overtime attendance types
+    const openInclude = [{ model: db.Work, as: "work" }];
+    if (!isOvertime) {
+        openInclude.push({ model: db.AttendanceType, attributes: ["id", "code"], where: { code: { [Op.notIn]: OVERTIME_CODES } }, required: true });
+    }
+
     const openSession = await db.AttendanceSession.findOne({
         where: whereConditionOpenSession,
-        include: [{ model: db.Work, as: "work" }],
+        include: openInclude,
         order: [["started_at", "DESC"]],
     });
 
@@ -191,23 +217,31 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id, office
     }
 
     // 2️⃣ KIỂM TRA XEM ĐÃ CHECK-OUT CHƯA
-    // Ngăn chặn check-in lại sau khi đã check-out cùng công việc trong ngày
+    // Tương tự: nếu là overtime chỉ kiểm tra cùng loại overtime, nếu không phải overtime kiểm tra mọi loại trừ overtime
     const whereConditionClosedSession = {
         user_id,
         work_id, // ✅ THÊM: Kiểm tra công việc cụ thể
-        attendance_type_id,
         started_at: { [Op.between]: [startOfCurrentDay, endOfCurrentDay] },
         status: "closed", // Phiên chấm công đã đóng
     };
+
+    if (isOvertime) {
+        whereConditionClosedSession.attendance_type_id = attendance_type_id;
+    }
 
     // Thêm office_location_id nếu có
     if (office_location_id) {
         whereConditionClosedSession.office_location_id = office_location_id;
     }
 
+    const closedInclude = [{ model: db.Work, as: "work" }];
+    if (!isOvertime) {
+        closedInclude.push({ model: db.AttendanceType, attributes: ["id", "code"], where: { code: { [Op.notIn]: OVERTIME_CODES } }, required: true });
+    }
+
     const closedSession = await db.AttendanceSession.findOne({
         where: whereConditionClosedSession,
-        include: [{ model: db.Work, as: "work" }],
+        include: closedInclude,
         order: [["started_at", "DESC"]],
     });
 
@@ -272,8 +306,8 @@ const prepareAttendanceData = (checkInPayload, attendanceType) => {
     const techArr = Array.isArray(technicians)
         ? technicians.map((t) => (typeof t === "string" ? parseInt(t, 10) : t))
         : technicians
-        ? [typeof technicians === "string" ? parseInt(technicians, 10) : technicians]
-        : [user_id];
+          ? [typeof technicians === "string" ? parseInt(technicians, 10) : technicians]
+          : [user_id];
 
     const parseId = (ID) => (ID != null && Number.isFinite(Number(ID)) ? parseInt(ID, 10) : ID);
 
@@ -353,7 +387,7 @@ const updateWorkStatus = async (wid) => {
         // Use a conditional update for atomicity
         const [affectedRows] = await db.Work.update(
             { status: "in_progress" },
-            { where: { id: wid, status: "pending" } }
+            { where: { id: wid, status: "pending" } },
         );
 
         return affectedRows > 0;
