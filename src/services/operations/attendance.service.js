@@ -945,8 +945,8 @@ export const getActiveSessionByUserService = async (userId) => {
             },
             include: [
                 // { model: db.User, as: "user" },
-                { model: db.Work, as: "work" },
-                // { model: db.Attendance, as: "attendances" },
+                { model: db.Work, as: "work", attributes: ["id", "title"] },
+                { model: db.AttendanceType, as: "attendanceType" },
             ],
         });
         return { success: true, data: session };
