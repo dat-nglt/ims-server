@@ -182,7 +182,7 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id, office
     // Build include: always include Work, and if not overtime add filter to exclude overtime attendance types
     const openInclude = [{ model: db.Work, as: "work" }];
     if (!isOvertime) {
-        openInclude.push({ model: db.AttendanceType, attributes: ["id", "code"], where: { code: { [Op.notIn]: OVERTIME_CODES } }, required: true });
+        openInclude.push({ model: db.AttendanceType, as: "attendance_type", attributes: ["id", "code"], where: { code: { [Op.notIn]: OVERTIME_CODES } }, required: true });
     }
 
     const openSession = await db.AttendanceSession.findOne({
@@ -236,7 +236,7 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id, office
 
     const closedInclude = [{ model: db.Work, as: "work" }];
     if (!isOvertime) {
-        closedInclude.push({ model: db.AttendanceType, attributes: ["id", "code"], where: { code: { [Op.notIn]: OVERTIME_CODES } }, required: true });
+        closedInclude.push({ model: db.AttendanceType, as: "attendance_type", attributes: ["id", "code"], where: { code: { [Op.notIn]: OVERTIME_CODES } }, required: true });
     }
 
     const closedSession = await db.AttendanceSession.findOne({
