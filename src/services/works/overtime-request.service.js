@@ -138,8 +138,8 @@ export const createOvertimeRequestService = async (data) => {
 
         logger.info(
             `Overtime request created: ${resultJson.id} by user ${user_id} for technicians: ${technician_ids.join(
-                ", "
-            )}`
+                ", ",
+            )}`,
         );
 
         return {
@@ -266,7 +266,7 @@ export const createOvertimeRequestServiceOffice = async (data) => {
         const resultJson = result.toJSON();
 
         logger.info(
-            `Office overtime request created: ${resultJson.id} by user ${user_id} on ${requested_date} from ${start_time} to ${end_time}`
+            `Office overtime request created: ${resultJson.id} by user ${user_id} on ${requested_date} from ${start_time} to ${end_time}`,
         );
 
         return {
@@ -316,7 +316,6 @@ export const getOvertimeRequestsByUserService = async (userId, filters = {}) => 
             include: [
                 { model: db.User, as: "requester", attributes: ["id", "name", "email", "phone"] },
                 { model: db.Work, as: "work", attributes: ["id", "title", "location"] },
-                // { model: db.Department, as: "department", attributes: ["id", "name"] },
                 { model: db.User, as: "approver", attributes: ["id", "name"] },
                 {
                     model: db.OvertimeRequestTechnician,
@@ -377,7 +376,6 @@ export const getAllOvertimeRequestsService = async (filters = {}) => {
                     attributes: ["id", "name", "email", "phone"],
                 },
                 { model: db.Work, as: "work", attributes: ["id", "title", "location"] },
-                { model: db.Department, as: "department", attributes: ["id", "name"] },
                 {
                     model: db.OvertimeRequestTechnician,
                     as: "technicians",
@@ -463,9 +461,7 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
                 notes: notes || null,
             });
 
-            logger.info(
-                `Office overtime request ${requestId} approved by user ${approverId}. Paid: ${is_paid}`
-            );
+            logger.info(`Office overtime request ${requestId} approved by user ${approverId}. Paid: ${is_paid}`);
         } else {
             // 🔵 TRƯỜNG HỢP TĂNG CA KỸ THUẬT: Cập nhật OvertimeRequestTechnician
 
@@ -502,13 +498,13 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
                     is_paid,
                     notes,
                 },
-                { where: whereCondition }
+                { where: whereCondition },
             );
 
             logger.info(
                 `Overtime request ${requestId} technician(s) approved by user ${approverId}. Technician ID: ${
                     technician_id || "all"
-                }`
+                }`,
             );
         }
 
@@ -547,11 +543,11 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
 
                         newAssignmentsCreated = true;
                         logger.info(
-                            `Technician ${techRecord.technician_id} assigned to work ${overtimeRequest.work_id} from approved overtime request ${requestId}`
+                            `Technician ${techRecord.technician_id} assigned to work ${overtimeRequest.work_id} from approved overtime request ${requestId}`,
                         );
                     } catch (assignmentError) {
                         logger.warn(
-                            `Failed to assign technician ${techRecord.technician_id} to work ${overtimeRequest.work_id}: ${assignmentError.message}`
+                            `Failed to assign technician ${techRecord.technician_id} to work ${overtimeRequest.work_id}: ${assignmentError.message}`,
                         );
                         // Continue with other technicians even if one fails
                     }
@@ -582,20 +578,20 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
                             if (allCompleted) {
                                 newWorkStatus = "completed";
                                 logger.info(
-                                    `All assignments for work ${overtimeRequest.work_id} are completed. Updating work status to completed.`
+                                    `All assignments for work ${overtimeRequest.work_id} are completed. Updating work status to completed.`,
                                 );
                             } else if (anyInProgress) {
                                 if (work.status !== "in_progress" && work.status !== "completed") {
                                     newWorkStatus = "in_progress";
                                     logger.info(
-                                        `At least one assignment for work ${overtimeRequest.work_id} is in progress. Updating work status to in_progress.`
+                                        `At least one assignment for work ${overtimeRequest.work_id} is in progress. Updating work status to in_progress.`,
                                     );
                                 }
                             } else if (anyAccepted) {
                                 if (work.status === "pending" || work.status === "assigned") {
                                     newWorkStatus = "assigned";
                                     logger.info(
-                                        `At least one assignment for work ${overtimeRequest.work_id} is accepted. Updating work status to assigned.`
+                                        `At least one assignment for work ${overtimeRequest.work_id} is accepted. Updating work status to assigned.`,
                                     );
                                 }
                             }
@@ -604,7 +600,7 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
                             if (newWorkStatus !== work.status) {
                                 await work.update({ status: newWorkStatus, updated_at: new Date() });
                                 logger.info(
-                                    `Work ${overtimeRequest.work_id} status updated from ${work.status} to ${newWorkStatus} based on assignment statuses.`
+                                    `Work ${overtimeRequest.work_id} status updated from ${work.status} to ${newWorkStatus} based on assignment statuses.`,
                                 );
                             }
                         }
@@ -612,7 +608,7 @@ export const approveOvertimeRequestService = async (requestId, approverId, appro
                 } catch (statusUpdateErr) {
                     logger.error(
                         "Failed to auto-update work status based on assignments in approveOvertimeRequest: " +
-                            statusUpdateErr.message
+                            statusUpdateErr.message,
                     );
                     // Non-blocking error, continue processing
                 }
@@ -732,7 +728,7 @@ export const rejectOvertimeRequestService = async (requestId, approverId, reject
             });
 
             logger.info(
-                `Office overtime request ${requestId} rejected by user ${approverId}. Reason: ${reject_reason}`
+                `Office overtime request ${requestId} rejected by user ${approverId}. Reason: ${reject_reason}`,
             );
         } else {
             // 🔵 TRƯỜNG HỢP TĂNG CA KỸ THUẬT: Cập nhật OvertimeRequestTechnician
@@ -769,13 +765,13 @@ export const rejectOvertimeRequestService = async (requestId, approverId, reject
                     approved_at: new Date(),
                     notes: reject_reason,
                 },
-                { where: whereCondition }
+                { where: whereCondition },
             );
 
             logger.info(
                 `Overtime request ${requestId} technician(s) rejected by user ${approverId}. Technician ID: ${
                     technician_id || "all"
-                }`
+                }`,
             );
 
             // 🟢 CẬP NHẬT TRẠNG THÁI REQUEST CHÍNH CHỈ KHI CẦN
