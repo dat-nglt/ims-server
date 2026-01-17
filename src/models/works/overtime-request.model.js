@@ -168,7 +168,6 @@ export default (sequelize, DataTypes) => {
             underscored: true,
             indexes: [
                 { fields: ["user_id"] },
-                { fields: ["department_id"] },
                 { fields: ["work_id"] },
                 { fields: ["status"] },
                 { fields: ["requested_date"] },
@@ -179,7 +178,6 @@ export default (sequelize, DataTypes) => {
 
     OvertimeRequest.associate = (models) => {
         OvertimeRequest.belongsTo(models.User, { foreignKey: "user_id", as: "requester" });
-        OvertimeRequest.belongsTo(models.Department, { foreignKey: "department_id", as: "department" });
         OvertimeRequest.belongsTo(models.User, { foreignKey: "approver_id", as: "approver" });
         OvertimeRequest.belongsTo(models.User, { foreignKey: "reviewed_by", as: "reviewer" });
         OvertimeRequest.belongsTo(models.Work, { foreignKey: "work_id", as: "work" });

@@ -137,7 +137,6 @@ export async function up(queryInterface, Sequelize) {
     });
 
     await queryInterface.addIndex("overtime_requests", ["user_id"]);
-    await queryInterface.addIndex("overtime_requests", ["department_id"]);
     await queryInterface.addIndex("overtime_requests", ["work_id"]);
     await queryInterface.addIndex("overtime_requests", ["status"]);
     await queryInterface.addIndex("overtime_requests", ["requested_date"]);
