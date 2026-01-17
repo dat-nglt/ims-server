@@ -19,7 +19,7 @@ export async function up(queryInterface, Sequelize) {
         },
         department_id: {
             type: Sequelize.INTEGER,
-            allowNull: false,
+            allowNull: true,
             references: { model: "departments", key: "id" },
         },
         requested_date: {
