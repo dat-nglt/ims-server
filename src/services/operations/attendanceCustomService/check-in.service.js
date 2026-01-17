@@ -66,7 +66,8 @@ export const checkInService = async (checkInPayload) => {
             message: "Chấm công vào thành công",
         };
     } catch (error) {
-        logger.warn("Error in attendanceService:" + error.messFage);
+        // Log the actual error message or object for easier debugging
+        logger.warn("Error in attendanceService: " + (error && error.message ? error.message : error));
         return { success: false, message: error.message || "Chấm công vào thất bại", data: null };
     }
 };
@@ -151,47 +152,67 @@ const ensureOvertimeApprovedForWork = async (user_id, work_id, attendanceType) =
     }
 };
 
-const checkExistingSession = async (user_id, attendance_type_id, work_id, office_location_id = null, attendanceType = null) => {
-    const OVERTIME_CODES = ["overtime_lunch", "overtime_night"];
-    const isOvertime = attendanceType && OVERTIME_CODES.includes(attendanceType.code);
+const OVERTIME_CODES = ["overtime_lunch", "overtime_night"];
 
-    const startOfCurrentDay = new Date(); /// Thời gian bắt đầu ngày hiện tại
-    startOfCurrentDay.setHours(0, 0, 0, 0);
-    const endOfCurrentDay = new Date(startOfCurrentDay); // Thời gian kết thúc ngày hiện tại
-    endOfCurrentDay.setDate(endOfCurrentDay.getDate() + 1);
+/**
+ * Return start/end Date objects for the current day range (start inclusive, end exclusive)
+ */
+const getDayRange = (baseDate = new Date()) => {
+    const start = new Date(baseDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    return { start, end };
+};
 
-    // 1️⃣ KIỂM TRA PHIÊN CHẤM CÔNG MỞ (status: "open")
-    // Nếu là overtime => chỉ kiểm tra cùng loại overtime
-    // Nếu không phải overtime => kiểm tra mọi loại CA TRỪ overtime để tránh chấm đồng thời 2 ca (ban ngày/đêm)
-    const whereConditionOpenSession = {
+/**
+ * Build where and include clauses for AttendanceSession queries.
+ * For non-overtime session we exclude overtime attendance types via include filter.
+ */
+const buildSessionQuery = ({ user_id, work_id, office_location_id = null, start, end, status, isOvertime, attendance_type_id }) => {
+    const where = {
         user_id,
-        work_id, // ✅ THÊM: Kiểm tra công việc cụ thể
-        status: "open",
-        started_at: { [Op.between]: [startOfCurrentDay, endOfCurrentDay] },
+        work_id,
+        status,
+        started_at: { [Op.between]: [start, end] },
     };
 
-    if (isOvertime) {
-        whereConditionOpenSession.attendance_type_id = attendance_type_id;
+    if (isOvertime && attendance_type_id) {
+        where.attendance_type_id = attendance_type_id;
     }
 
-    // Thêm office_location_id nếu có
     if (office_location_id) {
-        whereConditionOpenSession.office_location_id = office_location_id;
+        where.office_location_id = office_location_id;
     }
 
-    // Build include: always include Work, and if not overtime add filter to exclude overtime attendance types
-    const openInclude = [{ model: db.Work, as: "work" }];
+    const include = [{ model: db.Work, as: "work" }];
     if (!isOvertime) {
-        openInclude.push({ model: db.AttendanceType, as: "attendance_type", attributes: ["id", "code"], where: { code: { [Op.notIn]: OVERTIME_CODES } }, required: true });
+        include.push({
+            model: db.AttendanceType,
+            as: "attendance_type",
+            attributes: ["id", "code"],
+            where: { code: { [Op.notIn]: OVERTIME_CODES } },
+            required: true,
+        });
     }
+
+    return { where, include };
+};
+
+const checkExistingSession = async (user_id, attendance_type_id, work_id, office_location_id = null, attendanceType = null) => {
+    const isOvertime = attendanceType && OVERTIME_CODES.includes(attendanceType.code);
+
+    const { start, end } = getDayRange();
+
+    // 1️⃣ Open session check
+    const openQuery = buildSessionQuery({ user_id, work_id, office_location_id, start, end, status: "open", isOvertime, attendance_type_id });
 
     const openSession = await db.AttendanceSession.findOne({
-        where: whereConditionOpenSession,
-        include: openInclude,
+        where: openQuery.where,
+        include: openQuery.include,
         order: [["started_at", "DESC"]],
     });
 
-    // Nếu tồn tại phiên chấm công MỞ cho công việc này, trả về thông tin và không cho phép chấm công mới
     if (openSession) {
         const latestAttendance = await db.Attendance.findOne({
             where: { attendance_session_id: openSession.id, user_id },
@@ -216,36 +237,15 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id, office
         };
     }
 
-    // 2️⃣ KIỂM TRA XEM ĐÃ CHECK-OUT CHƯA
-    // Tương tự: nếu là overtime chỉ kiểm tra cùng loại overtime, nếu không phải overtime kiểm tra mọi loại trừ overtime
-    const whereConditionClosedSession = {
-        user_id,
-        work_id, // ✅ THÊM: Kiểm tra công việc cụ thể
-        started_at: { [Op.between]: [startOfCurrentDay, endOfCurrentDay] },
-        status: "closed", // Phiên chấm công đã đóng
-    };
-
-    if (isOvertime) {
-        whereConditionClosedSession.attendance_type_id = attendance_type_id;
-    }
-
-    // Thêm office_location_id nếu có
-    if (office_location_id) {
-        whereConditionClosedSession.office_location_id = office_location_id;
-    }
-
-    const closedInclude = [{ model: db.Work, as: "work" }];
-    if (!isOvertime) {
-        closedInclude.push({ model: db.AttendanceType, as: "attendance_type", attributes: ["id", "code"], where: { code: { [Op.notIn]: OVERTIME_CODES } }, required: true });
-    }
+    // 2️⃣ Closed session check
+    const closedQuery = buildSessionQuery({ user_id, work_id, office_location_id, start, end, status: "closed", isOvertime, attendance_type_id });
 
     const closedSession = await db.AttendanceSession.findOne({
-        where: whereConditionClosedSession,
-        include: closedInclude,
+        where: closedQuery.where,
+        include: closedQuery.include,
         order: [["started_at", "DESC"]],
     });
 
-    // Nếu đã check-out, không cho phép check-in lại
     if (closedSession) {
         const checkOutAttendance = await db.Attendance.findOne({
             where: { attendance_session_id: closedSession.id, user_id, check_out_time: { [Op.ne]: null } },
@@ -254,17 +254,13 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id, office
         });
 
         if (checkOutAttendance) {
-            const checkOutAt = checkOutAttendance.check_out_time
-                ? toVietnamTimeISO(checkOutAttendance.check_out_time)
-                : null;
+            const checkOutAt = checkOutAttendance.check_out_time ? toVietnamTimeISO(checkOutAttendance.check_out_time) : null;
 
             return {
                 success: false,
                 alreadyCheckedOut: true,
                 message: checkOutAt
-                    ? `Bạn đã thực hiện chấm công ra lúc ${checkOutAt
-                          .split("T")[1]
-                          .substring(0, 5)} cho công việc này. Không thể chấm công vào lại.`
+                    ? `Bạn đã thực hiện chấm công ra lúc ${checkOutAt.split("T")[1].substring(0, 5)} cho công việc này. Không thể chấm công vào lại.`
                     : `Công việc này đã được hoàn thành trong ngày hôm nay. Không thể chấm công vào lại.`,
                 session: {
                     id: closedSession.id,
