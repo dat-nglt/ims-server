@@ -937,7 +937,7 @@ export const getAttendanceSessionByIdService = async (id) => {
  */
 export const getActiveSessionByUserService = async (userId) => {
     try {
-        const session = await db.AttendanceSession.findOne({
+        const session = await db.AttendanceSession.findAll({
             where: {
                 user_id: userId,
                 status: "open",
