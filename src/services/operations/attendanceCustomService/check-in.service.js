@@ -17,18 +17,36 @@ export const checkInService = async (checkInPayload) => {
         // Xác thực loại chấm công
         const attendanceType = await validateAttendanceType(attendance_type_id);
 
-        // Ràng buộc chấm công tăng ca (tách hàm để clean code)
-        await ensureOvertimeApprovedForWork(user_id, work_id, attendanceType);
+        // Ràng buộc chấm công tăng ca
+        if (attendanceType && (attendanceType.code === "overtime_lunch" || attendanceType.code === "overtime_night")) {
+            const todayDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+
+            // Kiểm tra xem ngươi dùng có yêu cầu tăng ca được phê duyệt cho công việc này và loại tăng ca này không
+            const approvedOT = await db.OvertimeRequest.findOne({
+                where: {
+                    work_id,
+                    status: "approved",
+                    requested_date: todayDate,
+                    overtime_type: attendanceType.code,
+                },
+                include: [
+                    {
+                        model: db.OvertimeRequestTechnician,
+                        as: "technicians",
+                        where: { technician_id: user_id, status: "approved" },
+                        required: true,
+                    },
+                ],
+            });
+
+            if (!approvedOT) {
+                throw new Error("Bạn không có yêu cầu tăng ca được phê duyệt cho công việc này và loại tăng ca này");
+            }
+        }
 
         const user = await validateUser(user_id);
 
-        const existingSession = await checkExistingSession(
-            user_id,
-            attendance_type_id,
-            work_id,
-            office_location_id,
-            attendanceType,
-        );
+        const existingSession = await checkExistingSession(user_id, attendance_type_id, work_id, office_location_id);
         // Nếu tồn tại phiên chấm công mở cho công việc này hoặc đã chấm công xong công việc với ca chấm công trong ngày hôm nay, trả về thông tin phiên/chấm công đó và không tạo mới
         if (existingSession) {
             return existingSession;
@@ -66,8 +84,7 @@ export const checkInService = async (checkInPayload) => {
             message: "Chấm công vào thành công",
         };
     } catch (error) {
-        // Log the actual error message or object for easier debugging
-        logger.warn("Error in attendanceService: " + (error && error.message ? error.message : error));
+        logger.warn("Error in attendanceService:" + error.messFage);
         return { success: false, message: error.message || "Chấm công vào thất bại", data: null };
     }
 };
@@ -119,100 +136,32 @@ const validateAttendanceType = async (attendance_type_id) => {
     return null;
 };
 
-/**
- * Ensure the user has an approved overtime request for the given work and overtime type.
- * Throws an Error if validation fails.
- */
-const ensureOvertimeApprovedForWork = async (user_id, work_id, attendanceType) => {
-    if (!attendanceType || (attendanceType.code !== "overtime_lunch" && attendanceType.code !== "overtime_night")) {
-        return;
-    }
+const checkExistingSession = async (user_id, attendance_type_id, work_id, office_location_id = null) => {
+    const startOfCurrentDay = new Date(); /// Thời gian bắt đầu ngày hiện tại
+    startOfCurrentDay.setHours(0, 0, 0, 0);
+    const endOfCurrentDay = new Date(startOfCurrentDay); // Thời gian kết thúc ngày hiện tại
+    endOfCurrentDay.setDate(endOfCurrentDay.getDate() + 1);
 
-    const todayDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
-
-    const approvedOT = await db.OvertimeRequest.findOne({
-        where: {
-            work_id,
-            status: "approved",
-            requested_date: todayDate,
-            overtime_type: attendanceType.code,
-        },
-        include: [
-            {
-                model: db.OvertimeRequestTechnician,
-                as: "technicians",
-                where: { technician_id: user_id, status: "approved" },
-                required: true,
-            },
-        ],
-    });
-
-    if (!approvedOT) {
-        throw new Error("Bạn không có yêu cầu tăng ca được phê duyệt cho công việc này và loại tăng ca này");
-    }
-};
-
-const OVERTIME_CODES = ["overtime_lunch", "overtime_night"];
-
-/**
- * Return start/end Date objects for the current day range (start inclusive, end exclusive)
- */
-const getDayRange = (baseDate = new Date()) => {
-    const start = new Date(baseDate);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 1);
-    return { start, end };
-};
-
-/**
- * Build where and include clauses for AttendanceSession queries.
- * For non-overtime session we exclude overtime attendance types via include filter.
- */
-const buildSessionQuery = ({ user_id, work_id, office_location_id = null, start, end, status, isOvertime, attendance_type_id }) => {
-    const where = {
+    // Ngăn chặn check-in lặp lại - kiểm tra BẤT KỲ phiên MỞ nào của người dùng trong ngày (bất kể công việc nào)
+    const whereConditionOpenSession = {
         user_id,
-        work_id,
-        status,
-        started_at: { [Op.between]: [start, end] },
+        status: "open",
+        attendance_type_id,
+        started_at: { [Op.between]: [startOfCurrentDay, endOfCurrentDay] },
     };
 
-    if (isOvertime && attendance_type_id) {
-        where.attendance_type_id = attendance_type_id;
-    }
-
+    // Thêm office_location_id nếu có
     if (office_location_id) {
-        where.office_location_id = office_location_id;
+        whereConditionOpenSession.office_location_id = office_location_id;
     }
-
-    const include = [{ model: db.Work, as: "work" }];
-    if (!isOvertime) {
-        include.push({
-            model: db.AttendanceType,
-            as: "attendance_type",
-            attributes: ["id", "code"],
-            where: { code: { [Op.notIn]: OVERTIME_CODES } },
-            required: true,
-        });
-    }
-
-    return { where, include };
-};
-
-const checkExistingSession = async (user_id, attendance_type_id, work_id, office_location_id = null, attendanceType = null) => {
-    const isOvertime = attendanceType && OVERTIME_CODES.includes(attendanceType.code);
-
-    const { start, end } = getDayRange();
-
-    // 1️⃣ Open session check
-    const openQuery = buildSessionQuery({ user_id, work_id, office_location_id, start, end, status: "open", isOvertime, attendance_type_id });
 
     const openSession = await db.AttendanceSession.findOne({
-        where: openQuery.where,
-        include: openQuery.include,
+        where: whereConditionOpenSession,
+        include: [{ model: db.Work, as: "work" }],
         order: [["started_at", "DESC"]],
     });
 
+    // Nếu tồn tại phiên chấm công MỞ cho công việc này, trả về thông tin và không cho phép chấm công mới
     if (openSession) {
         const latestAttendance = await db.Attendance.findOne({
             where: { attendance_session_id: openSession.id, user_id },
@@ -226,7 +175,7 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id, office
             success: false,
             alreadyCheckedIn: true,
             message: checkInAt
-                ? `Bạn đã thực hiện chấm công vào lúc ${checkInAt.split("T")[1].substring(0, 5)} cho công việc này`
+                ? `Bạn đã thực hiện chấm công vào lúc ${checkInAt.split("T")[1].substring(0, 5)} và đang thực hiện công việc ${openSession.work.title}. Hoàn thành công việc trước khi chấm công vào lại.`
                 : `Bạn đã có phiên chấm công hiện tại`,
             session: {
                 id: openSession.id,
@@ -237,15 +186,28 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id, office
         };
     }
 
-    // 2️⃣ Closed session check
-    const closedQuery = buildSessionQuery({ user_id, work_id, office_location_id, start, end, status: "closed", isOvertime, attendance_type_id });
+    // 2️⃣ KIỂM TRA XEM ĐÃ CHECK-OUT CHƯA
+    // Ngăn chặn check-in lại sau khi đã check-out cùng công việc trong ngày
+    const whereConditionClosedSession = {
+        user_id,
+        work_id, // ✅ THÊM: Kiểm tra công việc cụ thể
+        attendance_type_id,
+        started_at: { [Op.between]: [startOfCurrentDay, endOfCurrentDay] },
+        status: "closed", // Phiên chấm công đã đóng
+    };
+
+    // Thêm office_location_id nếu có
+    if (office_location_id) {
+        whereConditionClosedSession.office_location_id = office_location_id;
+    }
 
     const closedSession = await db.AttendanceSession.findOne({
-        where: closedQuery.where,
-        include: closedQuery.include,
+        where: whereConditionClosedSession,
+        include: [{ model: db.Work, as: "work" }],
         order: [["started_at", "DESC"]],
     });
 
+    // Nếu đã check-out, không cho phép check-in lại
     if (closedSession) {
         const checkOutAttendance = await db.Attendance.findOne({
             where: { attendance_session_id: closedSession.id, user_id, check_out_time: { [Op.ne]: null } },
@@ -254,13 +216,17 @@ const checkExistingSession = async (user_id, attendance_type_id, work_id, office
         });
 
         if (checkOutAttendance) {
-            const checkOutAt = checkOutAttendance.check_out_time ? toVietnamTimeISO(checkOutAttendance.check_out_time) : null;
+            const checkOutAt = checkOutAttendance.check_out_time
+                ? toVietnamTimeISO(checkOutAttendance.check_out_time)
+                : null;
 
             return {
                 success: false,
                 alreadyCheckedOut: true,
                 message: checkOutAt
-                    ? `Bạn đã thực hiện chấm công ra lúc ${checkOutAt.split("T")[1].substring(0, 5)} cho công việc này. Không thể chấm công vào lại.`
+                    ? `Bạn đã thực hiện chấm công ra lúc ${checkOutAt
+                          .split("T")[1]
+                          .substring(0, 5)} cho công việc này. Không thể chấm công vào lại.`
                     : `Công việc này đã được hoàn thành trong ngày hôm nay. Không thể chấm công vào lại.`,
                 session: {
                     id: closedSession.id,
