@@ -438,11 +438,7 @@ export const getActiveSessionByUserController = async (req, res) => {
   try {
     const { userId } = req.params;
     const result = await attendanceService.getActiveSessionByUserService(userId);
-    res.json({
-      status: "success",
-      data: result.data,
-      message: "Lấy phiên chấm công hiện tại thành công",
-    });
+    res.json({result});
   } catch (error) {
     logger.error(`[${req.id}] Error in getActiveSessionByUserController:`, error.message);
     res.status(500).json({ error: error.message });
