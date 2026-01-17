@@ -943,11 +943,11 @@ export const getActiveSessionByUserService = async (userId) => {
                 status: "open",
                 ended_at: null,
             },
-            // include: [
-            //   { model: db.User, as: "user" },
-            //   { model: db.Work, as: "work" },
-            //   { model: db.Attendance, as: "attendances" },
-            // ],
+            include: [
+                // { model: db.User, as: "user" },
+                { model: db.Work, as: "work" },
+                // { model: db.Attendance, as: "attendances" },
+            ],
         });
         return { success: true, data: session };
     } catch (error) {
