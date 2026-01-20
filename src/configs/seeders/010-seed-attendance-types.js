@@ -44,7 +44,7 @@ export async function up(queryInterface, Sequelize) {
     {
       id: 4,
       code: "overtime_night",
-      name: "Tăng Ca Ngoài Giờ",
+      name: "Tăng Ca Tối",
       start_time: "17:00:00",
       end_time: "22:00:00",
       default_duration_minutes: 300,
