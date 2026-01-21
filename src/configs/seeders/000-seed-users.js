@@ -180,6 +180,40 @@ export async function up(queryInterface, Sequelize) {
             created_at: new Date(),
             updated_at: new Date(),
         },
+        {
+            employee_id: "8233110667251151101",
+            name: "Nguyễn Văn Hoài Nam",
+            position_id: null,
+            avatar_url: "https://res.cloudinary.com/djiwsnmtq/image/upload/v1768035267/defaultUser_fldfhz.jpg",
+            phone: null,
+            email: "hoainam@example.com",
+            password: "password123",
+            zalo_id: "8233110667251151101",
+            status: "active",
+            manager_id: 1,
+            is_active: true,
+            approved: "approved",
+            last_login: null,
+            created_at: new Date(),
+            updated_at: new Date(),
+        },
+        {
+            employee_id: "7402494146236096262",
+            name: "Lê Quang",
+            position_id: null,
+            avatar_url: "https://res.cloudinary.com/djiwsnmtq/image/upload/v1768035267/defaultUser_fldfhz.jpg",
+            phone: null,
+            email: "lequang@example.com",
+            password: "password123",
+            zalo_id: "7402494146236096262",
+            status: "active",
+            manager_id: 1,
+            is_active: true,
+            approved: "approved",
+            last_login: null,
+            created_at: new Date(),
+            updated_at: new Date(),
+        },
     ];
 
     await queryInterface.bulkInsert("users", usersData, {});
@@ -198,6 +232,8 @@ export async function down(queryInterface, Sequelize) {
         "6463462280977885198",
         "9038419743859921106",
         "4758850467376827318",
+        "8233110667251151101",
+        "7402494146236096262",
     ];
     await queryInterface.bulkDelete("users", { zalo_id: { [Sequelize.Op.in]: zaloIds } }, {});
 }

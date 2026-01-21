@@ -52,7 +52,7 @@ async function startServer() {
                 standardHeaders: true,
                 legacyHeaders: false,
                 keyGenerator: (req) => req.id,
-            })
+            }),
         );
 
         // --- RATE LIMITING FOR SENSITIVE APIs ---
@@ -79,7 +79,8 @@ async function startServer() {
                 "http://localhost:3000",
                 "http://localhost:5173",
                 "http://localhost:5175",
-                "http://localhost:5174"
+                "http://localhost:5174",
+                "https://ims-client-seven.vercel.app/",
             );
         }
 
@@ -114,7 +115,7 @@ async function startServer() {
         app.use(
             morgan("combined", {
                 stream: { write: (message) => logger.info(message.trim()) },
-            })
+            }),
         );
 
         // --- REQUEST DETAILS LOGGING MIDDLEWARE ---
