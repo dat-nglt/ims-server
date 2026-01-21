@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - developer
+      - staging  # Lắng nghe cả 2 nhánh
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -16,9 +16,10 @@ jobs:
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          # Kiểm tra nhánh đang push để chọn Host tương ứng
+          host: ${{ github.ref_name == 'developer' && secrets.DEV_HOST || secrets.STAGING_HOST }}
+          username: ${{ github.ref_name == 'developer' && secrets.DEV_USERNAME || secrets.STAGING_USERNAME }}
+          key: ${{ github.ref_name == 'developer' && secrets.DEV_SSH_KEY || secrets.STAGING_SSH_KEY }}
           port: ${{ secrets.VPS_SSH_PORT }}
           script: |
             cd /var/www/ims-server
