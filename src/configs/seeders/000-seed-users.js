@@ -200,9 +200,9 @@ export async function up(queryInterface, Sequelize) {
         {
             employee_id: "7402494146236096262",
             name: "Lê Quang",
-            position_id: "0774864251",
+            position_id: null,
             avatar_url: "https://res.cloudinary.com/djiwsnmtq/image/upload/v1768035267/defaultUser_fldfhz.jpg",
-            phone: null,
+            phone: "0774864251",
             email: "lequang@example.com",
             password: "password123",
             zalo_id: "7402494146236096262",
