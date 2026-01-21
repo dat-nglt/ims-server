@@ -183,7 +183,7 @@ export async function up(queryInterface, Sequelize) {
         {
             employee_id: "8233110667251151101",
             name: "Nguyễn Văn Hoài Nam",
-            position_id: null,
+            position_id: "0364536698",
             avatar_url: "https://res.cloudinary.com/djiwsnmtq/image/upload/v1768035267/defaultUser_fldfhz.jpg",
             phone: null,
             email: "hoainam@example.com",
@@ -200,7 +200,7 @@ export async function up(queryInterface, Sequelize) {
         {
             employee_id: "7402494146236096262",
             name: "Lê Quang",
-            position_id: null,
+            position_id: "0774864251",
             avatar_url: "https://res.cloudinary.com/djiwsnmtq/image/upload/v1768035267/defaultUser_fldfhz.jpg",
             phone: null,
             email: "lequang@example.com",

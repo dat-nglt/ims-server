@@ -59,6 +59,23 @@ export async function up(queryInterface, Sequelize) {
                 updated_at: new Date(),
             },
             {
+                name: "Kỹ Thuật Thực Tập",
+                code: "INTERN-TECH",
+                description: "Kỹ thuật thực tập hỗ trợ các tác vụ chuyên môn",
+                department_id: 1,
+                level: "intern",
+                parent_position_id: null,
+                salary_range_min: 800,
+                salary_range_max: 1200,
+                expected_headcount: 2,
+                status: "active",
+                is_deleted: false,
+                created_by: 1,
+                updated_by: 1,
+                created_at: new Date(),
+                updated_at: new Date(),
+            },
+            {
                 name: "Kỹ Thuật Phụ",
                 code: "JR-TECH",
                 description: "Nhân viên kỹ thuật hỗ trợ và vận hành",
@@ -371,9 +388,7 @@ export async function up(queryInterface, Sequelize) {
         // Insert all positions
         await queryInterface.bulkInsert("positions", allPositions, {});
 
-        console.log(
-            `✅ Successfully seeded ${allPositions.length} positions into the database`
-        );
+        console.log(`✅ Successfully seeded ${allPositions.length} positions into the database`);
     } catch (error) {
         console.error("❌ Error seeding positions:", error.message);
         throw error;
@@ -412,7 +427,7 @@ export async function down(queryInterface, Sequelize) {
                     "HR-ADMIN",
                 ],
             },
-            {}
+            {},
         );
 
         console.log("✅ Successfully removed seeded positions from the database");
