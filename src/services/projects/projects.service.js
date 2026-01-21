@@ -35,20 +35,20 @@ export const getProjectsService = async (query = {}) => {
         // Fetch all projects without filters or pagination
         const queryOptions = {
             include: [
-                { model: db.User, as: "manager", attributes: ["id", "name"] },
+                { model: db.User, as: "manager", attributes: ["name"] },
                 {
                     model: db.User,
                     as: "team",
-                    attributes: ["id", "name"],
+                    attributes: ["name"],
                     through: { attributes: [] },
                 }, // Many-to-many for team
                 {
                     model: db.ProjectTeamMember,
                     as: "teamMembers",
-                    attributes: ["id", "project_id", "user_id", "name", "role", "days_worked", "allocation_percent"],
+                    attributes: ["id", "user_id", "name", "role", "days_worked", "allocation_percent"],
                 },
-                { model: db.Work, as: "works", attributes: ["status"] }, // For counting tasks
-                { model: db.WorkReport, as: "reports", attributes: ["status"] }, // For pending reports
+                { model: db.Work, as: "works", attributes: [] }, // For counting tasks
+                { model: db.WorkReport, as: "reports", attributes: [] }, // For pending reports
             ],
             attributes: [
                 "id",
@@ -65,15 +65,15 @@ export const getProjectsService = async (query = {}) => {
                 "overdue_tasks",
                 "pending_reports", // Use stored fields or compute below
             ],
-            subQuery: false, // Avoid subquery issues with distinct
+            distinct: true, // For accurate count with includes
         };
 
         // No pagination: return all projects
 
-        const projects = await db.Project.findAll(queryOptions);
+        const projects = await db.Project.findAndCountAll(queryOptions);
 
         // Transform to camelCase and compute fields if not stored
-        const transformedProjects = projects.map((project) => {
+        const transformedProjects = projects.rows.map((project) => {
             const data = project.toJSON();
             // Compute if not stored (e.g., from works)
             if (!data.total_tasks) data.total_tasks = data.works ? data.works.length : 0;
@@ -121,7 +121,7 @@ export const getProjectsService = async (query = {}) => {
             success: true,
             data: {
                 projects: transformedProjects,
-                total: transformedProjects.length,
+                total: projects.count,
             },
         };
     } catch (error) {
