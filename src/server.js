@@ -74,7 +74,7 @@ async function startServer() {
             "https://lamquangdai.vn",
             "https://www.lamquangdai.vn",
             "https://h5.zdn.vn",
-            "https://ims-client-kappa.vercel.app/",
+            "https://ims-client-kappa.vercel.app",
         ];
 
         // Add localhost origins if in development mode
