@@ -70,7 +70,12 @@ async function startServer() {
 
         // --- DETAILED CORS CONFIGURATION ---
         // Define allowed origins for CORS, including production and development domains
-        const allowedOrigins = ["https://lamquangdai.vn", "https://www.lamquangdai.vn", "https://h5.zdn.vn"];
+        const allowedOrigins = [
+            "https://lamquangdai.vn",
+            "https://www.lamquangdai.vn",
+            "https://h5.zdn.vn",
+            "https://ims-client-kappa.vercel.app/",
+        ];
 
         // Add localhost origins if in development mode
         if (process.env.NODE_ENV === "development") {
@@ -80,7 +85,6 @@ async function startServer() {
                 "http://localhost:5173",
                 "http://localhost:5175",
                 "http://localhost:5174",
-                "https://ims-client-seven.vercel.app/",
             );
         }
 
